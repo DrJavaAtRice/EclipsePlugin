@@ -82,7 +82,7 @@
        Build Target
        ************ -->
   
-  <target name="build" depends="jar-14" description="Shortcut for 'jar-14'">
+  <target name="build" depends="jar-15" description="Shortcut for 'jar-15'">
   </target>
   <!-- test-14-in-15 should be here, but has been removed until testing works correctly
   <target name="build" depends="test-14-in-15, jar-14" 
@@ -824,6 +824,8 @@
           <or>
             <contains string="${java.version}" substring="1.5." />
             <contains string="${java.version}" substring="1.6." />
+            <contains string="${java.version}" substring="1.7." />
+            <contains string="${java.version}" substring="1.8." />
           </or>
         </not>
       </condition>

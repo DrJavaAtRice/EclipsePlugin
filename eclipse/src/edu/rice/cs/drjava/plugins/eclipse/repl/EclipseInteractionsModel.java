@@ -43,6 +43,8 @@ package edu.rice.cs.drjava.plugins.eclipse.repl;
 import java.io.*;
 
 import java.util.LinkedList;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.eclipse.core.runtime.*;
 import org.eclipse.core.resources.*;
@@ -69,7 +71,7 @@ import edu.rice.cs.util.text.ConsoleDocument;
 public class EclipseInteractionsModel extends RMIInteractionsModel {
 
   // TODO: Read input from System.in
-
+  
   /** Number of lines to remember in the history */
   protected static final int HISTORY_SIZE = 1000;
 
@@ -79,6 +81,11 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
   /** Whether to print System.out and System.err to files for debugging. */
   private static final boolean DEBUG = false;
 
+  public static final File WORKING_DIR = new File(System.getProperty("user.home", ""));
+  
+  // This should be named 'NEW_LINE' which adheres to coding standard
+  public static final String _newLine = "\n"; // was StringOps.EOL; but Swing uses '\n' for newLine
+  
   /**
    * List of listeners to this document.
    */
@@ -89,42 +96,41 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
    * occurs.
    */
   protected boolean _warnedToReset;
-
+  
   /**
    * Creates a new InteractionsModel with a new MainJVM.
    * @param adapter SWTDocumentAdapter to use for the document
    */
   public EclipseInteractionsModel(SWTDocumentAdapter adapter) {
-    this(new MainJVM(), adapter);
+    // maybe intergrate this with the constructor that is directly below
+    this(new MainJVM(null), adapter);
   }
-
+  
   /**
    * Creates a new InteractionsModel.
    * @param control RMI interface to the Interpreter JVM
    * @param adapter SWTDocumentAdapter to use for the document
    */
-  public EclipseInteractionsModel(MainJVM control,
-                                  SWTDocumentAdapter adapter)
-  {
-    super(control, adapter, HISTORY_SIZE, WRITE_DELAY);
+  public EclipseInteractionsModel(MainJVM control, SWTDocumentAdapter adapter) {
+    super(control, adapter, WORKING_DIR, HISTORY_SIZE, WRITE_DELAY);
     _listeners = new LinkedList<InteractionsListener>();
     _warnedToReset = false;
     if (DEBUG) {
       _debugSystemOutAndErr();
     }
 
-    _interpreterControl.setInteractionsModel(this);
+    _jvm.setInteractionsModel(this);
     try {
       EclipsePlugin plugin = EclipsePlugin.getDefault();
       if (plugin != null) {
         String classpath = plugin.getPluginClasspath();
-        _interpreterControl.setStartupClasspath(classpath);
+        _jvm.setStartupClassPath(classpath);
       }
     }
     catch (IOException ioe) {
       // TODO: log error
     }
-    _interpreterControl.startInterpreterJVM();
+    _jvm.startInterpreterJVM();
     _addChangeListener();
   }
 
@@ -132,9 +138,9 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
    * Cleans up any resources this model created, including the Interactions JVM.
    */
   public void dispose() {
-    _interpreterControl.killInterpreter(false);
+    _jvm.dispose();
   }
-
+  
   /**
    * Adds a listener to this model.
    */
@@ -167,26 +173,45 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
   }
 
   /**
+   * @param e The Exception indicating the interpreter won't start
+   */
+  protected void _interpreterWontStart(Exception e) {
+    _document.insertBeforeLastPrompt("JVM failed to start. Make sure a firewall is not blocking " + _newLine
+                                      + "inter-process communication. See the console tab for details." + _newLine,
+                                     InteractionsDocument.ERROR_STYLE);
+  }
+  
+  /** Transform the command line to be interpreted into something the Interactions JVM can use.
+    * This replaces "java MyClass a b c" with Java code to call MyClass.main(new String[]{"a","b","c"}).
+    * "import MyClass" is not handled here.
+    * @param interactionsString unprocessed command line
+    * @return command line with commands transformed */
+  public String transformCommands(String interactionsString) {
+    // TODO: figure out what to do here
+    return interactionsString;
+  }
+
+  /**
    * Called when the Java interpreter is ready to use.
    * Adds any open documents to the classpath.
    */
-  public void interpreterReady() {
+  public void interpreterReady(File wd) {
     _resetInteractionsClasspath();
-    super.interpreterReady();
+    super.interpreterReady(wd);
   }
 
   /**
    * Resets the warning flag after the Interactions Pane is reset.
    */
-  protected void _resetInterpreter() {
-    super._resetInterpreter();
+  protected void _resetInterpreter(File wd, boolean force) {
+    super._resetInterpreter(wd, true);
     _warnedToReset = false;
   }
 
   /**
    * Notifies listeners that an interaction has started.
    */
-  protected void _notifyInteractionStarted() {
+  public void _notifyInteractionStarted() {
     for (int i=0; i < _listeners.size(); i++) {
       _listeners.get(i).interactionStarted();
     }
@@ -222,9 +247,9 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
   /**
    * Notifies listeners that the interpreter is ready.
    */
-  protected void _notifyInterpreterReady() {
+  public void _notifyInterpreterReady(File wd) {
     for (int i=0; i < _listeners.size(); i++) {
-      _listeners.get(i).interpreterReady();
+      _listeners.get(i).interpreterReady(wd);
     }
   }
 
@@ -247,6 +272,7 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
       _listeners.get(i).interpreterResetFailed(t);
     }
   }
+
 
   /**
    * Notifies listeners that the interpreter has changed.
@@ -382,7 +408,7 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
    * the Interactions Pane has been used.
    */
   protected void _warnUserToReset() {
-    if (!_warnedToReset && interpreterUsed()) {
+    if (!_warnedToReset) {
       String warning =
         "Warning: Interactions are out of sync with the current class files.\n" +
         "You should reset interactions from the toolbar menu.\n";
@@ -412,35 +438,37 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
       }
     });
   }
-    public URL toURL(String path) {
-	try {	
-	    return new File(path).toURL();
-	} catch (MalformedURLException e) {
-	    _document.insertBeforeLastPrompt("Malformed URL " + path +"\n",
-	    				     InteractionsDocument.ERROR_STYLE);
-	}
-	throw new RuntimeException("Trying to add an invalid file:" + path);
-    }
-
-    public void addBuildDirectoryClassPath(String path) {    
-	// _document.insertBeforeLastPrompt("cp: " + path +"\n",
-	//   				     InteractionsDocument.ERROR_STYLE);
-	//System.out.println("addBuildDirectoryToClassPath:" + path);
-	super.addBuildDirectoryClassPath(toURL(path));
-	//new URL("file://"+path+"/"));
-    }
-    public void addProjectFilesClassPath(String path) {    
-	//_document.insertBeforeLastPrompt("cp: " + path +"\n",
-	//				 InteractionsDocument.ERROR_STYLE);
-	super.addProjectFilesClassPath(toURL(path));
-    }
-    
-    public void addToClassPath(String path) {
-	//_document.insertBeforeLastPrompt("cp: " + path +"\n",
-	//				 InteractionsDocument.ERROR_STYLE);
-	//System.out.println("addToClassPath:" + path);
-	super.addProjectClassPath(toURL(path));
-    }
+  
+  public URL toURL(String path) {
+    try {
+      return new File(path).toURL();
+     } catch (MalformedURLException e) {
+       _document.insertBeforeLastPrompt("Malformed URL " + path +"\n", 
+           InteractionsDocument.ERROR_STYLE);
+     }
+     throw new RuntimeException("Trying to add an invalid file:" + path);
+  }
+  
+  public void addBuildDirectoryClassPath(String path) {
+    // _document.insertBeforeLastPrompt("cp: " + path +"\n",
+    //            InteractionsDocument.ERROR_STYLE);
+    //System.out.println("addBuildDirectoryToClassPath:" + path);
+    super.addBuildDirectoryClassPath(new File(path));
+    //new URL("file://"+path+"/"));
+  }
+  
+  public void addProjectFilesClassPath(String path) {
+    //_document.insertBeforeLastPrompt("cp: " + path +"\n",
+    //     InteractionsDocument.ERROR_STYLE);
+    super.addProjectFilesClassPath(new File(path));
+  }
+  
+  public void addToClassPath(String path) {
+    //_document.insertBeforeLastPrompt("cp: " + path +"\n",
+    //     InteractionsDocument.ERROR_STYLE);
+    //System.out.println("addToClassPath:" + path);
+    super.addProjectClassPath(new File(path));
+  }
 
   /**
    * Walks the tree of deltas, looking for changes to the classpath or
@@ -578,20 +606,28 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
    * @param allow true iff access should be allowed
    */
   public void setPrivateAccessible(boolean allow) {
-    _interpreterControl.setPrivateAccessible(allow);
+//    _interpreterControl.setPrivateAccessible(allow);
+    _jvm.setPrivateAccessible(allow);
   }
   
   /**
    * Sets the optional command-line arguments to the interpreter JVM.
    */
   public void setOptionArgs(String optionArgString) {
-    _interpreterControl.setOptionArgs(optionArgString);
+//    _interpreterControl.setOptionArgs(optionArgString);
+    _jvm.setOptionArgs(optionArgString);
   }
   
   /** Gets the console tab document for this interactions model */
   public ConsoleDocument getConsoleDocument() {
-	  return new ConsoleDocument(new InteractionsDJDocument());
+   return new ConsoleDocument(new InteractionsDJDocument());
   }
-
   
+  /** A compiler can instruct DrJava to include additional elements for the boot
+    * class path of the Interactions JVM. */
+  public List<File> getCompilerBootClassPath() {
+    // not supported
+    // TODO: figure out what to do here
+    return new ArrayList<File>();
+  }
 }

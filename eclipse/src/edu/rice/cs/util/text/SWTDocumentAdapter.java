@@ -50,20 +50,19 @@ import org.eclipse.swt.events.*;
 import java.awt.print.Pageable;
 import java.awt.print.PrinterException;
 
-/**
- * Provides a toolkit-independent way to interact with an
- * SWT StyledText widget (from Eclipse).
+/** Provides a toolkit-independent way to interact with an SWT StyledText widget (from Eclipse).
  *
- * A StyledText serves as both model and view, so this class
- * must interface to the model parts of the widget.
+ * A StyledText serves as both model and view, so this class must interface to the model parts of the widget.
  *
  * @version $Id$
  */
-public class SWTDocumentAdapter implements EditDocumentInterface {
+public class SWTDocumentAdapter implements EditDocumentInterface, ConsoleDocumentInterface {
 
   // TO DO:
   //  - Test multithreaded support
 
+  private static final long serialVersionUID = 5467877329916880674L;
+  
   /** StyledText widget containing the view. */
   protected StyledText _pane;
 
@@ -170,12 +169,9 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
    * added using addStyle.
    * @throws EditDocumentException if the offset is illegal
    */
-  public void insertText(int offs, String str, String style)
-    throws EditDocumentException
-  {
-    if (_condition.canInsertText(offs)) { //, str, style)) {
+  public void insertText(int offs, String str, String style) throws EditDocumentException {
+    if (_condition.canInsertText(offs))
       forceInsertText(offs, str, style);
-    }
   }
 
   /**
@@ -187,10 +183,8 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
    * added using addStyle.
    * @throws EditDocumentException if the offset is illegal
    */
-  public synchronized void forceInsertText(final int offs, final String str,
-                                           final String style)
-    throws EditDocumentException
-  {
+  // Why is this synchronized?
+  public synchronized void forceInsertText(final int offs, final String str, final String style) throws EditDocumentException {
     SWTStyle s = null;
     if (style != null) {
       s = _styles.get(style);
@@ -234,7 +228,7 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
    * @throws EditDocumentException if the offset or length are illegal
    */
   public void removeText(int offs, int len) throws EditDocumentException {
-      if (_condition.canRemoveText(offs)) { //, len)) {
+      if (_condition.canRemoveText(offs)) {
       forceRemoveText(offs, len);
     }
   }
@@ -245,9 +239,8 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
    * @param len Number of characters to remove
    * @throws EditDocumentException if the offset or length are illegal
    */
-  public synchronized void forceRemoveText(final int offs, final int len)
-    throws EditDocumentException
-  {
+  // Why is this synchronized?
+  public synchronized void forceRemoveText(final int offs, final int len) throws EditDocumentException {
     _editException = null;
     _forceRemove = true;
 
@@ -295,9 +288,9 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
    *  @throws EditDocumentException if the offset is illegal
    */
   public void append(String str, String style) {
-	  	
-	  	int offs = getLength();
-	    forceInsertText(offs, str, style);
+    
+    int offs = getLength();
+     forceInsertText(offs, str, style);
   }
                                                                                                                         
 
@@ -337,12 +330,12 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
     /** Returns whether the event should be allowed to insert. */
     protected boolean _canInsert(VerifyEvent e) {
       return _forceInsert ||
-	  _condition.canInsertText(e.start); //, e.text, null);
+   _condition.canInsertText(e.start); //, e.text, null);
     }
     /** Returns whether the event should be allowed to remove. */
     protected boolean _canRemove(VerifyEvent e) {
       return _forceRemove ||
-	  _condition.canRemoveText(e.start); //, e.end - e.start);
+   _condition.canRemoveText(e.start); //, e.end - e.start);
     }
   }
 
@@ -384,7 +377,7 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
 
    /** Gets the String identifying the default style for this document if one exists; null otherwise. */
    public String getDefaultStyle() {
-	   	return "NONE";
+     return "NONE";
    }
     
 
@@ -392,13 +385,18 @@ public class SWTDocumentAdapter implements EditDocumentInterface {
     *  @return A Pageable representing this document.
     */
    public Pageable getPageable() throws IllegalStateException {
-	   return null;
+    return null;
    }
     
    
    /** Prints the given console document */
-   public void print() throws PrinterException {
-	   
-   }
-
+   public void print() throws PrinterException {}
+   
+   private volatile boolean _hasPrompt = true;
+   
+   /** @return true iff this document has a prompt and is ready to accept input. */
+   public boolean hasPrompt() { return _hasPrompt; }
+   
+   /** Setter for the _hasPrompt property. */
+   public void setHasPrompt(boolean val) { _hasPrompt = val; }
 }

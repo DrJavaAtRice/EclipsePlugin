@@ -78,7 +78,10 @@ import org.eclipse.swt.events.SelectionEvent;
 
 
 import java.util.Vector;
+import java.util.Iterator;
 import java.net.URL;
+import java.io.File;
+
 /**
  * This class installs listeners and actions between an InteractionsDocument
  * in the model and an InteractionsPane in the view.
@@ -409,7 +412,7 @@ public class InteractionsController {
       _disableInteractionsPane();
     }
 
-    public void interpreterReady() {
+    public void interpreterReady(File wd) {
       _enableInteractionsPane();
       moveToPrompt();
     }
@@ -438,7 +441,7 @@ public class InteractionsController {
       String msg = "The interactions window could not be reset:\n" +
         t.toString();
       _view.showInfoDialog(title, msg);
-      interpreterReady();
+      interpreterReady(null);
     }
 
     public void interactionIncomplete() {
@@ -500,7 +503,7 @@ public class InteractionsController {
         String title = "Confirm Reset Interactions";
         String message = "Are you sure you want to reset the Interactions Pane?";
         if (!_promptToReset || _view.showConfirmDialog(title, message)) {
-          _model.resetInterpreter();
+          _model.resetInterpreter(EclipseInteractionsModel.WORKING_DIR, true);
         }
       }
     };
@@ -512,12 +515,18 @@ public class InteractionsController {
       public void run() {
         String title = "Interpreter Classpath";
         StringBuffer cpBuf = new StringBuffer();
-        Vector<URL> classpathElements = _model.getClasspath();
-        for(int i = 0; i < classpathElements.size(); i++) {
-          cpBuf.append(classpathElements.get(i).toString());
-          if (i + 1 < classpathElements.size()) {
-            cpBuf.append("\n");
-          }
+//        Vector<URL> classpathElements = _model.getClasspath();
+//        for(int i = 0; i < classpathElements.size(); i++) {
+//          cpBuf.append(classpathElements.get(i).toString());
+//          if (i + 1 < classpathElements.size()) {
+//            cpBuf.append("\n");
+//          }
+//        }
+        Iterable<File> classpathElements = _model.getClassPath();
+        Iterator<File> files = classpathElements.iterator();
+        while(files.hasNext()) {
+          cpBuf.append(files.next());
+          cpBuf.append("\n");
         }
         _view.showInfoDialog(title, cpBuf.toString());
       }
