@@ -248,25 +248,26 @@ public class InteractionsController {
 
     // History size
     //_doc.getHistory().setMaxSize(store.getInt(DrJavaConstants.HISTORY_MAX_SIZE));
-
-    // Set the new interpreter JVM arguments
-    String jvmArgs = store.getString(DrJavaConstants.JVM_ARGS);
-    if (jvmArgs.equals("") || !called) {
-      _model.setOptionArgs(jvmArgs);
-    }
-    else {
-      String confirmMessage =
-        "Specifying the command-line arguments to the Interactions JVM is an\n" +
-        "advanced option, and incorrect arguments may cause the Interactions\n" +
-        "Pane to stop responding. Are you sure you want to set this option?\n" +
-        "(You must reset the Interactions Pane before changes will take effect.)";
-      if (_view.showConfirmDialog("Setting JVM Arguments", confirmMessage)) {
-        _model.setOptionArgs(jvmArgs);
-      }
-      else {
-        store.setValue(DrJavaConstants.JVM_ARGS, "");
-      }
-    }
+    
+//  Commented the block of code below out because the new DrJava's MainJVM doesn't seem to support or have a similar method that can be used instead
+//    // Set the new interpreter JVM arguments
+//    String jvmArgs = store.getString(DrJavaConstants.JVM_ARGS);
+//    if (jvmArgs.equals("") || !called) {
+//      _model.setOptionArgs(jvmArgs);
+//    }
+//    else {
+//      String confirmMessage =
+//        "Specifying the command-line arguments to the Interactions JVM is an\n" +
+//        "advanced option, and incorrect arguments may cause the Interactions\n" +
+//        "Pane to stop responding. Are you sure you want to set this option?\n" +
+//        "(You must reset the Interactions Pane before changes will take effect.)";
+//      if (_view.showConfirmDialog("Setting JVM Arguments", confirmMessage)) {
+//        _model.setOptionArgs(jvmArgs);
+//      }
+//      else {
+//        store.setValue(DrJavaConstants.JVM_ARGS, "");
+//      }
+//    }
     called = true;
   }
   boolean called = false;

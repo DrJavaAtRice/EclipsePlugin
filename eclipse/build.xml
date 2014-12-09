@@ -3,7 +3,9 @@
 <!-- This build script is based on the template located at "trunk/misc/build-template.xml"
      in the DrJava Subversion repository.  In general, changes made to the script should be
      reflected in the template as well. -->
-     
+
+<!-- !!!!!!! This build script requires the latest drjava.jar (built from latest DrJava source) to be inside the lib/ directory. !!!!!! -->
+
 <project name="eclipse" default="help">
 
   <property name="eclipse-version" value="0.9.8" />
@@ -13,9 +15,9 @@
   <property name="svn-repository" value="https://svn.sourceforge.net/svnroot/drjava" />
 
   <property environment="env" />
-  <property name="java14-home" value="${env.JAVA14_HOME}" />
+  <!-- <property name="java14-home" value="${env.JAVA14_HOME}" /> -->
   <property name="eclipse-home" value="${env.ECLIPSE_HOME}" />
-  <property name="drjava-src" value="${env.DRJAVA_SRC}" />
+  <!-- <property name="drjava-src" value="${env.DRJAVA_SRC}" /> -->
   <property name="clover-jar" value="${env.CLOVER_JAR}" />
   
   <!-- Testing defaults -->
@@ -61,14 +63,19 @@
     <echo message="" />
     <echo message="For this build file to function properly, the following environment " />
     <echo message="variables should be defined:" />
-    <echo message="JAVA14_HOME: Home folder of the Java 1.4 JRE or J2SDK" />
+    <!-- <echo message="JAVA14_HOME: Home folder of the Java 1.4 JRE or J2SDK" /> -->
     <echo message="ECLIPSE_HOME: Location of the 'eclipse' application folder" />
+    <!--
     <echo message="DRJAVA_SRC: Location of the DrJava sources.  These are included on the " />
     <echo message="            sourcepath during compilation; any sources referenced by the" />
     <echo message="            plugin will be included in the jar." />
+  -->
     <echo message="PATH: 'svn' needs to refer to the Subversion client executable" />
     <echo message="CLOVER_JAR: Location of the Clover jar file (necessary only if " />
     <echo message="            Clover targets will be used)"/>
+    <echo message="" />
+    <echo message="The lastest drjava.jar built from the DrJava source should also be" />
+    <echo message="put under the lib/ directory." />
     <echo message="" />
     <echo message="Additionally, Ant must be run under Java 5.0 or later.  If that is " />
     <echo message="not the system default, it may be set for Ant by using JAVA_HOME." />
@@ -102,11 +109,14 @@
           description="Compile all source files">
   </target>
   
-  <target name="do-compile" depends="assert-eclipse-exists, assert-drjava-src-exists, assert-15">
+  <!-- <target name="do-compile" depends="assert-eclipse-exists, assert-drjava-src-exists, assert-15"> -->
+  <target name="do-compile" depends="assert-eclipse-exists, assert-15">
   
     <echo message="Compiling src directory to classes/base and classes/test" />
+    <!--
     <echo message="NOTE: The 'generate-source' target of the drjava build script is assumed to" />
     <echo message="have been run.  Otherwise, you may encounter unexpected compilation errors." />
+  -->
     <echo message="" />
     
     <mkdir dir="classes/base" />
@@ -120,12 +130,13 @@
     <!--<javac srcdir="src" destdir="classes/base" source="1.5" target="1.5" sourcepath="${drjava-src}" 
            debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes">-->
           <!-- (Have to specify additional explicit srcdirs - see below) -->
-    <javac destdir="classes/base" source="1.5" target="1.5" sourcepath="${drjava-src}" 
-           debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes">
+    <!-- <javac destdir="classes/base" source="1.5" target="1.5" sourcepath="${drjava-src}" 
+           debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes"> -->
+    <javac destdir="classes/base" source="1.5" target="1.5" debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes">
       <src>
         <pathelement location="src" />
         <!-- These classes won't automatically compile, because they aren't in files matching their name -->
-        <pathelement location="${drjava-src}/edu/rice/cs/util/sexp" />
+        <!-- <pathelement location="${drjava-src}/edu/rice/cs/util/sexp" /> -->
       </src>
       <classpath>
         <fileset refid="libs" />
@@ -256,22 +267,28 @@
     </unjar>
   </target>
   
-  
+  <!--
   <target name="compile-14" depends="compile-15, resolve-java14-runtime, assert-eclipse-exists"
           description="Create 1.4 versions of the classes (after compiling)">
+  -->
     <!-- Note: This target, in addition to checking 1.4 compatibility, serves to ensure that there are no dependencies
          on test classes or JUnit classes in the base.  If 1.4 compatibility is no longer needed, a similar dependency
          check should probably still be done. -->
+    <!--
     <echo message="Generating 1.4 versions of the classes directories (this may take awhile after a large compile)" />
+    -->
     
     <!-- Convert lib classes -->
+    <!--
     <mkdir dir="classes/lib-14" />
     <retroweaver srcdir="classes/lib" destdir="classes/lib-14" target="1.4" verify="no" />
     <copy todir="classes/lib-14">
       <fileset dir="classes/lib" excludes="**/*.class" />
     </copy>
-    
+    -->
+
     <!-- Convert base classes -->
+    <!--
     <mkdir dir="classes/base-14" />
     <pathconvert property="retroweaver-base-classpath" dirsep="${file.separator}" pathsep="${path.separator}">
       <path>
@@ -287,8 +304,10 @@
     <copy todir="classes/base-14">
       <fileset dir="classes/base" excludes="**/*.class" />
     </copy>
+    -->
                  
     <!-- Convert test classes -->
+    <!--
     <mkdir dir="classes/test-14" />
     <pathconvert property="retroweaver-test-classpath" dirsep="${file.separator}" pathsep="${path.separator}">
       <path>
@@ -308,7 +327,7 @@
     </copy>
     
   </target>
-
+    -->
 
   <!-- ***************
        Testing Targets
@@ -324,6 +343,7 @@
     </antcall>
   </target>
   
+  <!--
   <target name="test-14" depends="compile-14"
           description="Run all 1.4 tests under Java 1.4 (after compiling); use -Dtest-spec=... to filter">
     <antcall target="iterate-tests">
@@ -337,7 +357,7 @@
       <param name="do-test-target" value="do-test-14-in-15" />
     </antcall>
   </target>
-  
+  -->
   <target name="iterate-tests">
     <if>
       <equals arg1="${test-spec}" arg2="" />
@@ -389,6 +409,7 @@
     </junit>
   </target>
 
+  <!--
   <target name="do-test-14" depends="resolve-java14-exec, assert-eclipse-exists">
     <echo message="Running all 1.4 tests matching '${test-spec}' under Java 1.4" />
     <junit haltonfailure="yes" fork="yes" forkmode="perTest" maxmemory="256M" jvm="${java14-exec}" dir="${basedir}">
@@ -428,7 +449,7 @@
       </batchtest>
     </junit>
   </target>
-
+  -->
 
   <!-- ***********
        Jar Targets
@@ -438,7 +459,7 @@
   
   <target name="jar-15" depends="compile-15, resolve-version-tag" 
           description="Create the 5.0 jar file with all classes and libs (compiling first)">
-    <jar jarfile="drjava-eclipse-15.jar">
+    <jar jarfile="drjava-eclipse.jar">
       <manifest>
         <attribute name="Built-By" value="${user.name}" />
         <attribute name="Build-Version" value="${version-tag}" />
@@ -459,6 +480,7 @@
     </jar>
   </target>
 
+  <!--
   <target name="jar-14" depends="compile-14, resolve-version-tag" 
           description="Create the 1.4 jar file with all classes and libs (compiling first)">
     <jar jarfile="drjava-eclipse.jar">
@@ -481,13 +503,15 @@
       <fileset dir="classes/base-14" />
     </jar>
   </target>
-
+  -->
 
   <!-- *********************
        Documentation Targets
        ********************* -->
   
-  <target name="javadoc" depends="assert-eclipse-exists, assert-drjava-src-exists, assert-15, resolve-version-tag"
+   <!-- <target name="javadoc" depends="assert-eclipse-exists, assert-drjava-src-exists, assert-15, resolve-version-tag"
+          description="Generate javadocs from the source folder"> -->
+  <target name="javadoc" depends="assert-eclipse-exists, assert-15, resolve-version-tag"
           description="Generate javadocs from the source folder">
     <antcall target="do-javadoc">
       <param name="generate-sourcedir" value="src" />
@@ -508,7 +532,7 @@
       <fileset dir="src" includes="**/*" />
       <sourcepath>
         <pathelement location="src" />
-        <pathelement location="${drjava-src}" />
+        <!-- <pathelement location="${drjava-src}" /> -->
       </sourcepath>
       <classpath>
         <fileset refid="libs" />
@@ -530,12 +554,14 @@
   <target name="clover-15" depends="clean, setup-clover, test-15, report-clover" 
           description="Generate a Clover test coverage report (using 'test-15')" />
   
+  <!--
   <target name="clover-14" depends="clean, setup-clover, test-14, report-clover" 
           description="Generate a Clover test coverage report (using 'test-14')" />
   
   <target name="clover-14-in-15" depends="clean, setup-clover, test-14-in-15, report-clover" 
           description="Generate a Clover test coverage report (using 'test-14-in-15')" />
-  
+  -->
+
   <target name="report-clover" depends="resolve-version-tag">
     <echo message="Generating Clover report" />
     <clover-report>
@@ -731,13 +757,14 @@
   <!-- We don't include this in the standard release process, because we don't want to
        include instrumented files in the release, and because Clover must be run on a
        licensed machine -->
+  <!--
   <target name="clover-zip" depends="clover-14-in-15, resolve-version-tag">
     <echo message="Creating ${version-tag}-clover.zip" />
     <zip destfile="${version-tag}-clover.zip">
       <zipfileset dir="docs/clover" prefix="${version-tag}/clover" />
     </zip>
   </target>
-  
+  -->
   
   <!-- ********************************
        Misc Occasionally-Useful Targets
@@ -783,11 +810,12 @@
   <!-- ***************************
        Property-resolution Targets 
        *************************** -->
-  
+  <!--
   <target name="resolve-java14-runtime">
+  -->
     <!-- We rely on "location" to generate a platform-specific path; note that properties
          are immutable and so java14-runtime will only be set the *first* time. -->
-
+  <!--
     <property name="java14-runtime-1" location="${java14-home}/lib/rt.jar" />
     <available property="java14-runtime" value="${java14-runtime-1}" file="${java14-runtime-1}" />
 
@@ -799,10 +827,12 @@
 
     <fail message="Can't find rt.jar in the Java 1.4 home: ${java14-home}" unless="java14-runtime" />
   </target>
-  
+  -->
+  <!--
   <target name="resolve-java14-exec">
+  -->
     <!-- We rely on "location" to generate a platform-specific path -->
-
+    <!--
     <property name="java14-exec-1" location="${java14-home}/bin/java.exe" />
     <condition property="java14-exec" value="${java14-exec-1}">
       <and>
@@ -816,7 +846,8 @@
 
     <fail message="Can't find the java executable in the Java 1.4 home: ${java14-home}" unless="java14-exec" />
   </target>
-  
+    -->
+
   <target name="assert-15">
     <fail message="The specified target requires Ant to be run under Java 5.0 or later">
       <condition>
@@ -842,11 +873,13 @@
     <fail message="${clover-jar} does not exist" unless="clover-jar-exists" />
   </target>
   
+  <!--
   <target name="assert-drjava-src-exists">
     <available property="drjava-src-exists" file="${drjava-src}" />
     <fail message="${drjava-src} does not exist" unless="drjava-src-exists" />
   </target>
-  
+  -->
+
   <target name="assert-eclipse-exists">
     <available property="eclipse-exists" file="${eclipse-home}" />
     <fail message="${eclipse-home} does not exist" unless="eclipse-exists" />

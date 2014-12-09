@@ -606,17 +606,18 @@ public class EclipseInteractionsModel extends RMIInteractionsModel {
    * @param allow true iff access should be allowed
    */
   public void setPrivateAccessible(boolean allow) {
-//    _interpreterControl.setPrivateAccessible(allow);
-    _jvm.setPrivateAccessible(allow);
+    // The setPrivateAccessible() method seems to have been renamed to setEnforcePrivateAccess() since commit 3e22080f (Aug 14, 2009)
+    // _jvm.setPrivateAccessible(allow);
+    _jvm.setEnforcePrivateAccess(allow);
   }
   
-  /**
-   * Sets the optional command-line arguments to the interpreter JVM.
-   */
-  public void setOptionArgs(String optionArgString) {
-//    _interpreterControl.setOptionArgs(optionArgString);
-    _jvm.setOptionArgs(optionArgString);
-  }
+// setOptionArgs() is commented out because the new DrJava's MainJVM doesn't seem to support or have a similar method that can be used instead
+//  /**
+//   * Sets the optional command-line arguments to the interpreter JVM.
+//   */
+//  public void setOptionArgs(String optionArgString) {
+//    _jvm.setOptionArgs(optionArgString);
+//  }
   
   /** Gets the console tab document for this interactions model */
   public ConsoleDocument getConsoleDocument() {
