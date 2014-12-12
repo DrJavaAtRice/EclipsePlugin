@@ -39,21 +39,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class ConditionalExpression extends Expression {
   /**
-   * The conditionExpression property name
-   */
-  public final static String CONDITION_EXPRESSION = "conditionExpression";
-  
-  /**
-   * The ifTrueExpression property name
-   */
-  public final static String IF_TRUE_EXPRESSION = "ifTrueExpression";
-  
-  /**
-   * The ifFalseExpression property name
-   */
-  public final static String IF_FALSE_EXPRESSION = "ifFalseExpression";
-  
-  /**
    * The condition expression
    */
   private Expression conditionExpression;
@@ -77,7 +62,7 @@ public class ConditionalExpression extends Expression {
    *            fexp is null
    */
   public ConditionalExpression(Expression cexp, Expression texp, Expression fexp) {
-    this(cexp, texp, fexp, null, 0, 0, 0, 0);
+    this(cexp, texp, fexp, SourceInfo.NONE);
   }
   
   /**
@@ -85,17 +70,12 @@ public class ConditionalExpression extends Expression {
    * @param cexp  the condition expression
    * @param texp  the if true expression
    * @param fexp  the if false expression
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if cexp is null or texp is null or
    *            fexp is null
    */
   public ConditionalExpression(Expression cexp, Expression texp, Expression fexp,
-                               String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                               SourceInfo si) {
+    super(si);
     
     if (cexp == null) throw new IllegalArgumentException("cexp == null");
     if (texp == null) throw new IllegalArgumentException("texp == null");
@@ -119,10 +99,7 @@ public class ConditionalExpression extends Expression {
    */
   public void setConditionExpression(Expression e) {
     if (e == null) throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(CONDITION_EXPRESSION,
-                       conditionExpression,
-                       conditionExpression = e);
+    conditionExpression = e;
   }
   
   /**
@@ -138,8 +115,7 @@ public class ConditionalExpression extends Expression {
    */
   public void setIfTrueExpression(Expression e) {
     if (e == null) throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(IF_TRUE_EXPRESSION, ifTrueExpression, ifTrueExpression = e);
+    ifTrueExpression = e;
   }
   
   /**
@@ -155,10 +131,7 @@ public class ConditionalExpression extends Expression {
    */
   public void setIfFalseExpression(Expression e) {
     if (e == null) throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(IF_FALSE_EXPRESSION,
-                       ifFalseExpression,
-                       ifFalseExpression = e);
+    ifFalseExpression = e;
   }
   
   /**

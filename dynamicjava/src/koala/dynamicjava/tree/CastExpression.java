@@ -38,9 +38,6 @@ import koala.dynamicjava.tree.visitor.*;
  */
 
 public class CastExpression extends UnaryExpression {
-  /**
-   * The targetType property name
-   */
   public final static String TARGET_TYPE = "targetType";
   
   /**
@@ -55,26 +52,21 @@ public class CastExpression extends UnaryExpression {
    * @exception IllegalArgumentException if tt is null or exp is null
    */
   public CastExpression(TypeName tt, Expression exp) {
-    this(tt, exp, null, 0, 0, 0, 0);
+    this(tt, exp, SourceInfo.NONE);
   }
   
   /**
    * Initializes the expression
    * @param tt    the target type
    * @param exp   the casted expression
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if tt is null or exp is null
    */
   public CastExpression(TypeName tt, Expression exp,
-                        String fn, int bl, int bc, int el, int ec) {
-    super(exp, fn, bl, bc, el, ec);
+                        SourceInfo si) {
+    super(exp, si);
     
-    if (tt == null) throw new IllegalArgumentException("tt == null");
-    
+    //if (tt == null) throw new IllegalArgumentException("tt == null");
+    // tt can be null in a generated cast
     targetType = tt;
   }
   
@@ -90,9 +82,8 @@ public class CastExpression extends UnaryExpression {
    * @exception IllegalArgumentException if t is null
    */
   public void setTargetType(TypeName t) {
-    if (t == null) throw new IllegalArgumentException("t == null");
-    
-    firePropertyChange(TARGET_TYPE, targetType, targetType = t);
+    //if (t == null) throw new IllegalArgumentException("t == null");
+    targetType = t;
   }
   
   /**

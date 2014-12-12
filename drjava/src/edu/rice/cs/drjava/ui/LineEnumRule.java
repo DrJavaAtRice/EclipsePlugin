@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui;
 
@@ -50,6 +53,9 @@ public class LineEnumRule extends JComponent {
   /** Width of the rule */
   static int SIZE = 35;
 
+  /** White space between numbers and code*/
+  static int WHITE_SPACE = 7;
+  
   /** Vertical increment between line numbers */
   private int _increment;
 
@@ -63,8 +69,7 @@ public class LineEnumRule extends JComponent {
   /** font metrics for the new font */
   protected FontMetrics _nfm;
 
-  /**
-   * Create a new component to display line numbers along the left of
+  /** Create a new component to display line numbers along the left of
    * the definitions pane.
    * @param p the pane to show line numbers on
    */
@@ -76,19 +81,15 @@ public class LineEnumRule extends JComponent {
     _newFont = _getLineNumFont();
     _nfm = getFontMetrics(_newFont);
     // XXX: 3 is the magic number for Swing's JTextPane border padding.
-    SIZE = (int) _nfm.getStringBounds("99999", getGraphics()).getWidth() + 3;
+    SIZE = (int) _nfm.getStringBounds("99999", getGraphics()).getWidth() + 3 +10;
   }
 
-  /**
-   * Return a new Dimension using our set width, and the height of the def. pane
-   * return Dimension
-   */
+  /** Return a new Dimension using our set width, and the height of the definitions pane */
   public Dimension getPreferredSize() {
-    return new Dimension( SIZE, (int)_pane.getPreferredSize().getHeight());
+    return new Dimension(SIZE, (int)_pane.getPreferredSize().getHeight());
   }
 
-  /**
-   * Updates the row header's font information.
+  /** Updates the row header's font information.
    * Uses a custom config setting for this purpose.
    */
   public void updateFont() {
@@ -97,25 +98,23 @@ public class LineEnumRule extends JComponent {
       //_pane.getFont().deriveFont( 8f );
     _nfm = getFontMetrics(_newFont);
     // XXX: 3 is the magic number for Swing's JTextPane border padding.
-    SIZE = (int) _nfm.getStringBounds("99999", getGraphics()).getWidth() + 3;
+    SIZE = (int) _nfm.getStringBounds("99999", getGraphics()).getWidth() + 3 + WHITE_SPACE;
   }
 
-  /**
-   * Paints the line enumeration component.
-   */
+  /** Paints the line enumeration component.*/
   public void paintComponent(Graphics g) {
     Rectangle drawHere = g.getClipBounds();
 
     // Set a white background
     Color backg = DrJava.getConfig().getSetting
-      (OptionConstants.DEFINITIONS_BACKGROUND_COLOR);
+      (OptionConstants.DEFINITIONS_LINE_NUMBER_BACKGROUND_COLOR);
     g.setColor(backg);
     g.fillRect(drawHere.x, drawHere.y, drawHere.width, drawHere.height);
 
     // Do the ruler labels in a small font that's black.
     g.setFont(_newFont);
     Color foreg = DrJava.getConfig().getSetting
-      (OptionConstants.DEFINITIONS_NORMAL_COLOR);
+      (OptionConstants.DEFINITIONS_LINE_NUMBER_COLOR);
     g.setColor(foreg);
 
     // Use clipping bounds to calculate first tick and last tick location.
@@ -130,7 +129,7 @@ public class LineEnumRule extends JComponent {
 //    final int endOffset = odd.getEndPosition().getOffset()-1;
 //    int lastLine = odd.getDefaultRootElement().getElementIndex(endOffset);
 //    
-//    if (odd.getLineStartPos(endOffset)!=odd.getLineEndPos(endOffset)) { ++lastLine; }
+//    if (odd.getLineStartPos(endOffset) != odd.getLineEndPos(endOffset)) { ++lastLine; }
     for (int i = start; i < end; i += _increment) {
 //      final int lineNo = i/_increment +1;
 //      if (lineNo>lastLine) break;
@@ -139,8 +138,8 @@ public class LineEnumRule extends JComponent {
 
       // When we paint, we get a good look at the Graphics hints.
       // Use them to update our estimate of total width.
-      SIZE = (int) _nfm.getStringBounds("99999", g).getWidth() + BORDER_PADDING;
-      int offset = SIZE - ((int) (_nfm.getStringBounds(text, g).getWidth() + 1));
+      SIZE = (int) _nfm.getStringBounds("99999", g).getWidth() + BORDER_PADDING + WHITE_SPACE;
+      int offset = SIZE - ((int) (_nfm.getStringBounds(text, g).getWidth() + 3)) - WHITE_SPACE;
 
       //g.drawLine(SIZE-1, i, SIZE-tickLength-1, i);
       if (text != null) {
@@ -151,8 +150,7 @@ public class LineEnumRule extends JComponent {
     }
   }
 
-  /**
-   * Get the font for line numbers, making sure that it is vertically smaller
+  /** Get the font for line numbers, making sure that it is vertically smaller
    * than the definitions pane font.
    * @return a valid font for displaying line numbers
    */

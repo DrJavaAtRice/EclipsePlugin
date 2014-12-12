@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui;
 
@@ -38,11 +41,12 @@ import edu.rice.cs.drjava.config.OptionConstants;
 import edu.rice.cs.drjava.config.OptionEvent;
 import edu.rice.cs.drjava.config.OptionListener;
 import edu.rice.cs.drjava.model.SingleDisplayModel;
+import edu.rice.cs.drjava.model.compiler.CompilerModel;
+import edu.rice.cs.drjava.model.compiler.CompilerErrorModel;
 import edu.rice.cs.drjava.model.compiler.CompilerErrorModel;
 import edu.rice.cs.drjava.model.compiler.CompilerInterface;
-import edu.rice.cs.drjava.model.compiler.NoCompilerAvailable;
 import edu.rice.cs.util.UnexpectedException;
-import edu.rice.cs.util.text.SwingDocument;
+import edu.rice.cs.plt.iter.IterUtil;
 
 import javax.swing.*;
 import javax.swing.text.BadLocationException;
@@ -53,24 +57,20 @@ import java.awt.event.ItemListener;
 import java.io.File;
 import java.util.Vector;
 
-/**
- * The panel which houses the list of errors after an unsuccessful compilation.
- * If the user clicks on the combobox, move the definitions cursor to the
- * error in the source.
- * If the cursor is moved onto a line with an error, select the appropriate
- * error in the list but do not move the cursor.
- *
- * @version $Id$
- */
+/** The panel which houses the list of errors after an unsuccessful compilation.  If the user clicks on the combobox,
+  * it moves the definitions cursor to the error in the source.  If the cursor is moved onto a line with an error, it 
+  * selects the appropriate error in the list but do not move the cursor.
+  * @version $Id$
+  */
 public class CompilerErrorPanel extends ErrorPanel {
   
   /** Whether a compile has occurred since the last compiler change. */
-  private boolean _compileHasOccurred;
-  private CompilerErrorListPane _errorListPane;
-  private final JComboBox _compilerChoiceBox;
+  private volatile boolean _compileHasOccurred;
+  private volatile CompilerErrorListPane _errorListPane;
+  private final JComboBox<CompilerInterface> _compilerChoiceBox;
   
   /** The list of files from the last compilation unit that were not compiled because they were not source files. */
-  private File[] _excludedFiles = new File[0];
+  private volatile File[] _excludedFiles = new File[0];
   
   /** Constructor.
    *  @param model SingleDisplayModel in which we are running
@@ -84,34 +84,36 @@ public class CompilerErrorPanel extends ErrorPanel {
     _errorListPane = new CompilerErrorListPane();
     setErrorListPane(_errorListPane);
     
+    
     /******** Initialize the drop-down compiler menu ********/
     // Limitation: Only compiler choices are those that were available
     // at the time this box was created.
     // Also: The UI will go out of sync with reality if the active compiler
     // is later changed somewhere else. This is because there is no way
     // to listen on the active compiler.
-    _compilerChoiceBox =
-      new JComboBox(getModel().getCompilerModel().getAvailableCompilers());
+    final CompilerModel compilerModel = getModel().getCompilerModel();
+    Iterable<CompilerInterface> iter = getModel().getCompilerModel().getAvailableCompilers();
+    _compilerChoiceBox = new JComboBox<CompilerInterface>(IterUtil.toArray(iter, CompilerInterface.class));
     _compilerChoiceBox.setEditable(false);
-    _compilerChoiceBox.setSelectedItem
-      (getModel().getCompilerModel().getActiveCompiler());
+    _compilerChoiceBox.setSelectedItem(compilerModel.getActiveCompiler());
     _compilerChoiceBox.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        CompilerInterface compiler = (CompilerInterface)
-          _compilerChoiceBox.getSelectedItem();
-        if (compiler != null) {
-          getModel().getCompilerModel().setActiveCompiler(compiler);
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          final CompilerInterface compiler = (CompilerInterface) _compilerChoiceBox.getSelectedItem();
+          compilerModel.resetCompilerErrors();
+          _compileHasOccurred = false;
+          // set the new compiler (and reset the interactions pane) in a separate thread
+          // to address [ drjava-Bugs-2985291 ] Delay in GUI when selecting compiler
+          new Thread(new Runnable() {
+            public void run() {
+              compilerModel.setActiveCompiler(compiler);
+              reset();
+            }
+          }).start();
         }
-        else {
-          getModel().getCompilerModel()
-            .setActiveCompiler(NoCompilerAvailable.ONLY);
-        }
-        getModel().getCompilerModel().resetCompilerErrors();
-        _compileHasOccurred = false;
-        reset();
       }
     });
-    
+
     customPanel.add(_compilerChoiceBox, BorderLayout.NORTH);
     
     DrJava.getConfig().addOptionListener(OptionConstants.JAVAC_LOCATION, new CompilerLocationOptionListener<File>());
@@ -124,9 +126,8 @@ public class CompilerErrorPanel extends ErrorPanel {
     
     public void optionChanged(OptionEvent<T> oce) {
       _compilerChoiceBox.removeAllItems();
-      CompilerInterface[] availCompilers = getModel().getCompilerModel().getAvailableCompilers();
-      for (int i=0; i<availCompilers.length; i++) {
-        _compilerChoiceBox.addItem(availCompilers[i]);
+      for (CompilerInterface c : getModel().getCompilerModel().getAvailableCompilers()) {
+        _compilerChoiceBox.addItem(c);
       }
     }
   }
@@ -139,18 +140,17 @@ public class CompilerErrorPanel extends ErrorPanel {
     _errorListPane.setCompilationInProgress();
   }
   
-  protected CompilerErrorModel getErrorModel() {
-    return getModel().getCompilerModel().getCompilerErrorModel();
-  }
+  public CompilerErrorModel getErrorModel() { return getModel().getCompilerModel().getCompilerErrorModel(); }
   
   /** Clean up when the tab is closed. */
+  @Override
   protected void _close() {
     super._close();
     getModel().getCompilerModel().resetCompilerErrors();
     reset();
   }
   
-  /** Reset the errors to the current error information immediately following compilation */
+  /** Reset the errors to the current error information immediately following compilation. */
   public void reset(File[] excludedFiles) {
     _excludedFiles = excludedFiles;
     reset();
@@ -171,7 +171,7 @@ public class CompilerErrorPanel extends ErrorPanel {
   class CompilerErrorListPane extends ErrorPanel.ErrorListPane {
     
     protected void _updateWithErrors() throws BadLocationException {
-      SwingDocument doc = new SwingDocument();
+      ErrorDocument doc = new ErrorDocument(getErrorDocumentTitle());
       if (_excludedFiles.length != 0) {
         final StringBuilder msgBuffer = 
           new StringBuilder("Compilation completed.  The following files were not compiled:\n");
@@ -192,7 +192,7 @@ public class CompilerErrorPanel extends ErrorPanel {
       _errorListPositions = new Position[0];
       _compileHasOccurred = true;
       
-      SwingDocument doc = new SwingDocument();
+      ErrorDocument doc = new ErrorDocument(getErrorDocumentTitle());
        
       try { doc.insertString(0, "Compilation in progress, please wait...", NORMAL_ATTRIBUTES); }
       catch (BadLocationException ble) { throw new UnexpectedException(ble); }
@@ -205,7 +205,7 @@ public class CompilerErrorPanel extends ErrorPanel {
      *  @param done ignored: we assume that this is only called after compilation is completed
      */
     protected void _updateNoErrors(boolean done) throws BadLocationException {
-      SwingDocument doc = new SwingDocument();
+      ErrorDocument doc = new ErrorDocument(getErrorDocumentTitle());
       String message;
       if (_compileHasOccurred) {
         if (_excludedFiles.length == 0) message = "Compilation completed.";
@@ -213,22 +213,21 @@ public class CompilerErrorPanel extends ErrorPanel {
           final StringBuilder msgBuffer = 
             new StringBuilder("Compilation completed.  The following files were not compiled:\n");
           for (File f: _excludedFiles) {
-            if (f!=null) { msgBuffer.append("  ").append(f).append('\n'); } // do not print files from untitled docs
+            if (f != null) { msgBuffer.append("  ").append(f).append('\n'); } // do not print files from untitled docs
           }
           message = msgBuffer.toString();
         }
       }
-      else if (getModel().getCompilerModel().getAvailableCompilers().length == 0)
-        message = "No compiler is available.  Please specify one in\nthe Preferences dialog in the Edit menu.";
-      else if (getModel().getCompilerModel().getActiveCompiler() == NoCompilerAvailable.ONLY)
+      else if (!getModel().getCompilerModel().getActiveCompiler().isAvailable())
         message = "No compiler available.";
       else 
-        message = getModel().getCompilerModel().getActiveCompiler().getName() + " compiler ready.";
+        message = "Compiler ready: " + getModel().getCompilerModel().getActiveCompiler().getDescription() + ".";
       
       doc.insertString(0, message, NORMAL_ATTRIBUTES);
       setDocument(doc);
       _updateScrollButtons();
       selectNothing();
     }
+    public String getErrorDocumentTitle() { return "Compiler Errors"; }
   }
 }

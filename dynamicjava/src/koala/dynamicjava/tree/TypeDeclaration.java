@@ -30,7 +30,9 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
-import koala.dynamicjava.tree.visitor.*;
+import koala.dynamicjava.tree.tiger.TypeParameter;
+
+import edu.rice.cs.plt.tuple.Option;
 
 /**
  * This class represents a type declaration
@@ -39,91 +41,30 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/05/10
  */
 
-public abstract class TypeDeclaration extends Node {
-  /**
-   * The accessFlags property name
-   */
-  public final static String ACCESS_FLAGS = "accessFlags";
-
-  /**
-   * The name property name
-   */
-  public final static String NAME = "name";
-
-  /**
-   * The interfaces property name
-   */
-  public final static String INTERFACES = "interfaces";
-
-  /**
-   * The members property name
-   */
-  public final static String MEMBERS = "members";
-
-  /**
-   * The access flags
-   */
-  private int accessFlags;
-
-  /**
-   * The name of this class
-   */
+public abstract class TypeDeclaration extends Declaration {
   private String name;
-
-  /**
-   * The implemented interfaces
-   */
-  private List<String> interfaces;
-
-  /**
-   * The members
-   */
+  private Option<List<TypeParameter>> typeParams;
+  private List<? extends ReferenceTypeName> interfaces; // implements clause
   private List<Node> members;
 
   /**
    * Creates a new class declaration
-   * @param flags the access flags
-   * @param name  the name of the class to declare
-   * @param impl  the list of implemented interfaces (List of List of Token). Can be null.
-   * @param body  the list of fields declarations
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
+   * @param mods    the modifiers
+   * @param name    the name of the class to declare
+   * @param tparams declared type parameters
+   * @param impl    the list of implemented interfaces. Can be null.
+   * @param body    the list of fields declarations
    * @exception IllegalArgumentException if name is null or body is null
    */
-  protected TypeDeclaration(int flags, String name, List<? extends ReferenceTypeName> impl, List<Node> body,
-                            String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
-
-    if (name == null) throw new IllegalArgumentException("name == null");
-    if (body == null) throw new IllegalArgumentException("body == null");
-
-    accessFlags = flags;    
+  protected TypeDeclaration(ModifierSet mods, String name, Option<List<TypeParameter>> tparams,
+                             List<? extends ReferenceTypeName> impl, List<Node> body,
+                             SourceInfo si) {
+    super(mods, si);
+    if (name == null || tparams == null || body == null) throw new IllegalArgumentException();
     this.name = name;
-    if (impl != null) {
-      interfaces = new LinkedList<String>();
-      Iterator<? extends ReferenceTypeName> it = impl.iterator();
-      while (it.hasNext()) {
-        interfaces.add(it.next().getRepresentation());
-      }
-    }
+    typeParams = tparams;
+    interfaces = impl;
     members = body;
-  }
-
-  /**
-   * Returns the access flags for this class
-   */
-  public int getAccessFlags() {
-    return accessFlags;
-  }
-
-  /**
-   * Sets the access flags for this constructor
-   */
-  public void setAccessFlags(int f) {
-    firePropertyChange(ACCESS_FLAGS, accessFlags, accessFlags = f);
   }
 
   /**
@@ -139,28 +80,29 @@ public abstract class TypeDeclaration extends Node {
    */
   public void setName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-    
-    
-    
-    
-    
-    
-    firePropertyChange(NAME, name, name = s);
+    name = s;
   }
 
+  public Option<List<TypeParameter>> getTypeParams() { return typeParams; }
+  public void setTypeArgs(List<TypeParameter> tparams) { typeParams = Option.wrap(tparams); }
+  public void setTypeArgs(Option<List<TypeParameter>> tparams) {
+    if (tparams == null) throw new IllegalArgumentException();
+    typeParams = tparams;
+  }
+  
   /**
    * Returns a list that contains the names (String) of the implemented interfaces.
    * Can be null.
    */
-  public List<String> getInterfaces() {
+  public List<? extends ReferenceTypeName> getInterfaces() {
     return interfaces;
   }
 
   /**
    * Sets the interfaces (a list of strings)
    */
-  public void setInterfaces(List<String> l) {
-    firePropertyChange(INTERFACES, interfaces, interfaces = l);
+  public void setInterfaces(List<? extends ReferenceTypeName> l) {
+    interfaces = l;
   }
 
   /**
@@ -176,7 +118,6 @@ public abstract class TypeDeclaration extends Node {
    */
   public void setMembers(List<Node> l) {
     if (l == null) throw new IllegalArgumentException("l == null");
-
-    firePropertyChange(MEMBERS, members, members = l);
+    members = l;
   }
 }

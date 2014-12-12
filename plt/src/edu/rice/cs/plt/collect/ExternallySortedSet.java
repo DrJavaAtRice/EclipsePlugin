@@ -1,6 +1,41 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.collect;
 
 import java.util.*;
+import edu.rice.cs.plt.iter.SizedIterable;
 
 /**
  * <p>A container class that <em>almost</em> implements the {@link java.util.SortedSet} interface;
@@ -10,7 +45,7 @@ import java.util.*;
  * to an external {@code orderBy} value.  The {@code subSet()}, etc., methods are also adjusted 
  * to take in {@code orderBy} values rather than set elements.</p>
  * 
- * <p>The result is a set that works essentially like a {@link java.util.OrderedSet}
+ * <p>The result is a set that works essentially like a {@link java.util.TreeSet}
  * of {@link edu.rice.cs.plt.tuple.Pair}s in which one of the Pair elements is a Comparable, 
  * and for which a Comparator is correctly defined.  One significant difference is that this
  * implementation does not return {@code true} for the expression {@code add(1, 1) && add(1, 2)},
@@ -19,7 +54,7 @@ import java.util.*;
  * <p>Note: the implementation relies heavily on hashing, so good performance is
  * dependent on elements of the set having an efficient {@code hashCode()} implementation.</p>
  */
-public class ExternallySortedSet<T, C extends Comparable<? super C>> implements Iterable<T> {
+public class ExternallySortedSet<T, C extends Comparable<? super C>> implements SizedIterable<T> {
 
   /**
    * The sorted set of elements.  Note that operations involving elements
@@ -63,9 +98,20 @@ public class ExternallySortedSet<T, C extends Comparable<? super C>> implements 
     _upperBound = upperBound;
   }
   
+  public boolean isEmpty() { return _set.isEmpty(); }
+  
   public int size() { return _set.size(); }
   
-  public boolean isEmpty() { return _set.isEmpty(); }
+  public int size(int bound) {
+    int result = _set.size();
+    return result <= bound ? result : bound;
+  }
+ 
+  public boolean isInfinite() { return false; }
+  
+  public boolean hasFixedSize() { return false; }
+  
+  public boolean isStatic() { return false; }
   
   public boolean contains(Object element) {
     // We can only call _set.contains() if a mapping is defined.
@@ -110,7 +156,7 @@ public class ExternallySortedSet<T, C extends Comparable<? super C>> implements 
    * @return  An array of the set elements in their sorted order.  As in the {@link Set} interface,
    *          changes to the array will not be reflected in the set.
    */
-  public <T> T[] toArray(T[] a) { return _set.toArray(a); }
+  public <S> S[] toArray(S[] a) { return _set.toArray(a); }
   
   /**
    * Add {@code element} to the set, sorted by {@code orderBy}.
@@ -170,7 +216,7 @@ public class ExternallySortedSet<T, C extends Comparable<? super C>> implements 
     }
   }
   
-  /** Add the elements by invoking {@link #add(T, C)} on each one. */
+  /** Add the elements by invoking {@link #add} on each one. */
   private boolean checkedAddAll(ExternallySortedSet<? extends T, ? extends C> s) {
     boolean result = false;
     for (T t : s) {
@@ -181,7 +227,7 @@ public class ExternallySortedSet<T, C extends Comparable<? super C>> implements 
   }
   
   /** 
-   * Add the elements without calling {@link #add(T, C)} on each one, by simply taking the union 
+   * Add the elements without calling {@link #add} on each one, by simply taking the union 
    * of the two data structures.  This avoids a bounds check on each element.  Assumes that each 
    * element of {@code s} is within this set's bounds.
    */
@@ -226,7 +272,7 @@ public class ExternallySortedSet<T, C extends Comparable<? super C>> implements 
   public boolean removeAll(Iterable<?> i) {
     boolean result = false;
     // "|" instead of "||" to avoid short-circuit
-    for (Object o : i) { result = result | remove(i); }
+    for (Object o : i) { result = result | remove(o); }
     return result;
   }
   

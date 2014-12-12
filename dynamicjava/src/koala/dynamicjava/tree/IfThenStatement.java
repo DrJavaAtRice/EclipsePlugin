@@ -39,16 +39,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class IfThenStatement extends Statement {
   /**
-   * The condition property name
-   */
-  public final static String CONDITION = "condition";
-  
-  /**
-   * The thenStatement property name
-   */
-  public final static String THEN_STATEMENT = "thenStatement";
-  
-  /**
    * The condition
    */
   private Expression condition;
@@ -65,23 +55,18 @@ public class IfThenStatement extends Statement {
    * @exception IllegalArgumentException if cond is null or tstmt is null
    */
   public IfThenStatement(Expression cond, Node tstmt) {
-    this(cond, tstmt, null, 0, 0, 0, 0);
+    this(cond, tstmt, SourceInfo.NONE);
   }
   
   /**
    * Creates a new while statement
    * @param cond  the condition
    * @param tstmt the statement
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if cond is null or tstmt is null
    */
   public IfThenStatement(Expression cond, Node tstmt,
-                         String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                         SourceInfo si) {
+    super(si);
     
     if (cond == null)  throw new IllegalArgumentException("cond == null");
     if (tstmt == null) throw new IllegalArgumentException("tstmt == null");
@@ -103,8 +88,7 @@ public class IfThenStatement extends Statement {
    */
   public void setCondition(Expression e) {
     if (e == null) throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(CONDITION, condition, condition = e);
+    condition = e;
   }
   
   /**
@@ -120,8 +104,7 @@ public class IfThenStatement extends Statement {
    */
   public void setThenStatement(Node node) {
     if (node == null) throw new IllegalArgumentException("node == null");
-    
-    firePropertyChange(THEN_STATEMENT, thenStatement, thenStatement = node);
+    thenStatement = node;
   }
   
   /**

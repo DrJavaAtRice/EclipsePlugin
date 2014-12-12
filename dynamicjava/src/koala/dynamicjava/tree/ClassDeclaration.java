@@ -30,6 +30,9 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
+import koala.dynamicjava.tree.tiger.TypeParameter;
 import koala.dynamicjava.tree.visitor.*;
 
 /**
@@ -40,19 +43,17 @@ import koala.dynamicjava.tree.visitor.*;
  */
 
 public class ClassDeclaration extends TypeDeclaration {
-  /**
-   * The superclass property name
-   */
-  public final static String SUPERCLASS = "superclass";
+  /** Default supertype */
+  private static final ReferenceTypeName OBJECT = new ReferenceTypeName("java", "lang", "Object");
 
   /**
    * The superclass of this class
    */
-  private String superclass;
+  private ReferenceTypeName superclass;
 
   /**
    * Creates a new class declaration
-   * @param flags the access flags
+   * @param mods  the modifiers
    * @param name  the name of the class to declare
    * @param ext   the tokens that compose the name of the parent class.
    *              The list can be null. The superclass property is then
@@ -61,13 +62,30 @@ public class ClassDeclaration extends TypeDeclaration {
    *              Token). Can be null.
    * @param body  the list of members declarations
    */
-  public ClassDeclaration(int flags, String name, ReferenceTypeName ext, List<? extends ReferenceTypeName> impl, List<Node> body) {
-    this(flags, name, ext, impl, body, null, 0, 0, 0, 0);
+  public ClassDeclaration(ModifierSet mods, String name, ReferenceTypeName ext, List<? extends ReferenceTypeName> impl, List<Node> body) {
+    this(mods, name, Option.<List<TypeParameter>>none(), ext, impl, body, SourceInfo.NONE);
   }
 
   /**
    * Creates a new class declaration
-   * @param flags the access flags
+   * @param mods  the modifiers
+   * @param name  the name of the class to declare
+   * @param tparams the type parameters
+   * @param ext   the tokens that compose the name of the parent class.
+   *              The list can be null. The superclass property is then
+   *              set to "java.lang.Object".
+   * @param impl  the list of implemented interfaces (a list of list of
+   *              Token). Can be null.
+   * @param body  the list of members declarations
+   */
+  public ClassDeclaration(ModifierSet mods, String name, Option<List<TypeParameter>> tparams, ReferenceTypeName ext,
+                           List<? extends ReferenceTypeName> impl, List<Node> body) {
+    this(mods, name, tparams, ext, impl, body, SourceInfo.NONE);
+  }
+
+  /**
+   * Creates a new class declaration
+   * @param mods  the modifiers
    * @param name  the name of the class to declare
    * @param ext   the tokens that compose the name of the parent class.
    *              The list can be null. The superclass property is then
@@ -75,26 +93,35 @@ public class ClassDeclaration extends TypeDeclaration {
    * @param impl  the list of implemented interfaces (a list of list of
    *              Token). Can be null.
    * @param body  the list of members declarations
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    */
-  public ClassDeclaration(int flags, String name, ReferenceTypeName ext, List<? extends ReferenceTypeName> impl, List<Node> body,
-                          String fn, int bl, int bc, int el, int ec) {
-    super(flags, name, impl, body, fn, bl, bc, el, ec);
-    if (ext == null) {
-      superclass = "java.lang.Object";
-    } else {
-      superclass = ext.getRepresentation();
-    }
+  public ClassDeclaration(ModifierSet mods, String name, ReferenceTypeName ext,
+                           List<? extends ReferenceTypeName> impl, List<Node> body, SourceInfo si) {
+    this(mods, name, Option.<List<TypeParameter>>none(), ext, impl, body, si);
   }
+
+  /**
+   * Creates a new class declaration
+   * @param mods  the modifiers
+   * @param name  the name of the class to declare
+   * @param tparams the type parameters
+   * @param ext   the tokens that compose the name of the parent class.
+   *              The list can be null. The superclass property is then
+   *              set to "java.lang.Object".
+   * @param impl  the list of implemented interfaces (a list of list of
+   *              Token). Can be null.
+   * @param body  the list of members declarations
+   */
+  public ClassDeclaration(ModifierSet mods, String name, Option<List<TypeParameter>> tparams, ReferenceTypeName ext,
+                           List<? extends ReferenceTypeName> impl, List<Node> body, SourceInfo si) {
+    super(mods, name, tparams, impl, body, si);
+    superclass = (ext == null) ? OBJECT : ext;
+  }
+  
 
   /**
    * Returns the name of the superclass of this class
    */
-  public String getSuperclass() {
+  public ReferenceTypeName getSuperclass() {
     return superclass;
   }
 
@@ -102,10 +129,9 @@ public class ClassDeclaration extends TypeDeclaration {
    * Sets the superclass name
    * @exception IllegalArgumentException if s is null
    */
-  public void setSuperclass(String s) {
+  public void setSuperclass(ReferenceTypeName s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-
-    firePropertyChange(SUPERCLASS, superclass, superclass = s);
+    superclass = s;
   }
 
   /**
@@ -123,7 +149,6 @@ public class ClassDeclaration extends TypeDeclaration {
   }
 
   protected String toStringHelper() {
-   return java.lang.reflect.Modifier.toString(getAccessFlags())+" "+getName()+
-          " "+getInterfaces()+" "+getMembers();
+    return getModifiers()+" "+getName()+" "+getTypeParams()+" "+getSuperclass()+" "+getInterfaces()+" "+getMembers();
   }
 }

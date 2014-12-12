@@ -1,11 +1,45 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.recur;
 
 import java.util.LinkedList;
 import edu.rice.cs.plt.collect.Multiset;
 import edu.rice.cs.plt.collect.HashMultiset;
+import edu.rice.cs.plt.tuple.Quad;
 import edu.rice.cs.plt.tuple.IdentityQuad;
-import edu.rice.cs.plt.lambda.Command;
-import edu.rice.cs.plt.lambda.Command4;
+import edu.rice.cs.plt.lambda.Runnable4;
 import edu.rice.cs.plt.lambda.Thunk;
 import edu.rice.cs.plt.lambda.Lambda4;
 
@@ -30,13 +64,25 @@ import edu.rice.cs.plt.lambda.Lambda4;
  */
 public class RecursionStack4<T1, T2, T3, T4> {
   
-  private Multiset<IdentityQuad<T1, T2, T3, T4>> _previous;
-  private LinkedList<IdentityQuad<T1, T2, T3, T4>> _stack;
+  private final Lambda4<? super T1, ? super T2, ? super T3, ? super T4, 
+                        ? extends Quad<T1, T2, T3, T4>> _quadFactory;
+  private final Multiset<Quad<T1, T2, T3, T4>> _previous;
+  private final LinkedList<Quad<T1, T2, T3, T4>> _stack;
   
-  /** Create an empty recursion stack */
-  public RecursionStack4() {
-    _previous = new HashMultiset<IdentityQuad<T1, T2, T3, T4>>();
-    _stack = new LinkedList<IdentityQuad<T1, T2, T3, T4>>();
+  /** Create an empty recursion stack with an {@link IdentityQuad} factory */
+  public RecursionStack4() { this(IdentityQuad.<T1, T2, T3, T4>factory()); }
+  
+  /**
+   * Create an empty recursion stack with the given {@code Quad} factory
+   * @param quadFactory  A lambda used to produce a quad for values placed on the
+   *                     stack.  This provides clients with control over the method used
+   *                     to determine if a value has been seen previously.
+   */
+  public RecursionStack4(Lambda4<? super T1, ? super T2, ? super T3, ? super T4,
+                                 ? extends Quad<T1, T2, T3, T4>> quadFactory) {
+    _quadFactory = quadFactory;
+    _previous = new HashMultiset<Quad<T1, T2, T3, T4>>();
+    _stack = new LinkedList<Quad<T1, T2, T3, T4>>();
   }
   
   /** 
@@ -44,7 +90,7 @@ public class RecursionStack4<T1, T2, T3, T4> {
    *          given arguments is currently on the stack
    */
   public boolean contains(T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-    return _previous.contains(new IdentityQuad<T1, T2, T3, T4>(arg1, arg2, arg3, arg4));
+    return _previous.contains(_quadFactory.value(arg1, arg2, arg3, arg4));
   }
   
   /** 
@@ -52,12 +98,12 @@ public class RecursionStack4<T1, T2, T3, T4> {
    *          (according to {@code ==}) to the given arguments are currently on the stack
    */
   public boolean contains(T1 arg1, T2 arg2, T3 arg3, T4 arg4, int threshold) {
-    return _previous.count(new IdentityQuad<T1, T2, T3, T4>(arg1, arg2, arg3, arg4)) >= threshold;
+    return _previous.count(_quadFactory.value(arg1, arg2, arg3, arg4)) >= threshold;
   }
   
   /** Add the given arguments to the top of the stack */
   public void push(T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-    IdentityQuad<T1, T2, T3, T4> wrapped = new IdentityQuad<T1, T2, T3, T4>(arg1, arg2, arg3, arg4);
+    Quad<T1, T2, T3, T4> wrapped = _quadFactory.value(arg1, arg2, arg3, arg4);
     _stack.addLast(wrapped);
     _previous.add(wrapped);
   }
@@ -67,7 +113,7 @@ public class RecursionStack4<T1, T2, T3, T4> {
    * @throws IllegalArgumentException  If the given arguments are not at the top of the stack
    */
   public void pop(T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-    IdentityQuad<T1, T2, T3, T4> wrapped = new IdentityQuad<T1, T2, T3, T4>(arg1, arg2, arg3, arg4);
+    Quad<T1, T2, T3, T4> wrapped = _quadFactory.value(arg1, arg2, arg3, arg4);
     if (_stack.isEmpty() || !_stack.getLast().equals(wrapped)) {
       throw new IllegalArgumentException("given args are not on top of the stack");
     }
@@ -82,36 +128,36 @@ public class RecursionStack4<T1, T2, T3, T4> {
   public boolean isEmpty() { return _stack.isEmpty(); }
   
   /**
-   * Run the given command, unless the given arguments are already on the stack; push the 
-   * arguments onto the stack during command execution
+   * Run the given runnable, unless the given arguments are already on the stack; push the 
+   * arguments onto the stack during runnable execution
    */
-  public void run(Command c, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+  public void run(Runnable r, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
     if (!contains(arg1, arg2, arg3, arg4)) { 
       push(arg1, arg2, arg3, arg4);
-      try { c.run(); }
+      try { r.run(); }
       finally { pop(arg1, arg2, arg3, arg4); }
     }
   }
   
   /**
-   * Run the given command, unless {@code threshold} instances of the given arguments are 
-   * already on the stack; push the arguments onto the stack during command execution
+   * Run the given runnable, unless {@code threshold} instances of the given arguments are 
+   * already on the stack; push the arguments onto the stack during runnable execution
    */
-  public void run(Command c, T1 arg1, T2 arg2, T3 arg3, T4 arg4, int threshold) {
+  public void run(Runnable r, T1 arg1, T2 arg2, T3 arg3, T4 arg4, int threshold) {
     if (!contains(arg1, arg2, arg3, arg4, threshold)) { 
       push(arg1, arg2, arg3, arg4);
-      try { c.run(); }
+      try { r.run(); }
       finally { pop(arg1, arg2, arg3, arg4); }
     }
   }
   
   /**
-   * If the given arguments are not on the stack, run {@code c}; otherwise, run 
+   * If the given arguments are not on the stack, run {@code r}; otherwise, run 
    * {@code infiniteCase}.  In either case, push the arguments onto the stack during 
-   * command execution.
+   * runnable execution.
    */
-  public void run(Command c, Command infiniteCase, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
-    Command toRun = (contains(arg1, arg2, arg3, arg4) ? infiniteCase : c);
+  public void run(Runnable r, Runnable infiniteCase, T1 arg1, T2 arg2, T3 arg3, T4 arg4) {
+    Runnable toRun = (contains(arg1, arg2, arg3, arg4) ? infiniteCase : r);
     push(arg1, arg2, arg3, arg4);
     try { toRun.run(); }
     finally { pop(arg1, arg2, arg3, arg4); }
@@ -119,58 +165,58 @@ public class RecursionStack4<T1, T2, T3, T4> {
   
   /**
    * If less than {@code threshold} instances of the given arguments are on the stack, run 
-   * {@code c}; otherwise, run {@code infiniteCase}.  In either case, push the 
-   * arguments onto the stack during command execution.
+   * {@code r}; otherwise, run {@code infiniteCase}.  In either case, push the 
+   * arguments onto the stack during runnable execution.
    */
-  public void run(Command c, Command infiniteCase, T1 arg1, T2 arg2, T3 arg3, T4 arg4, int threshold) {
-    Command toRun = (contains(arg1, arg2, arg3, arg4, threshold) ? infiniteCase : c);
+  public void run(Runnable r, Runnable infiniteCase, T1 arg1, T2 arg2, T3 arg3, T4 arg4, int threshold) {
+    Runnable toRun = (contains(arg1, arg2, arg3, arg4, threshold) ? infiniteCase : r);
     push(arg1, arg2, arg3, arg4);
     try { toRun.run(); }
     finally { pop(arg1, arg2, arg3, arg4); }
   }
   
   /**
-   * Run the given command with the given arguments, unless the arguments are already on the 
-   * stack; push the arguments onto the stack during command execution
+   * Run the given runnable with the given arguments, unless the arguments are already on the 
+   * stack; push the arguments onto the stack during runnable execution
    */
   public <V1 extends T1, V2 extends T2, V3 extends T3, V4 extends T4>
-    void run(Command4<? super V1, ? super V2, ? super V3, ? super V4> c, V1 arg1, V2 arg2, 
+    void run(Runnable4<? super V1, ? super V2, ? super V3, ? super V4> r, V1 arg1, V2 arg2, 
              V3 arg3, V4 arg4) {
     if (!contains(arg1, arg2, arg3, arg4)) { 
       push(arg1, arg2, arg3, arg4);
-      try { c.run(arg1, arg2, arg3, arg4); }
+      try { r.run(arg1, arg2, arg3, arg4); }
       finally { pop(arg1, arg2, arg3, arg4); }
     }
   }
   
   /**
-   * Run the given command with the given arguments, unless {@code threshold} instances 
+   * Run the given runnable with the given arguments, unless {@code threshold} instances 
    * of the arguments are already on the stack; push the arguments onto the stack during 
-   * command execution
+   * runnable execution
    */
   public <V1 extends T1, V2 extends T2, V3 extends T3, V4 extends T4>
-    void run(Command4<? super V1, ? super V2, ? super V3, ? super V4> c, V1 arg1, V2 arg2, 
+    void run(Runnable4<? super V1, ? super V2, ? super V3, ? super V4> r, V1 arg1, V2 arg2, 
              V3 arg3, V4 arg4, int threshold) {
     if (!contains(arg1, arg2, arg3, arg4, threshold)) { 
       push(arg1, arg2, arg3, arg4);
-      try { c.run(arg1, arg2, arg3, arg4); }
+      try { r.run(arg1, arg2, arg3, arg4); }
       finally { pop(arg1, arg2, arg3, arg4); }
     }
   }
   
   /**
-   * If the given arguments are not on the stack, run {@code c} with argument the arguments; 
+   * If the given arguments are not on the stack, run {@code r} with argument the arguments; 
    * otherwise, run {@code infiniteCase}.  In either case, push the arguments onto the 
-   * stack during command execution.
+   * stack during runnable execution.
    */
   public <V1 extends T1, V2 extends T2, V3 extends T3, V4 extends T4>
-    void run(Command4<? super V1, ? super V2, ? super V3, ? super V4> c, 
-             Command4<? super V1, ? super V2, ? super V3, ? super V4> infiniteCase, 
+    void run(Runnable4<? super V1, ? super V2, ? super V3, ? super V4> r, 
+             Runnable4<? super V1, ? super V2, ? super V3, ? super V4> infiniteCase, 
              V1 arg1, V2 arg2, V3 arg3, V4 arg4) {
     // The javac type checker is broken here
-    @SuppressWarnings("unchecked") Command4<? super V1, ? super V2, ? super V3, ? super V4> toRun = 
-      (Command4<? super V1, ? super V2, ? super V3, ? super V4>)
-        (contains(arg1, arg2, arg3, arg4) ? infiniteCase : c);
+    @SuppressWarnings("unchecked") Runnable4<? super V1, ? super V2, ? super V3, ? super V4> toRun = 
+      (Runnable4<? super V1, ? super V2, ? super V3, ? super V4>)
+        (contains(arg1, arg2, arg3, arg4) ? infiniteCase : r);
     push(arg1, arg2, arg3, arg4);
     try { toRun.run(arg1, arg2, arg3, arg4); }
     finally { pop(arg1, arg2, arg3, arg4); }
@@ -178,17 +224,17 @@ public class RecursionStack4<T1, T2, T3, T4> {
   
   /**
    * If less than {@code threshold} instances of the given arguments are on the stack, 
-   * run {@code c} with the arguments; otherwise, run {@code infiniteCase}.  In either case, 
-   * push the arguments onto the stack during command execution.
+   * run {@code r} with the arguments; otherwise, run {@code infiniteCase}.  In either case, 
+   * push the arguments onto the stack during runnable execution.
    */
   public <V1 extends T1, V2 extends T2, V3 extends T3, V4 extends T4>
-    void run(Command4<? super V1, ? super V2, ? super V3, ? super V4> c, 
-             Command4<? super V1, ? super V2, ? super V3, ? super V4> infiniteCase, 
+    void run(Runnable4<? super V1, ? super V2, ? super V3, ? super V4> r, 
+             Runnable4<? super V1, ? super V2, ? super V3, ? super V4> infiniteCase, 
              V1 arg1, V2 arg2, V3 arg3, V4 arg4, int threshold) {
     // The javac type checker is broken here
-    @SuppressWarnings("unchecked") Command4<? super V1, ? super V2, ? super V3, ? super V4> toRun = 
-      (Command4<? super V1, ? super V2, ? super V3, ? super V4>)
-        (contains(arg1, arg2, arg3, arg4, threshold) ? infiniteCase : c);
+    @SuppressWarnings("unchecked") Runnable4<? super V1, ? super V2, ? super V3, ? super V4> toRun = 
+      (Runnable4<? super V1, ? super V2, ? super V3, ? super V4>)
+        (contains(arg1, arg2, arg3, arg4, threshold) ? infiniteCase : r);
     push(arg1, arg2, arg3, arg4);
     try { toRun.run(arg1, arg2, arg3, arg4); }
     finally { pop(arg1, arg2, arg3, arg4); }
@@ -335,4 +381,10 @@ public class RecursionStack4<T1, T2, T3, T4> {
     return new RecursionStack4<T1, T2, T3, T4>();
   }
 
+  /** Call the constructor (allows the type arguments to be inferred) */
+  public static <T1, T2, T3, T4> RecursionStack4<T1, T2, T3, T4> 
+    make(Lambda4<? super T1, ? super T2, ? super T3, ? super T4, ? extends Quad<T1, T2, T3, T4>> quadFactory) {
+    return new RecursionStack4<T1, T2, T3, T4>(quadFactory);
+  }
+  
 }

@@ -41,26 +41,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class ForStatement extends ForSlashEachStatement implements ContinueTarget {
   /**
-   * The initialization property name
-   */
-  public final static String INITIALIZATION = "initialization";
-  
-  /**
-   * The condition property name
-   */
-  public final static String CONDITION = "condition";
-  
-  /**
-   * The update property name
-   */
-  public final static String UPDATE = "update";
-  
-  /**
-   * The body property name
-   */
-  public final static String BODY = "body";
-  
-  /**
    * The initialization statements
    */
   private List<Node> initialization;
@@ -94,25 +74,20 @@ public class ForStatement extends ForSlashEachStatement implements ContinueTarge
    * @exception IllegalArgumentException if body is null
    */
   public ForStatement(List<Node> init, Expression cond, List<Node> updt, Node body) {
-    this(init, cond, updt, body, null, 0, 0, 0, 0);
+    this(init, cond, updt, body, SourceInfo.NONE);
   }
   
   /**
    * Creates a new for statement
-   * @param init  the initialization statements
+   * @param init  the initialization statements (either Statements or declarations)
    * @param cond  the condition to evaluate at each loop
-   * @param updt  the update statements
+   * @param updt  the update statements (either Statements or declarations)
    * @param body  the body
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if body is null
    */
   public ForStatement(List<Node> init, Expression cond, List<Node> updt, Node body,
-                      String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                      SourceInfo si) {
+    super(si);
     
     if (body == null) throw new IllegalArgumentException("body == null");
     
@@ -134,7 +109,7 @@ public class ForStatement extends ForSlashEachStatement implements ContinueTarge
    * Sets the initialization statements
    */
   public void setInitialization(List<Node> l) {
-    firePropertyChange(INITIALIZATION, initialization, initialization = l);
+    initialization = l;
   }
   
   /**
@@ -148,7 +123,7 @@ public class ForStatement extends ForSlashEachStatement implements ContinueTarge
    * Sets the condition to evaluate
    */
   public void setCondition(Expression e) {
-    firePropertyChange(CONDITION, condition, condition = e);
+    condition = e;
   }
   
   /**
@@ -162,7 +137,7 @@ public class ForStatement extends ForSlashEachStatement implements ContinueTarge
    * Sets the update statements
    */
   public void setUpdate(List<Node> l) {
-    firePropertyChange(UPDATE, update, update = l);
+    update = l;
   }
   
   /**
@@ -178,8 +153,7 @@ public class ForStatement extends ForSlashEachStatement implements ContinueTarge
    */
   public void setBody(Node node) {
     if (node == null) throw new IllegalArgumentException("node == null");
-    
-    firePropertyChange(BODY, body, body = node);
+    body = node;
   }
   
   /**

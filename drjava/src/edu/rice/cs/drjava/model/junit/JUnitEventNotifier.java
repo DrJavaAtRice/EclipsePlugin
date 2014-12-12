@@ -1,44 +1,46 @@
- /*BEGIN_COPYRIGHT_BLOCK
+/*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.junit;
 
-import java.util.List;
 import edu.rice.cs.drjava.model.EventNotifier;
-import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
 import edu.rice.cs.drjava.model.compiler.CompilerListener;
 import edu.rice.cs.util.classloader.ClassFileError;
-import edu.rice.cs.util.swing.Utilities;
+import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
+import java.util.List;
 
 /**
  * Keeps track of all listeners to a JUnitModel, and has the ability
@@ -78,26 +80,27 @@ class JUnitEventNotifier extends EventNotifier<JUnitListener> implements JUnitLi
     super.addListener(jul);
 //    Utilities.show("Adding listener " + jul + " to listener list in " + this);
   }
-
+  
   /** Called when trying to test a non-TestCase class.
-   *  @param isTestAll whether or not it was a use of the test all button
-   */
-  public void nonTestCase(boolean isTestAll) {
+    * @param isTestAll whether or not it was a use of the test all button
+    * @param didCompileFail whether or not a compile before this JUnit attempt failed
+    */
+  public void nonTestCase(boolean isTestAll, boolean didCompileFail) {
     _lock.startRead();
-    try { for (JUnitListener jul : _listeners) { jul.nonTestCase(isTestAll); } }
+    try { for (JUnitListener jul : _listeners) { jul.nonTestCase(isTestAll, didCompileFail); } }
     finally { _lock.endRead(); }
   }
-
+  
   public void classFileError(ClassFileError e) {
     _lock.startRead();
     try { for (JUnitListener jul : _listeners) { jul.classFileError(e); } }
     finally { _lock.endRead(); }
   }
   
- /** Called before JUnit is started by the DefaultJUnitModel. */
-  public void compileBeforeJUnit(final CompilerListener cl) {
+  /** Called before JUnit is started by the DefaultJUnitModel. */
+  public void compileBeforeJUnit(final CompilerListener cl, List<OpenDefinitionsDocument> outOfSync) {
     _lock.startRead();
-    try { for (JUnitListener jul : _listeners) { jul.compileBeforeJUnit(cl); } }
+    try { for (JUnitListener jul : _listeners) { jul.compileBeforeJUnit(cl, outOfSync); } }
     finally { _lock.endRead(); }
   }
   
@@ -107,48 +110,46 @@ class JUnitEventNotifier extends EventNotifier<JUnitListener> implements JUnitLi
     try { for (JUnitListener jul : _listeners) { jul.junitStarted(); } }
     finally { _lock.endRead(); }
   }
-
+  
   /** Called after junitClasses is started by the GlobalModel. */
   public void junitClassesStarted() {
     _lock.startRead();
     try { for (JUnitListener jul : _listeners) { jul.junitClassesStarted(); } }
     finally { _lock.endRead(); }
   }
-
+  
   /** Called to indicate that a suite of tests has started running.
-   *  @param numTests The number of tests in the suite to be run.
-   */
+    * @param numTests The number of tests in the suite to be run.
+    */
   public void junitSuiteStarted(int numTests) {
     _lock.startRead();
     try { for (JUnitListener jul : _listeners) { jul.junitSuiteStarted(numTests); } }
     finally { _lock.endRead(); }
   }
-
+  
   /** Called when a particular test is started.
-   *  @param name The name of the test being started.
-   */
+    * @param name The name of the test being started.
+    */
   public void junitTestStarted(String name) {
     _lock.startRead();
     try { for (JUnitListener jul : _listeners) { jul.junitTestStarted(name); } }
     finally { _lock.endRead(); }
   }
-
+  
   /** Called when a particular test has ended.
-   *  @param name The name of the test that has ended.
-   *  @param wasSuccessful Whether the test passed or not.
-   *  @param causedError If not successful, whether the test caused an error or simply failed.
-   */
+    * @param name The name of the test that has ended.
+    * @param wasSuccessful Whether the test passed or not.
+    * @param causedError If not successful, whether the test caused an error or simply failed.
+    */
   public void junitTestEnded(String name, boolean wasSuccessful, boolean causedError) {
     _lock.startRead();
     try { for (JUnitListener jul : _listeners) { jul.junitTestEnded(name, wasSuccessful, causedError); } }
     finally { _lock.endRead(); }
   }
-
+  
   /** Called after JUnit is finished running tests. */
   public void junitEnded() {
-//    new ScrollableDialog(null, "Ready to grab acquireReadLock for junitListener queue in junitEnded" + _listeners, "", "").show();
     _lock.startRead();
-//     new ScrollableDialog(null, "Grabbed acquireReadLock for junitListener queue in junitEnded" + _listeners, "", "").show();
     try { for(JUnitListener jul : _listeners) { jul.junitEnded(); } }
     finally { _lock.endRead(); }
   }

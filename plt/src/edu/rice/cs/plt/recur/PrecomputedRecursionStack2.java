@@ -1,8 +1,43 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.recur;
 
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
+import edu.rice.cs.plt.tuple.Pair;
 import edu.rice.cs.plt.tuple.IdentityPair;
 import edu.rice.cs.plt.lambda.Thunk;
 import edu.rice.cs.plt.lambda.Lambda2;
@@ -23,7 +58,7 @@ import edu.rice.cs.plt.lambda.LambdaUtil;
  * used to create precomputed values, providing an initial "empty box" that can be "filled" when 
  * computation is complete.  This allows the definition, for example, of data structures that 
  * contain themselves.  Due to the restricted applicability of this class (in comparison to
- * {@code RecursionStack2}), methods that involve invoking {@code Command}s or recurring multiple
+ * {@code RecursionStack2}), methods that involve invoking {@code Runnable}s or recurring multiple
  * times based on a threshold value are not defined here.</p>
  * 
  * <p>The client may either choose to explicity check for containment, {@link #push} the argument, 
@@ -40,13 +75,23 @@ import edu.rice.cs.plt.lambda.LambdaUtil;
  */
 public class PrecomputedRecursionStack2<T1, T2, R> {
   
-  private Map<IdentityPair<T1, T2>, Lambda2<? super T1, ? super T2, ? extends R>> _previous;
-  private LinkedList<IdentityPair<T1, T2>> _stack;
+  private final Lambda2<? super T1, ? super T2, ? extends Pair<T1, T2>> _pairFactory;
+  private final Map<Pair<T1, T2>, Lambda2<? super T1, ? super T2, ? extends R>> _previous;
+  private final LinkedList<Pair<T1, T2>> _stack;
   
-  /** Create an empty recursion stack */
-  public PrecomputedRecursionStack2() {
-    _previous = new HashMap<IdentityPair<T1, T2>, Lambda2<? super T1, ? super T2, ? extends R>>();
-    _stack = new LinkedList<IdentityPair<T1, T2>>();
+  /** Create an empty recursion stack with an {@link IdentityPair} factory */
+  public PrecomputedRecursionStack2() { this(IdentityPair.<T1, T2>factory()); }
+  
+  /**
+   * Create an empty recursion stack with the given {@code Pair} factory
+   * @param pairFactory  A lambda used to produce a pair for values placed on the
+   *                     stack.  This provides clients with control over the method used
+   *                     to determine if a value has been seen previously.
+   */
+  public PrecomputedRecursionStack2(Lambda2<? super T1, ? super T2, ? extends Pair<T1, T2>> pairFactory) {
+    _pairFactory = pairFactory;
+    _previous = new HashMap<Pair<T1, T2>, Lambda2<? super T1, ? super T2, ? extends R>>();
+    _stack = new LinkedList<Pair<T1, T2>>();
   }
   
   /** 
@@ -54,7 +99,7 @@ public class PrecomputedRecursionStack2<T1, T2, R> {
    *          are currently on the stack
    */
   public boolean contains(T1 arg1, T2 arg2) {
-    return _previous.containsKey(new IdentityPair<T1, T2>(arg1, arg2));
+    return _previous.containsKey(_pairFactory.value(arg1, arg2));
   }
   
   /** 
@@ -63,7 +108,7 @@ public class PrecomputedRecursionStack2<T1, T2, R> {
    */
   public R get(T1 arg1, T2 arg2) {
     Lambda2<? super T1, ? super T2, ? extends R> result = 
-      _previous.get(new IdentityPair<T1, T2>(arg1, arg2));
+      _previous.get(_pairFactory.value(arg1, arg2));
     if (result == null) { throw new IllegalArgumentException("Values are not on the stack"); }
     return result.value(arg1, arg2);
   }
@@ -72,7 +117,9 @@ public class PrecomputedRecursionStack2<T1, T2, R> {
    * Add the given arguments to the top of the stack with the given infinite-case result.
    * @throws IllegalArgumentException  If the arguments are already on the stack
    */
-  public void push(T1 arg1, T2 arg2, R value) { push(arg1, arg2, LambdaUtil.valueLambda2(value)); }
+  public void push(T1 arg1, T2 arg2, R value) {
+    push(arg1, arg2, (Lambda2<Object, Object, R>) LambdaUtil.valueLambda(value));
+  }
   
   /**
    * Add the given arguments to the top of the stack with the given thunk producing their 
@@ -80,7 +127,7 @@ public class PrecomputedRecursionStack2<T1, T2, R> {
    * @throws IllegalArgumentException  If the arguments are already on the stack
    */
   public void push(T1 arg1, T2 arg2, Thunk<? extends R> value) {
-    push(arg1, arg2, LambdaUtil.promote(LambdaUtil.promote(value)));
+    push(arg1, arg2, (Lambda2<Object, Object, ? extends R>) LambdaUtil.promote(value));
   }
   
   /**
@@ -89,7 +136,7 @@ public class PrecomputedRecursionStack2<T1, T2, R> {
    * @throws IllegalArgumentException  If the arguments are already on the stack
    */
   public void push(T1 arg1, T2 arg2, Lambda2<? super T1, ? super T2, ? extends R> value) {
-    IdentityPair<T1, T2> wrapped = new IdentityPair<T1, T2>(arg1, arg2);
+    Pair<T1, T2> wrapped = _pairFactory.value(arg1, arg2);
     if (_previous.containsKey(wrapped)) {
       throw new IllegalArgumentException("The given arguments are already on the stack");
     }
@@ -102,7 +149,7 @@ public class PrecomputedRecursionStack2<T1, T2, R> {
    * @throws IllegalArgumentException  If the arguments are not at the top of the stack
    */
   public void pop(T1 arg1, T2 arg2) {
-    IdentityPair<T1, T2> wrapped = new IdentityPair<T1, T2>(arg1, arg2);
+    Pair<T1, T2> wrapped = _pairFactory.value(arg1, arg2);
     if (_stack.isEmpty() || !_stack.getLast().equals(wrapped)) {
       throw new IllegalArgumentException("the given arguments are not on top of the stack");
     }
@@ -216,6 +263,12 @@ public class PrecomputedRecursionStack2<T1, T2, R> {
   /** Call the constructor (allows the type arguments to be inferred) */
   public static <T1, T2, R> PrecomputedRecursionStack2<T1, T2, R> make() {
     return new PrecomputedRecursionStack2<T1, T2, R>();
+  }
+  
+  /** Call the constructor (allows the type arguments to be inferred) */
+  public static <T1, T2, R> PrecomputedRecursionStack2<T1, T2, R> 
+    make(Lambda2<? super T1, ? super T2, ? extends Pair<T1, T2>> pairFactory) {
+    return new PrecomputedRecursionStack2<T1, T2, R>(pairFactory);
   }
   
 }

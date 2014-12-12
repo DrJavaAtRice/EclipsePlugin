@@ -1,3 +1,7 @@
+// Language Level Converter line number map: dj*->java. Entries: 20
+//     1->5         2->6         3->7         4->8         5->9         6->40        7->41        8->42   
+//     9->73       10->74       11->75       12->76       13->77       14->125      15->126      16->127  
+//    17->128      18->129      19->130      20->131  
 //this makes sure that autoboxing is correctly done in the case where the object type corresponding to the
 //primitive is not in the symbol table.
 

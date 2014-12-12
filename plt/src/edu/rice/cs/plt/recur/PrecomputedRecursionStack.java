@@ -1,8 +1,43 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.recur;
 
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.HashMap;
+import edu.rice.cs.plt.tuple.Wrapper;
 import edu.rice.cs.plt.tuple.IdentityWrapper;
 import edu.rice.cs.plt.lambda.Thunk;
 import edu.rice.cs.plt.lambda.Lambda;
@@ -23,7 +58,7 @@ import edu.rice.cs.plt.lambda.LambdaUtil;
  * used to create precomputed values, providing an initial "empty box" that can be "filled" when 
  * computation is complete.  This allows the definition, for example, of data structures that 
  * contain themselves.  Due to the restricted applicability of this class (in comparison to
- * {@code RecursionStack}), methods that involve invoking {@code Command}s or recurring multiple
+ * {@code RecursionStack}), methods that involve invoking {@code Runnable}s or recurring multiple
  * times based on a threshold value are not defined here.</p>
  * 
  * <p>The client may either choose to explicity check for containment, {@link #push} the argument, 
@@ -40,27 +75,37 @@ import edu.rice.cs.plt.lambda.LambdaUtil;
  */
 public class PrecomputedRecursionStack<T, R> {
   
-  private Map<IdentityWrapper<T>, Lambda<? super T, ? extends R>> _previous;
-  private LinkedList<IdentityWrapper<T>> _stack;
+  private final Lambda<? super T, ? extends Wrapper<T>> _wrapperFactory;
+  private final Map<Wrapper<T>, Lambda<? super T, ? extends R>> _previous;
+  private final LinkedList<Wrapper<T>> _stack;
   
-  /** Create an empty recursion stack */
-  public PrecomputedRecursionStack() {
-    _previous = new HashMap<IdentityWrapper<T>, Lambda<? super T, ? extends R>>();
-    _stack = new LinkedList<IdentityWrapper<T>>();
+  /** Create an empty recursion stack with an {@link IdentityWrapper} factory */
+  public PrecomputedRecursionStack() { this(IdentityWrapper.<T>factory()); }
+  
+  /**
+   * Create an empty recursion stack with the given {@code Wrapper} factory
+   * @param wrapperFactory  A lambda used to produce a wrapper for values placed on the
+   *                        stack.  This provides clients with control over the method used
+   *                        to determine if a value has been seen previously.
+   */
+  public PrecomputedRecursionStack(Lambda<? super T, ? extends Wrapper<T>> wrapperFactory) {
+    _wrapperFactory = wrapperFactory;
+    _previous = new HashMap<Wrapper<T>, Lambda<? super T, ? extends R>>();
+    _stack = new LinkedList<Wrapper<T>>();
   }
   
   /** 
    * @return  {@code true} iff a value identical (according to {@code ==}) to {@code arg}
    *          is currently on the stack
    */
-  public boolean contains(T arg) { return _previous.containsKey(new IdentityWrapper<T>(arg)); }
+  public boolean contains(T arg) { return _previous.containsKey(_wrapperFactory.value(arg)); }
   
   /** 
    * @return  The infinite-case result provided for {@code arg}
    * @throws  IllegalStateException  If {@code arg} is not on the stack
    */
   public R get(T arg) {
-    Lambda<? super T, ? extends R> result = _previous.get(new IdentityWrapper<T>(arg));
+    Lambda<? super T, ? extends R> result = _previous.get(_wrapperFactory.value(arg));
     if (result == null) { throw new IllegalArgumentException("Value is not on the stack"); }
     return result.value(arg);
   }
@@ -69,20 +114,22 @@ public class PrecomputedRecursionStack<T, R> {
    * Add {@code arg} to the top of the stack with the given infinite-case result.
    * @throws IllegalArgumentException  If {@code arg} is already on the stack
    */
-  public void push(T arg, R value) { push(arg, LambdaUtil.valueLambda(value)); }
+  public void push(T arg, R value) { push(arg, (Lambda<Object, R>) LambdaUtil.valueLambda(value)); }
   
   /**
    * Add {@code arg} to the top of the stack with the given thunk producing its infinite-case result.
    * @throws IllegalArgumentException  If {@code arg} is already on the stack
    */
-  public void push(T arg, Thunk<? extends R> value) { push(arg, LambdaUtil.promote(value)); }
+  public void push(T arg, Thunk<? extends R> value) {
+    push(arg, (Lambda<Object, ? extends R>) LambdaUtil.promote(value));
+  }
   
   /**
    * Add {@code arg} to the top of the stack with the given lambda producing its infinite-case result.
    * @throws IllegalArgumentException  If {@code arg} is already on the stack
    */
   public void push(T arg, Lambda<? super T, ? extends R> value) {
-    IdentityWrapper<T> wrapped = new IdentityWrapper<T>(arg);
+    Wrapper<T> wrapped = _wrapperFactory.value(arg);
     if (_previous.containsKey(wrapped)) {
       throw new IllegalArgumentException("arg is already on the stack");
     }
@@ -95,7 +142,7 @@ public class PrecomputedRecursionStack<T, R> {
    * @throws IllegalArgumentException  If {@code arg} is not at the top of the stack
    */
   public void pop(T arg) {
-    IdentityWrapper<T> wrapped = new IdentityWrapper<T>(arg);
+    Wrapper<T> wrapped = _wrapperFactory.value(arg);
     if (_stack.isEmpty() || !_stack.getLast().equals(wrapped)) {
       throw new IllegalArgumentException("arg is not on top of the stack");
     }
@@ -206,6 +253,12 @@ public class PrecomputedRecursionStack<T, R> {
   /** Call the constructor (allows the type arguments to be inferred) */
   public static <T, R> PrecomputedRecursionStack<T, R> make() {
     return new PrecomputedRecursionStack<T, R>();
+  }
+  
+  /** Call the constructor (allows the type arguments to be inferred) */
+  public static <T, R> PrecomputedRecursionStack<T, R> 
+    make(Lambda<? super T, ? extends Wrapper<T>> wrapperFactory) {
+    return new PrecomputedRecursionStack<T, R>(wrapperFactory);
   }
   
 }

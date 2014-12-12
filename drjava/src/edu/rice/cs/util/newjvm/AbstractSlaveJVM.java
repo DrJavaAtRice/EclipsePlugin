@@ -1,162 +1,117 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util.newjvm;
 
-import edu.rice.cs.util.Log;
-import edu.rice.cs.util.UnexpectedException;
-//import edu.rice.cs.util.PreventExitSecurityManager;
+import edu.rice.cs.plt.concurrent.ConcurrentUtil;
 
-import java.io.Serializable;
 import java.rmi.*;
-import java.rmi.server.UnicastRemoteObject;
 
-//import edu.rice.cs.util.PreventExitSecurityManager;
+import static edu.rice.cs.plt.debug.DebugUtil.error;
+import static edu.rice.cs.plt.debug.DebugUtil.debug;
 
 /** A partial implementation of a {@link SlaveRemote} that provides the quit functionality and that also periodically 
- *  checks if the master is still alive and automatically quits if not.
- *  @version $Id$
- */
-public abstract class AbstractSlaveJVM implements SlaveRemote, Serializable {
+  * checks if the master is still alive and automatically quits if not.
+  * @version $Id$
+  */
+public abstract class AbstractSlaveJVM implements SlaveRemote {
   public static final int CHECK_MAIN_VM_ALIVE_SECONDS = 1;
   
-  protected static final Log _log  = new Log("MasterSlave.txt", false);
-  
-//  /** remote reference to the Master JVM; after initialization it is immutable until quit is executed. */
-//  public volatile MasterRemote _master;
-
   /** Name of the thread to quit the slave. */
-  protected volatile String _quitSlaveThreadName = "Quit SlaveJVM Thread";
-
+  private final String _quitSlaveThreadName;
   /** Name of the thread to periodically poll the master. */
-  protected volatile String _pollMasterThreadName = "Poll MasterJVM Thread";
+  private final String _pollMasterThreadName;
+  private boolean _started;
   
-  private volatile Thread _checkMaster = null;
-
-  private final Object _slaveJVMLock = new Object();
+  public AbstractSlaveJVM() {
+    this("Quit SlaveJVM Thread", "Poll MasterJVM Thread");
+  }
   
-  private volatile boolean _slaveExited = false;
-  
-  private void shutdown() {
-//    try { 
-//      boolean exported = UnicastRemoteObject.unexportObject(this, true); 
-//      if (! exported) _log.log("ERROR: " + this + " was not unexported before shutdown");
-//    }
-//    catch(NoSuchObjectException e) { throw new UnexpectedException(e); }  // should never happen
-    _log.log(AbstractSlaveJVM.this + ".shutdown() calling System.exit(0)");
-    System.exit(0);
+  public AbstractSlaveJVM(String quitSlaveThreadName, String pollMasterThreadName) {
+    _quitSlaveThreadName = quitSlaveThreadName;
+    _pollMasterThreadName = pollMasterThreadName;
+    _started = false;
   }
   
   /** Quits the slave JVM, calling {@link #beforeQuit} before it does. */
   public final synchronized void quit() {
-//    _log.log(this + ".quit() called");
-//    _master = null;
-    
     beforeQuit();
-    
-    _slaveExited = false;
-//    Utilities.showDebug("quit() called");
-
     // put exit into another thread to allow this RMI call to return normally.
-    Thread t = new Thread(_quitSlaveThreadName) {
+    new Thread(_quitSlaveThreadName) {
       public void run() {
-        try {
-          // wait for parent RMI calling thread to exit 
-          synchronized(_slaveJVMLock) { 
-            while (! _slaveExited) {
-//              _log.log("Waiting for " + AbstractSlaveJVM.this + ".quit() to exit");
-              _slaveJVMLock.wait(); 
-            }
-          }
-          shutdown();
+        // ensure (as best we can) that the quit() RMI call has returned cleanly
+        synchronized(AbstractSlaveJVM.this) {
+          try { System.exit(0); }
+          catch (RuntimeException e) { error.log("Can't invoke System.exit", e); }
         }
-        catch (Throwable th) { 
-          _log.log(this + ".quit() failed!");
-          quitFailed(th); 
+      }
+    }.start();
+  }
+  
+  /** Initializes the Slave JVM including starting background thread to periodically poll the master JVM and 
+    * automatically quit if it's dead.  Synchronized to prevent other method invocations from proceeding before
+    * startup is complete.
+    */
+  public final synchronized void start(final MasterRemote master) throws RemoteException {
+    if (_started) { throw new IllegalArgumentException("start() has already been invoked"); }
+    master.checkStillAlive(); // verify that two-way communication works; may throw RemoteException
+
+    Thread checkMaster = new Thread(_pollMasterThreadName) {
+      public void run() {
+        while (true) {
+          ConcurrentUtil.sleep(CHECK_MAIN_VM_ALIVE_SECONDS*1000);
+          try { master.checkStillAlive(); }
+          catch (RemoteException e) {
+            // TODO: This should always be an exceptional situation, but for now
+            // many tests abandon the slave without quitting cleanly.
+            // error.log("Master is no longer available", e);
+            quit();
+          }
         }
       }
     };
-
-    t.start();
-//    _log.log(this + ".quit() RMI call exited");
-    synchronized(_slaveJVMLock) { 
-      _slaveExited = true; 
-      _slaveJVMLock.notify();  // There does not appear to be any constraint forcing this thread to exit before shutdown
-    }
+    checkMaster.setDaemon(true);
+    checkMaster.start();
+    handleStart(master);
   }
-
+  
   /** This method is called just before the JVM is quit.  It can be overridden to provide cleanup code, etc. */
   protected void beforeQuit() { }
-
-  /** This method is called if the interpreterJVM cannot be exited (likely because of a unexpected security manager.) */
-  protected void quitFailed(Throwable th) { }
-
-  /** Initializes the Slave JVM including starting background thread to periodically poll the master JVM and 
-   *  automatically quit if it's dead.  Unsynchronized because 
-   *  (i)   this method can only be called once (without throwing an error) and _master is immutable once assigned here
-   *        until quit() 
-   *  (ii)  this method does not depend on any mutable state in this (which constrains {@link #handleStart}); and
-   *  (iii) this method (and perhaps {@link #handleStart}) perform remote calls on master.
-   *  This method delegates starting actions other than polling master to {@link #handleStart}.
-   */
-  public final void start(final MasterRemote master) throws RemoteException {
-    
-    if (_checkMaster != null) throw new UnexpectedException(this + ".start(...) called a second time");
-
-    _checkMaster = new Thread(_pollMasterThreadName) {
-      public void run() { // Note: this method is NOT synchronized; it runs in a different thread.
-//        PreventExitSecurityManager.activate();
-        while (true) {
-          try { Thread.sleep(CHECK_MAIN_VM_ALIVE_SECONDS*1000); }
-          catch (InterruptedException ie) { }
-//          _log.log(this + " polling " + master + " to confirm Master JVM is still alive");
-          try { master.checkStillAlive(); }
-          catch (RemoteException re) { quit(); }  // Master JVM service is defunct. Quit! */
-        }
-      }
-    };
-    
-   
-
-    _checkMaster.setDaemon(true);
-    _checkMaster.start();
-    _log.log(_checkMaster + " created and STARTed by " + this);
-
-    handleStart(master);  // master is passed as parameter because in some refactorings, _master is eliminated
-  }
-
+  
   /** Called when the slave JVM has started running.  Subclasses must implement this method. */
   protected abstract void handleStart(MasterRemote master);
   
-//  public void finalize() { _log.log(this + " has been FINALIZED"); }
 }

@@ -1,47 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project:
- * http://sourceforge.net/projects/drjava/ or http://www.drjava.org/
- *
- * DrJava Open Source License
- * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu)
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
  * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Developed by:   Java Programming Languages Team
- *                 Rice University
- *                 http://www.cs.rice.edu/~javaplt/
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"),
- * to deal with the Software without restriction, including without 
- * limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to 
- * whom the Software is furnished to do so, subject to the following 
- * conditions:
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- *     - Redistributions of source code must retain the above copyright 
- *       notice, this list of conditions and the following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright 
- *       notice, this list of conditions and the following disclaimers in the
- *       documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor
- *       use the term "DrJava" as part of their names without prior written
- *       permission from the JavaPLT group.  For permission, write to
- *       javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
- * OTHER DEALINGS WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.javalanglevels;
 
@@ -49,21 +40,19 @@ import edu.rice.cs.javalanglevels.tree.*;
 import edu.rice.cs.javalanglevels.parser.JExprParser;
 import java.util.*;
 import java.io.*;
+import edu.rice.cs.plt.reflect.JavaVersion;
+import edu.rice.cs.plt.iter.*;
 
 import junit.framework.TestCase;
 
 /**Do the TypeChecking appropriate to the context of a class body.  Common to all Language Levels.*/
-public class InterfaceBodyTypeChecker extends Bob {
+public class InterfaceBodyTypeChecker extends SpecialTypeChecker {
   
   /**The SymbolData corresponding to this interface.*/
   private SymbolData _symbolData;
   
-  
-    /*
-   * Constructor for InterfaceBodyTypeChecker.
-   * Adds all the variables in the symbol data to the list of what can be seen from this context,
-   * since interface fields can always be seen.
-   * 
+  /* Constructor for InterfaceBodyTypeChecker.  Adds all the variables in the symbol data to the list of what can be 
+   * seen from this context, since interface fields can always be seen.
    * @param sd  The SymbolData of the interface we are type checking.
    * @param file  The File corresponding to the source file we are checking.
    * @param packageName  The package of the source file.
@@ -96,28 +85,28 @@ public class InterfaceBodyTypeChecker extends Bob {
    * method doesn't resolve another method with a different return type.
    */
   public TypeData forAbstractMethodDef(AbstractMethodDef that) {
-    final TypeData mav_result = that.getMav().visit(this);
-    final TypeData[] typeParams_result = makeArrayOfRetType(that.getTypeParams().length);
+    final TypeData mavRes = that.getMav().visit(this);
+    final TypeData[] typeParamsRes = makeArrayOfRetType(that.getTypeParams().length);
     for (int i = 0; i < that.getTypeParams().length; i++) {
-      typeParams_result[i] = that.getTypeParams()[i].visit(this);
+      typeParamsRes[i] = that.getTypeParams()[i].visit(this);
     }
-    final TypeData result_result = getSymbolData(that.getResult().getName(), _symbolData, that);//that.getResult().visit(this);
-    final TypeData name_result = that.getName().visit(this);
-    final TypeData[] params_result = makeArrayOfRetType(that.getParams().length);
-    for (int i = 0; i<params_result.length; i++) {
-      params_result[i] = getSymbolData(that.getParams()[i].getDeclarator().getType().getName(), _symbolData, that.getParams()[i]);
+    final TypeData resRes = getSymbolData(that.getResult().getName(), _symbolData, that);//that.getResult().visit(this);
+    final TypeData nameRes = that.getName().visit(this);
+    final TypeData[] paramsRes = makeArrayOfRetType(that.getParams().length);
+    for (int i = 0; i<paramsRes.length; i++) {
+      paramsRes[i] = getSymbolData(that.getParams()[i].getDeclarator().getType().getName(), _symbolData, that.getParams()[i]);
     }
-    final TypeData[] throws_result = makeArrayOfRetType(that.getThrows().length);
+    final TypeData[] throwsRes = makeArrayOfRetType(that.getThrows().length);
     for (int i = 0; i < that.getThrows().length; i++) {
-      throws_result[i] = getSymbolData(that.getThrows()[i].getName(), _symbolData, that.getThrows()[i]);//that.getThrows()[i].visit(this);
+      throwsRes[i] = getSymbolData(that.getThrows()[i].getName(), _symbolData, that.getThrows()[i]);//that.getThrows()[i].visit(this);
     }
     // Ensure that this method doesn't override another method with a different return type.
-    MethodData md = _symbolData.getMethod(that.getName().getText(), params_result);
+    MethodData md = _symbolData.getMethod(that.getName().getText(), paramsRes);
     if (md == null) {
       throw new RuntimeException("Internal Program Error: Could not find the method " + that.getName().getText() + " in interface " + _symbolData.getName() + ".  Please report this bug.");
     }
-    SymbolData.checkDifferentReturnTypes(md, _symbolData, _targetVersion);
-    return result_result;
+    SymbolData.checkDifferentReturnTypes(md, _symbolData, true);
+    return resRes;
   }
   
 
@@ -134,7 +123,7 @@ public class InterfaceBodyTypeChecker extends Bob {
     Data sd = getSymbolData(that.getName(), _symbolData, that);
     if (sd != null) {sd = sd.getOuterData();}
     while (sd != null && !LanguageLevelVisitor.isJavaLibraryClass(sd.getSymbolData().getName())) {
-      if (!checkAccessibility(that, sd.getMav(), sd.getName(), sd.getSymbolData(), _symbolData, "class or interface")) {
+      if (!checkAccess(that, sd.getMav(), sd.getName(), sd.getSymbolData(), _symbolData, "class or interface")) {
         return null;
       }
       sd = sd.getOuterData();
@@ -156,12 +145,12 @@ public class InterfaceBodyTypeChecker extends Bob {
     private SymbolData _sd4;
     private SymbolData _sd5;
     private SymbolData _sd6;
-    private ModifiersAndVisibility _publicMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"public"});
-    private ModifiersAndVisibility _protectedMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"protected"});
-    private ModifiersAndVisibility _privateMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"private"});
-    private ModifiersAndVisibility _packageMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[0]);
-    private ModifiersAndVisibility _abstractMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"abstract"});
-    private ModifiersAndVisibility _finalMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"final"});
+    private ModifiersAndVisibility _publicMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"public"});
+    private ModifiersAndVisibility _protectedMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"protected"});
+    private ModifiersAndVisibility _privateMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"private"});
+    private ModifiersAndVisibility _packageMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[0]);
+    private ModifiersAndVisibility _abstractMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"abstract"});
+    private ModifiersAndVisibility _finalMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"final"});
     
     
     public InterfaceBodyTypeCheckerTest() {
@@ -182,69 +171,79 @@ public class InterfaceBodyTypeChecker extends Bob {
       _sd5 = new SymbolData("");
       _sd6 = new SymbolData("cebu");
       errors = new LinkedList<Pair<String, JExpressionIF>>();
-      symbolTable = new Symboltable();
-      _ibbtc = new InterfaceBodyTypeChecker(_sd1, new File(""), "", new LinkedList<String>(), new LinkedList<String>(), new LinkedList<VariableData>(), new LinkedList<Pair<SymbolData, JExpression>>());
-      _ibbtc._targetVersion = "version 1.5";
+      LanguageLevelConverter.symbolTable.clear();
+      LanguageLevelConverter._newSDs.clear();
+      _ibbtc = 
+        new InterfaceBodyTypeChecker(_sd1, new File(""), "", new LinkedList<String>(), new LinkedList<String>(),
+                                     new LinkedList<VariableData>(), new LinkedList<Pair<SymbolData, JExpression>>());
+      LanguageLevelConverter.OPT = new Options(JavaVersion.JAVA_6, EmptyIterable.<File>make());
       _ibbtc._importedPackages.addFirst("java.lang");
     }
     
     public void testForUninitializedVariableDeclaratorOnly() {
       VariableData vd1 = new VariableData("Mojo", _publicMav, SymbolData.INT_TYPE, false, _sd1);
       _sd1.addVar(vd1);
-      UninitializedVariableDeclarator uvd = new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                                                                new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                                                                new Word(JExprParser.NO_SOURCE_INFO, "Mojo"));
+      UninitializedVariableDeclarator uvd = 
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                            new PrimitiveType(SourceInfo.NONE, "int"), 
+                                            new Word(SourceInfo.NONE, "Mojo"));
       uvd.visit(_ibbtc);
       _ibbtc.forUninitializedVariableDeclaratorOnly(uvd, SymbolData.INT_TYPE, null);
       assertEquals("There should be one error", 1, errors.size());
-      assertEquals("The error message should be correct", "All fields in interfaces must be initialized", errors.get(0).getFirst());
+      assertEquals("The error message should be correct", "All fields in interfaces must be initialized", 
+                   errors.get(0).getFirst());
     }
     
     public void testForInitializedVariableDeclaratorOnly() {
       VariableData vd1 = new VariableData("Mojo", _publicMav, SymbolData.INT_TYPE, false, _sd1);
       _sd1.addVar(vd1);
-      InitializedVariableDeclarator ivd = new InitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                                                            new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                                                            new Word(JExprParser.NO_SOURCE_INFO, "Mojo"), 
-                                                                            new IntegerLiteral(JExprParser.NO_SOURCE_INFO, 1));
+      InitializedVariableDeclarator ivd = 
+        new InitializedVariableDeclarator(SourceInfo.NONE, 
+                                          new PrimitiveType(SourceInfo.NONE, "int"), 
+                                          new Word(SourceInfo.NONE, "Mojo"), 
+                                          new IntegerLiteral(SourceInfo.NONE, 1));
       ivd.visit(_ibbtc);
       assertEquals("There should be no errors.", 0, errors.size());
       assertTrue("_vars should contain Mojo.", _ibbtc._vars.contains(vd1));
-      ivd = new InitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                              new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                              new Word(JExprParser.NO_SOURCE_INFO, "Santa's Little Helper"), 
-                                              new IntegerLiteral(JExprParser.NO_SOURCE_INFO, 1));
+      ivd = new InitializedVariableDeclarator(SourceInfo.NONE, 
+                                              new PrimitiveType(SourceInfo.NONE, "int"), 
+                                              new Word(SourceInfo.NONE, "Santa's Little Helper"), 
+                                              new IntegerLiteral(SourceInfo.NONE, 1));
       try {
         ivd.visit(_ibbtc);
         fail("Should have thrown a RuntimeException because there's no field named Santa's Little Helper.");
       }
       catch (RuntimeException re) {
-        assertEquals("The error message should be correct.", "Internal Program Error: The field or variable Santa's Little Helper was not found in this block.  Please report this bug.", re.getMessage());
+        assertEquals("The error message should be correct.", 
+                     "Internal Program Error: The field or variable Santa's Little Helper was not found in this block.  Please report this bug.", re.getMessage());
       }
     }
     
     public void testForConcreteMethodDef() {
       FormalParameter[] fps = new FormalParameter[] {
-        new FormalParameter(JExprParser.NO_SOURCE_INFO, 
-                            new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                                              new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                              new Word (JExprParser.NO_SOURCE_INFO, "field1")),
+        new FormalParameter(SourceInfo.NONE, 
+                            new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                                                new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                                new Word (SourceInfo.NONE, "field1")),
                             false),
-        new FormalParameter(JExprParser.NO_SOURCE_INFO, 
-                            new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                                              new PrimitiveType(JExprParser.NO_SOURCE_INFO, "boolean"), 
-                                                              new Word (JExprParser.NO_SOURCE_INFO, "field2")),
+        new FormalParameter(SourceInfo.NONE, 
+                            new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                                                new PrimitiveType(SourceInfo.NONE, "boolean"), 
+                                                                new Word (SourceInfo.NONE, "field2")),
                             false)};
-      ConcreteMethodDef cmd = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO, 
-                                                    _packageMav, 
-                                                    new TypeParameter[0], 
-                                                    new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                                    new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
-                                                    fps,
-                                                    new ReferenceType[0], 
-                                                    new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[] {
-        new ValueReturnStatement(JExprParser.NO_SOURCE_INFO, 
-                                 new IntegerLiteral(JExprParser.NO_SOURCE_INFO, 5))}));
+      
+      ConcreteMethodDef cmd = 
+        new ConcreteMethodDef(SourceInfo.NONE, 
+                              _packageMav, 
+                              new TypeParameter[0], 
+                              new PrimitiveType(SourceInfo.NONE, "int"), 
+                              new Word(SourceInfo.NONE, "methodName"),
+                              fps,
+                              new ReferenceType[0], 
+                              new BracedBody(SourceInfo.NONE, new BodyItemI[] {
+        new ValueReturnStatement(SourceInfo.NONE, 
+                                 new IntegerLiteral(SourceInfo.NONE, 5))}));
+      
       MethodData md = new MethodData("methodName", 
                                      _packageMav, 
                                      new TypeParameter[0], 
@@ -264,10 +263,8 @@ public class InterfaceBodyTypeChecker extends Bob {
       assertEquals("The error message should be correct", "Concrete method definitions cannot appear in interfaces", errors.get(0).getFirst());
     }
     
-
-    
     public void testForTypeOnly() {
-      Type t = new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double");
+      Type t = new PrimitiveType(SourceInfo.NONE, "double");
       t.visit(_ibbtc);
       assertEquals("There should be no errors", 0, errors.size());
       
@@ -275,7 +272,7 @@ public class InterfaceBodyTypeChecker extends Bob {
       sd.setIsContinuation(false);
       symbolTable.put("Adam", sd);
       sd.setMav(_publicMav);
-      t = new ClassOrInterfaceType(JExprParser.NO_SOURCE_INFO, "Adam", new Type[0]);
+      t = new ClassOrInterfaceType(SourceInfo.NONE, "Adam", new Type[0]);
       t.visit(_ibbtc);
       assertEquals("There should still be no errors", 0, errors.size());
       
@@ -285,23 +282,26 @@ public class InterfaceBodyTypeChecker extends Bob {
       innerSd.setOuterData(sd);
       innerSd.setMav(_publicMav);
       _ibbtc.symbolTable.put("USaigehgihdsgslghdlighs", innerSd);
-      t = new ClassOrInterfaceType(JExprParser.NO_SOURCE_INFO, "Adam.Wulf", new Type[0]);
+      t = new ClassOrInterfaceType(SourceInfo.NONE, "Adam.Wulf", new Type[0]);
       t.visit(_ibbtc);
       assertEquals("There should still be no errors", 0, errors.size());
       
       innerSd.setMav(_privateMav);
-      t = new ClassOrInterfaceType(JExprParser.NO_SOURCE_INFO, "Adam.Wulf", new Type[0]);
+      t = new ClassOrInterfaceType(SourceInfo.NONE, "Adam.Wulf", new Type[0]);
       t.visit(_ibbtc);
+      String tcSDName =  _ibbtc._symbolData.getName();
       assertEquals("There should be one error", 1, errors.size());
-      assertEquals("The error message should be correct", "The class or interface Adam.Wulf is private and cannot be accessed from " + _ibbtc._symbolData.getName(),
+      assertEquals("The error message should be correct", 
+                   "The class or interface Adam.Wulf in Adam.Wulf is private and cannot be accessed from " + tcSDName,
                    errors.get(0).getFirst());
       
       sd.setMav(_privateMav);
       innerSd.setMav(_publicMav);
-      t = new ClassOrInterfaceType(JExprParser.NO_SOURCE_INFO, "Adam.Wulf", new Type[0]);
+      t = new ClassOrInterfaceType(SourceInfo.NONE, "Adam.Wulf", new Type[0]);
       t.visit(_ibbtc);
       assertEquals("There should be two errors", 2, errors.size());
-      assertEquals("The error message should be correct", "The class or interface Adam is private and cannot be accessed from " + _ibbtc._symbolData.getName(),
+      assertEquals("The error message should be correct", 
+                   "The class or interface Adam in Adam is private and cannot be accessed from " + tcSDName,
                    errors.get(1).getFirst());
     }
   }

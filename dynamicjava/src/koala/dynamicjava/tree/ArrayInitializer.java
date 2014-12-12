@@ -41,16 +41,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class ArrayInitializer extends Expression {
   /**
-   * The cells property name
-   */
-  public final static String CELLS = "cells";
-  
-  /**
-   * The element type property name
-   */
-  public final static String ELEMENT_TYPE = "elementType";
-  
-  /**
    * The list of initialized cells
    */
   private List<Expression> cells;
@@ -65,27 +55,22 @@ public class ArrayInitializer extends Expression {
    * @param cells the list of initialized cells
    * @exception IllegalArgumentException if cells is null
    */
-  public ArrayInitializer(List<Expression> cells) {
-    this(cells, null, 0, 0, 0, 0);
+  public ArrayInitializer(List<? extends Expression> cells) {
+    this(cells, SourceInfo.NONE);
   }
   
   /**
    * Initializes the expression
    * @param cells the list of initialized cells
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if cells is null
    */
-  public ArrayInitializer(List<Expression> cells,
-                          String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public ArrayInitializer(List<? extends Expression> cells,
+                          SourceInfo si) {
+    super(si);
     
     if (cells == null) throw new IllegalArgumentException("cells == null");
     
-    this.cells = cells;
+    this.cells = new ArrayList<Expression>(cells);
   }
   
   /**
@@ -99,35 +84,29 @@ public class ArrayInitializer extends Expression {
    * Sets the list of cell initialization expressions
    * @exception IllegalArgumentException if l is null
    */
-  public void setCells(List<Expression> l) {
+  public void setCells(List<? extends Expression> l) {
     if (l == null) throw new IllegalArgumentException("l == null");
-    
-    firePropertyChange(CELLS, cells, cells = l);
+    cells = new ArrayList<Expression>(l);
   }
   
   /**
-   * Returns the element type
-   * @exception IllegalStateException if elementType is null
+   * Returns the element type, or {@code null} if it's not set
    */
   public TypeName getElementType() {
-    if (elementType == null) throw new IllegalStateException("elementType == null");
-    
     return elementType;
   }
   
   /**
-   * Sets the element type
+   * Sets the element type.  Also recursively sets the element type of any
+   * cells that are ArrayInitializers.
    * @exception IllegalArgumentException if t is null
    */
   public void setElementType(TypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-    
-    firePropertyChange(ELEMENT_TYPE, elementType, elementType = t);
+    elementType = t;
     if (t instanceof ArrayTypeName) {
       ArrayTypeName at = (ArrayTypeName)t;
-      Iterator  it = cells.iterator();
-      while (it.hasNext()) {
-        Object init = it.next();
+      for (Expression init : cells) {
         if (init instanceof ArrayInitializer) {
           ((ArrayInitializer)init).setElementType(at.getElementType());
         }

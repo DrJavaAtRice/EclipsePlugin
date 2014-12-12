@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package  edu.rice.cs.drjava.model.definitions;
 
@@ -41,31 +44,26 @@ import edu.rice.cs.drjava.model.GlobalEventNotifier;
 
 import javax.swing.text.BadLocationException;
 
-/**
- * Test the comment lines / uncomment lines functionality.
- * @version $Id$
- */
+/** Test the comment lines / uncomment lines functionality.
+  * @version $Id$
+  */
 public final class CommentTest extends DrJavaTestCase {
   protected DefinitionsDocument doc;
-  private Integer _indentLevel = new Integer(2);
-//  private Integer configIndent;
+  private Integer _indentLevel = Integer.valueOf(2);
   private GlobalEventNotifier _notifier;
 
-  /**
-   * Resents configuration settings and sets up the indent level so that we
-   * can predict the correct behavior for indenting.
-   */
+  /** Resents configuration settings and sets up the indent level so that we
+    * can predict the correct behavior for indenting.
+    */
   public void setUp() throws Exception {
     super.setUp();
     DrJava.getConfig().resetToDefaults();
     _notifier = new GlobalEventNotifier();
     doc = new DefinitionsDocument(_notifier);
-    DrJava.getConfig().setSetting(OptionConstants.INDENT_LEVEL,_indentLevel);
+    DrJava.getConfig().setSetting(OptionConstants.INDENT_INC,_indentLevel);
   }
 
-  /**
-   * Tests the Comment Out Line(s) command with a single line.
-   */
+  /** Tests the Comment Out Line(s) command with a single line. */
   public void testCommentOutSingleLine() throws BadLocationException {
     String text =
       "Here is some abritrary text that should be commented.\n" +
@@ -83,9 +81,7 @@ public final class CommentTest extends DrJavaTestCase {
     _assertContents("Only the second line should be wing-commented!", commented, doc);
   }
 
-  /**
-   * Tests the Comment Out Line(s) command with multiple lines.
-   */
+  /** Tests the Comment Out Line(s) command with multiple lines. */
   public void testCommentOutMultipleLines() throws BadLocationException {
     String text =
       "Here is some abritrary text that should be commented.\n" +
@@ -103,12 +99,14 @@ public final class CommentTest extends DrJavaTestCase {
     _assertContents("These lines should be wing-commented!", commented, doc);
   }
 
-  /**
-   * Tests the Uncomment Line(s) command with a single line.
-   * These sample lines should be ignored by the algorithm.
-   */
+  /** Tests the Uncomment Line(s) command with a single line.
+    * These sample lines should be ignored by the algorithm.
+    */
   public void testUncommentIgnoreSingleLine() throws BadLocationException {
-    String text =
+    doc.uncommentLines(0,0);
+    _assertContents("Uncommenting an empty document should not cause an error", "", doc);
+    
+    String text = 
       "Here is some abritrary text that should not be uncommented.\n" +
       "/* It is on multiple lines, and contains slashes // and other\n" +
       "* various */ obnoxious characters,\n" +
@@ -116,12 +114,13 @@ public final class CommentTest extends DrJavaTestCase {
 
     doc.insertString(0, text, null);
     _assertContents("Sample text is inserted improperly.", text, doc);
+    doc.uncommentLines(0,0);
+    _assertContents("Uncommenting an uncommented line should not cause an error or modify the text", text, doc);
     doc.uncommentLines(70, 75);
     _assertContents("These lines should be unchanged by uncomment!", text, doc);
   }
 
-  /**
-   * Tests the Uncomment Line(s) command with multiple lines.
+  /** Tests the Uncomment Line(s) command with multiple lines.
    * These sample lines should be ignored by the algorithm.
    */
   public void testUncommentIgnoreMultipleLines() throws BadLocationException {
@@ -137,8 +136,7 @@ public final class CommentTest extends DrJavaTestCase {
     _assertContents("These lines should be unchanged by uncomment!", text, doc);
   }
 
-  /**
-   * Tests the Uncomment Line(s) command with a single line.
+  /** Tests the Uncomment Line(s) command with a single line.
    * One of these sample lines should be uncommented and indented by the algorithm.
    */
   public void testUncommentSingleLine() throws BadLocationException {
@@ -163,8 +161,7 @@ public final class CommentTest extends DrJavaTestCase {
                     uncommented, doc);
   }
 
-  /**
-   * Tests the Uncomment Line(s) command with multiple lines.
+  /** Tests the Uncomment Line(s) command with multiple lines.
    * These sample lines should be uncommented and indented by the algorithm.
    */
   public void testUncommentMultipleLines() throws BadLocationException {

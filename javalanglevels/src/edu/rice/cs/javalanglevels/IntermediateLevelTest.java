@@ -1,47 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project:
- * http://sourceforge.net/projects/drjava/ or http://www.drjava.org/
- *
- * DrJava Open Source License
- * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu)
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
  * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Developed by:   Java Programming Languages Team
- *                 Rice University
- *                 http://www.cs.rice.edu/~javaplt/
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"),
- * to deal with the Software without restriction, including without 
- * limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to 
- * whom the Software is furnished to do so, subject to the following 
- * conditions:
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- *     - Redistributions of source code must retain the above copyright 
- *       notice, this list of conditions and the following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright 
- *       notice, this list of conditions and the following disclaimers in the
- *       documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor
- *       use the term "DrJava" as part of their names without prior written
- *       permission from the JavaPLT group.  For permission, write to
- *       javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
- * OTHER DEALINGS WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.javalanglevels;
 import edu.rice.cs.javalanglevels.parser.*;
@@ -49,6 +40,11 @@ import edu.rice.cs.javalanglevels.tree.*;
 import junit.framework.TestCase;
 import java.util.*;
 import java.io.*;
+import edu.rice.cs.plt.reflect.JavaVersion;
+import edu.rice.cs.plt.iter.*;
+import edu.rice.cs.plt.io.IOUtil;
+
+import static edu.rice.cs.javalanglevels.ElementaryLevelTest.lf;
 
 /**
  * This is a high-level test to make sure that taking an Intermediate Level file from
@@ -67,39 +63,44 @@ public class IntermediateLevelTest extends TestCase {
     directory = new File("testFiles/forIntermediateLevelTest");
     
   }
-
-  /*Test that files that are correct can be processed with no errors and result in the expected augmented file.
-   * Yay.dj1 is designed to be handled as a 1.4 file, so ignore it here.
-   */
+  
+  public void assertEquals(String s, Data answer, Data testValue) {
+//    if (! answer.equals(testValue)) 
+//      System.err.println("Unit test '" + s + "' failed. Expected '" + 
+//                         answer.getName() + "'.  Found '" + testValue.getName() + "'.");
+  }
+  
+  /** Test that files that are correct can be processed with no errors and result in the expected augmented file.
+    * Yay.dj1 is designed to be handled as a 1.4 file, so ignore it here.
+    */
   public void testSuccessful() {
     File[] testFiles = directory.listFiles(new FileFilter() {
-      public boolean accept(File pathName) {
-        return pathName.getAbsolutePath().endsWith(".dj1") && !pathName.getAbsolutePath().endsWith("Yay.dj1");  //we will check Yay.dj1 for 1.4 augmentation
-      }
+      public boolean accept(File pathName) { return pathName.getAbsolutePath().endsWith(".dj1"); }
     });
-
-    System.out.flush();
-    
-    LanguageLevelConverter llc = new LanguageLevelConverter("1.5");
+//    System.err.println("testFiles for IntermediateLevelTest.testSuccessful = " + Arrays.toString(testFiles));
+    LanguageLevelConverter llc = new LanguageLevelConverter();
     Pair<LinkedList<JExprParseException>, LinkedList<Pair<String, JExpressionIF>>> result;
-    result = llc.convert(testFiles);
-    
+    result = llc.convert(testFiles, new Options(JavaVersion.JAVA_6, IterUtil.make(new File("lib/buildlib/junit.jar"))));
+
+//     System.err.flush();
     assertEquals("should be no parse exceptions", new LinkedList<JExprParseException>(), result.getFirst());
-    
     assertEquals("should be no visitor exceptions", new LinkedList<Pair<String, JExpressionIF>>(), result.getSecond());
-    
-    /**Now make sure that the resulting java files are correct.*/
-    for(int i = 0; i < testFiles.length; i++) {
+          
+    /** Now make sure that the resulting java files are correct.*/
+    for (int i = 0; i < testFiles.length; i++) {
       File currFile = testFiles[i];
       String fileName = currFile.getAbsolutePath();
       fileName = fileName.substring(0, fileName.length() -4);
       File resultingFile = new File(fileName + ".java");
       File correctFile = new File(fileName + ".expected");
+      
+//      System.err.println("Testing file: " + fileName);
+      
       if (correctFile.exists()) {
         try {
           assertEquals("File " + currFile.getName() + " should have been parsed and augmented correctly.",
-                       readFileAsString(correctFile),
-                       readFileAsString(resultingFile));
+                       lf(IOUtil.toString(correctFile)),
+                       lf(IOUtil.toString(resultingFile)));
         }
         catch (IOException ioe) {
           fail(ioe.getMessage());
@@ -116,75 +117,57 @@ public class IntermediateLevelTest extends TestCase {
     
     File[] testFiles = directory.listFiles(new FileFilter() {
       public boolean accept(File pathName) {
+//        System.err.println("Testing " + pathName + " should break");
         return pathName.getAbsolutePath().endsWith(".dj1");
+//        return pathName.getAbsolutePath().endsWith("BadClass.dj1");
       }});
-      
+//    System.err.println("In testShouldBeErrors, testFiles = " + Arrays.toString(testFiles)); 
     LanguageLevelConverter llc;
     Pair<LinkedList<JExprParseException>, LinkedList<Pair<String, JExpressionIF>>> result;
-    for (int i = 0; i<testFiles.length; i++) {
-      llc = new LanguageLevelConverter("1.5");
-      result = llc.convert(new File[] {testFiles[i]});
-      assertTrue("should be parse exceptions or visitor exceptions in file " + testFiles[i].getName(), !result.getFirst().isEmpty() || !result.getSecond().isEmpty());
+    for (int i = 0; i < testFiles.length; i++) {
+//      System.err.println("TESTING " + testFiles[i]);
+      LanguageLevelConverter llc1 = new LanguageLevelConverter();
+//      System.err.println("Checking " + testFiles[i]);
+      result = llc1.convert(new File[] {testFiles[i]}, new Options(JavaVersion.JAVA_6, EmptyIterable.<File>make()));
+      assertTrue("should be parse exceptions or visitor exceptions in file " + testFiles[i].getName(), 
+                 ! result.getFirst().isEmpty() || ! result.getSecond().isEmpty());
     }
     
     /* Take care of the "references" directory */
-    llc = new LanguageLevelConverter("1.5");
+    LanguageLevelConverter llc2 = new LanguageLevelConverter();
     File f = new File(new File(directory, "references"), "ReferencingClass.dj1");
-    result = llc.convert(new File[] { f });
-    assertTrue("should be parse exceptions or visitor exceptions in file " + f.getName(), !result.getFirst().isEmpty() || !result.getSecond().isEmpty());
+    result = llc2.convert(new File[] { f }, new Options(JavaVersion.JAVA_6, EmptyIterable.<File>make()));
+    assertTrue("should be parse exceptions or visitor exceptions in file " + f.getName(), 
+               ! result.getFirst().isEmpty() || ! result.getSecond().isEmpty());
   }
   
   
-  /*Make sure that 1.4 augmentation rules are correctly followed for Yay.dj1*/
+  /** Make sure that 1.4 augmentation rules are correctly followed for Yay.dj1*/
   public void test14Augmentation() {
-        File[] arrayF = new File[]{ new File("testFiles/forIntermediateLevelTest/Yay.dj1")};
-      LanguageLevelConverter llc = new LanguageLevelConverter("1.4");
-      Pair<LinkedList<JExprParseException>, LinkedList<Pair<String, JExpressionIF>>> result;
-      result = llc.convert(arrayF);
-      assertEquals("should be no parse exceptions", new LinkedList<JExprParseException>(), result.getFirst());
-      
-      assertEquals("should be no visitor exceptions", new LinkedList<Pair<String, JExpressionIF>>(), result.getSecond());
-      
-      
-      File currFile = new File("testFiles/forIntermediateLevelTest/Yay.dj1");
-      String fileName = currFile.getAbsolutePath();
-      fileName = fileName.substring(0, fileName.length() -4);
-      File resultingFile = new File(fileName + ".java");
-      File correctFile = new File(fileName + ".expected");
-        
-      try {
-        assertEquals("File " + currFile.getName() + " should have been parsed and augmented correctly.",
-                     readFileAsString(correctFile),
-                     readFileAsString(resultingFile));
-        }
-      catch (IOException ioe) {
-        fail(ioe.getMessage());
-        // let JUnit throw the exception
-      }
-  }
-  
-
-  
-  
-  /**
-   * Read the entire contents of a file and return them.  Copied from DrJava's FileOps.
-   */
-  public static String readFileAsString(final File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader(file));
-    StringBuffer buf = new StringBuffer();
-
-    while (reader.ready()) {
-//      char c = (char) reader.read();
-//      buf.append(c);
-      String s = reader.readLine();
-      buf.append(s);
-    }
+    File[] arrayF = new File[]{ new File("testFiles/forIntermediateLevelTest/Yay.dj1")};
+    LanguageLevelConverter llc = new LanguageLevelConverter();
+    Pair<LinkedList<JExprParseException>, LinkedList<Pair<String, JExpressionIF>>> result;
+    assert llc._newSDs != null;
+    result = llc.convert(arrayF, new Options(JavaVersion.JAVA_6, EmptyIterable.<File>make()));
+    assertEquals("should be no parse exceptions", new LinkedList<JExprParseException>(), result.getFirst());
     
-
-    reader.close();
-    return buf.toString();
+    assertEquals("should be no visitor exceptions", new LinkedList<Pair<String, JExpressionIF>>(), result.getSecond());
+    
+    
+    File currFile = new File("testFiles/forIntermediateLevelTest/Yay.dj1");
+    String fileName = currFile.getAbsolutePath();
+    fileName = fileName.substring(0, fileName.length() -4);
+    File resultingFile = new File(fileName + ".java");
+    File correctFile = new File(fileName + ".expected");
+    
+    try {
+      assertEquals("File " + currFile.getName() + " should have been parsed and augmented correctly.",
+                   lf(IOUtil.toString(correctFile)),
+                   lf(IOUtil.toString(resultingFile)));
+    }
+    catch (IOException ioe) {
+      fail(ioe.getMessage());
+      // let JUnit throw the exception
+    }
   }
-
-  
-  
 }

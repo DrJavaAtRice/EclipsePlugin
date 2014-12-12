@@ -1,40 +1,42 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.junit;
 
 import java.io.IOException;
-import java.io.File;
 import java.util.List;
 import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
 import edu.rice.cs.util.text.SwingDocument;
@@ -46,71 +48,71 @@ public interface JUnitModel {
   
   /** set the forceTestSuffix flag that forces class names in projects to end in "Test */
   public void setForceTestSuffix(boolean b);
-
+  
   //-------------------------- Listener Management --------------------------//
-
+  
   /** Add a JUnitListener to the model.
-   *  @param listener a listener that reacts to JUnit events
-   */
+    * @param listener a listener that reacts to JUnit events
+    */
   public void addListener(JUnitListener listener);
-
-  /** Remove a JUnitListener from the model.  If the listener is not currently listening to this 
-   *  model, this method has no effect.
-   * @param listener a listener that reacts to JUnit events
-   */
+  
+  /** Removes a JUnitListener from the model.  If the listener is not installed, this method has no effect.
+    * @param listener a listener that reacts to JUnit events
+    */
   public void removeListener(JUnitListener listener);
-
+  
   /** Removes all JUnitListeners from this model. */
   public void removeAllListeners();
-
+  
   //-------------------------------- Triggers --------------------------------//
-
+  
   /** This is used by test cases and perhaps other things.  We should kill it. */
   public SwingDocument getJUnitDocument();
-
+  
   /** Creates a JUnit test suite over all currently open documents and runs it.  If the class file 
-   *  associated with a file is not a test case, it will be ignored.  Synchronized against the compiler 
-   *  model to prevent testing and compiling at the same time, which would create invalid results.
-   */
+    * associated with a file is not a test case, it will be ignored.  Synchronized against the compiler 
+    * model to prevent testing and compiling at the same time, which would create invalid results.
+    */
   public void junitAll();
-
+  
   /** Creates a JUnit test suite over all currently open project documents and runs it.  If 
-   *  the class file associated with a file is not a test case, it will be ignored.  Synchronized 
-   *  against the compiler model to prevent testing and compiling at the same time, which would 
-   *  create invalid results.
-   */
+    * the class file associated with a file is not a test case, it will be ignored.  Synchronized 
+    * against the compiler model to prevent testing and compiling at the same time, which would 
+    * create invalid results.
+    */
   public void junitProject();
-
+  
   /** Runs JUnit over a list of documents.  Synchronized against the compiler model to prevent 
-   *  testing and compiling at the same time, which would create invalid results.
-   *  @param lod the list of documents that are to be run through JUnit testing.
-   */
+    * testing and compiling at the same time, which would create invalid results.
+    * @param lod the list of documents that are to be run through JUnit testing.
+    */
   public void junitDocs(List<OpenDefinitionsDocument> lod);
   
   /** Runs JUnit over a single document.  Synchronized against the compiler model to prevent testing
-   *  and compiling at the same time, which would create invalid results.
-   *  @param doc the document to be run under JUnit
-   */
+    * and compiling at the same time, which would create invalid results.
+    * @param doc the document to be run under JUnit
+    */
   public void junit(OpenDefinitionsDocument doc) throws ClassNotFoundException, IOException;
-
-  /** Forwards the classnames and files to the test manager to test all of them.
-   *  @param qualifiedClassnames a list of all the qualified class names to test.
-   *  @param files a list of their source files in the same order as qualified class names.
-   */
-  public void junitClasses(List<String> qualifiedClassnames, List<File> files);
   
+//  /** Forwards the classnames and files to the test manager to test all of them.
+//    * @param qualifiedClassnames a list of all the qualified class names to test.
+//    * @param files a list of their source files in the same order as qualified class names.
+//    */
+//  public void junitClasses(List<String> qualifiedClassnames, List<File> files);
+//  
   //---------------------------- Model Callbacks ----------------------------//
   
   /** Cleans up an attempt JUnit test exeuction when suitable test code is not available.
-   *  @param isTestAll whether or not it was a use of the test all button
-   */
-  public void nonTestCase(boolean isTestAll);
+    * @param isTestAll whether or not it was a use of the test all button
+    * @param didCompileFail whether or not a compile before this JUnit attempt failed
+    */
+  public void nonTestCase(boolean isTestAll, boolean didCompileFail);
   
   //----------------------------- Error Results -----------------------------//
-
+  
   /** Gets the JUnitErrorModel, which contains error info for the last test run. */
   public JUnitErrorModel getJUnitErrorModel();
-
+  
   /** Resets the junit error state to have no errors. */
   public void resetJUnitErrors();
   

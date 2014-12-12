@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model;
 
@@ -40,9 +43,8 @@ import java.io.IOException;
 import java.util.Arrays;
 
 import edu.rice.cs.util.FileOpenSelector;
-import edu.rice.cs.util.Log;
+import edu.rice.cs.util.FileOps;
 import edu.rice.cs.util.OperationCanceledException;
-import edu.rice.cs.util.StringOps;
 import edu.rice.cs.util.swing.Utilities;
 
 /** Test functions of the single display model.
@@ -51,8 +53,6 @@ import edu.rice.cs.util.swing.Utilities;
 public class SingleDisplayModelTest extends GlobalModelTestCase {
 
   // _log is inherited from GlobalModelTestCase
-  
-  private Object _readyLock = new Object(); // lock used for wait/notify on interpreterReady event
   
   /** Get the instance of the SingleDisplayModel.*/
   private DefaultGlobalModel getSDModel() { return  _model; }
@@ -192,7 +192,7 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
     // Check for proper events
     SDTestListener listener = new SDTestListener() {
       public void fileOpened(OpenDefinitionsDocument doc) {
-        File file = null;
+        File file = FileOps.NULL_FILE;
         try { file = doc.getFile(); }
         catch (FileMovedException fme) {
           // We know file should exist
@@ -232,14 +232,8 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
       public synchronized void newFileCreated(OpenDefinitionsDocument doc) { newCount++; }
       public synchronized void fileClosed(OpenDefinitionsDocument doc) { closeCount++; }
       public synchronized void activeDocumentChanged(OpenDefinitionsDocument doc) { switchCount++; }
-      public synchronized void interpreterReady(File wd) {  // closing all files calls resetInteractions
-//        Utilities.show("interpreterReady(" + wd + ") called");
-//        Utilities.show("Traceback is:\n" + StringOps.getStackTrace());
-        interpreterReadyCount++;
-        synchronized(_readyLock) { _readyLock.notify(); }
-      }
+      public synchronized void interpreterReady(File wd) { interpreterReadyCount++; }
     };
-    
     _model.addListener(listener);
     
     // Set up two documents
@@ -250,6 +244,7 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
     assertNumOpenDocs(2);
     listener.assertNewCount(1);
     listener.assertSwitchCount(1);
+    listener.assertInterpreterResettingCount(0);
 
     // Close one
     _model.closeFile(_model.getActiveDocument());
@@ -257,6 +252,7 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
     listener.assertCloseCount(1);
     listener.assertAbandonCount(1);
     listener.assertSwitchCount(2);
+    listener.assertInterpreterResettingCount(0);
     assertActiveDocument(doc1);
     assertContents(FOO_TEXT, _model.getActiveDocument());
 
@@ -264,11 +260,13 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
     _model.closeFile(_model.getActiveDocument());
     listener.assertCloseCount(2);
     listener.assertAbandonCount(2);
+    listener.assertInterpreterResettingCount(0);
 
     // Ensure a new document was created
     assertNumOpenDocs(1);
     listener.assertNewCount(2);
     listener.assertSwitchCount(3);
+    listener.assertInterpreterResettingCount(0);
     assertLength(0, _model.getActiveDocument());
     
     _log.log("Starting second phase of testCloseFiles");
@@ -279,27 +277,24 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
     doc2 = setupDocument(BAR_TEXT);
     assertNumOpenDocs(2);
     listener.assertNewCount(3);
+    listener.assertInterpreterResettingCount(0);
     
     _log.log("Just before calling _model.closeAllFiles()");
-
     // Close all files, ensure new one was created
-    _model.closeAllFiles();
+    Utilities.invokeAndWait(new Runnable() { public void run() { _model.closeAllFiles(); } });
     Utilities.clearEventQueue();
+    Utilities.clearEventQueue();
+    // we want a ready notification here; closeAllFiles is supposed to reset
+    // the interactions pane, but the interpreter is supposed to be in a fresh running state
+    // so it should immediately say "ready" without resetting the interpreter itself
+    listener.assertInterpreterReadyCount(1);
     assertNumOpenDocs(1);
-    assertLength(0, _model.getActiveDocument()); 
+    assertLength(0, _model.getActiveDocument());
     
-    // wait for interpreter to be ready
-    try {
-      synchronized(_readyLock) {
-        if (listener.getInterpreterReadyCount() == 0) _readyLock.wait(10000);  // intentionally not a while 
-      }
-    }
-    catch(InterruptedException e) { fail("Wait for interpreterReady event was interrupted by " + e); }
-    listener.assertInterpreterReadyCount(1);  
     listener.assertNewCount(4);
     listener.assertCloseCount(4);
     listener.assertAbandonCount(4);
-
+    
     _model.removeListener(listener);
 //    _log.log("testCloseFiles completed");
   }
@@ -308,31 +303,42 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
   public void testCompleteFilename() throws BadLocationException, IOException, OperationCanceledException, 
     AlreadyOpenException {
     // Untitled
-    OpenDefinitionsDocument doc = _model.getActiveDocument();
-    assertEquals("untitled display filename", "(Untitled)", doc.getCompletePath());
-
-    // Ends in ".java"
-    File file = File.createTempFile("DrJava-filename-test", ".java", _tempDir).getCanonicalFile();
-    file.deleteOnExit();
-    String name = file.getAbsolutePath();
-    doc = _model.openFile(new FileSelector(file));
-            
-    assertEquals(".java display filename", name, doc.getCompletePath());
-
-    // Doesn't contain ".java"
-    file = File.createTempFile("DrJava-filename-test", ".txt", _tempDir).getCanonicalFile();
-    file.deleteOnExit();
-    name = file.getAbsolutePath();
-    doc = _model.openFile(new FileSelector(file));
-    assertEquals(".txt display filename", name, doc.getCompletePath());
-
-    // Modified File
-    file = File.createTempFile("DrJava-filename-test", ".java", _tempDir).getCanonicalFile();
-    file.deleteOnExit();
-    name = file.getAbsolutePath();
-    doc = _model.openFile(new FileSelector(file));
-    changeDocumentText("foo", doc);
-    assertEquals(".java.txt display filename", name + " *", doc.getCompletePath());
+    Utilities.invokeAndWait(new Runnable() {
+      public void run() {
+        try {
+          OpenDefinitionsDocument doc = _model.getActiveDocument();
+          assertEquals("untitled display filename", "(Untitled)", doc.getCompletePath());
+          
+          // Ends in ".java"
+          File file1 = File.createTempFile("DrJava-filename-test", ".java", _tempDir).getCanonicalFile();
+          file1.deleteOnExit();
+          String name = file1.getAbsolutePath();
+          doc = _model.openFile(new FileSelector(file1));
+          
+          assertEquals(".java display filename", name, doc.getCompletePath());
+          
+          // Doesn't contain ".java"
+          File file2 = File.createTempFile("DrJava-filename-test", ".txt", _tempDir).getCanonicalFile();
+          file2.deleteOnExit();
+          name = file2.getAbsolutePath();
+          
+          doc = _model.openFile(new FileSelector(file2));
+          assertEquals(".txt display filename", name, doc.getCompletePath());
+          
+          // Modified File
+          File file3 = File.createTempFile("DrJava-filename-test", ".java", _tempDir).getCanonicalFile();
+          file3.deleteOnExit();
+          name = file3.getAbsolutePath();
+          doc = _model.openFile(new FileSelector(file3));
+          changeDocumentText("foo", doc);
+          assertEquals(".java.txt display filename", name + " *", doc.getCompletePath());
+        }
+        catch (Exception e) {
+          // should never happen
+          fail("testCompleteFilename threw exception.  Traceback: \n" + e);
+        }
+      }
+    });
     _log.log("testDisplayFilename completed");
   }
   
@@ -341,7 +347,7 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
     String txt = "This is some test text";
     File f = writeToNewTempFile(txt);
     OpenDefinitionsDocument doc1 = _model.openFile(new FileSelector(f));
-    OpenDefinitionsDocument doc2 = _model.newFile();
+    @SuppressWarnings("unused") OpenDefinitionsDocument doc2 = _model.newFile();
     f.delete();
     _model.closeFile(doc1);
      _log.log("testDeleteFileWhileOpen completed");
@@ -369,7 +375,7 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
     };
     _model.openFiles(fos);
     _log.log("Opened files " + Arrays.toString(files));
-    OpenDefinitionsDocument doc = _model.getOpenDefinitionsDocuments().get(5);
+    OpenDefinitionsDocument doc = _model.getSortedOpenDefinitionsDocuments().get(5);
     _model.setActiveDocument(doc);
     _log.log("Active document is: " + doc);
     files[5].delete();
@@ -395,6 +401,10 @@ public class SingleDisplayModelTest extends GlobalModelTestCase {
 
     public void activeDocumentChanged(OpenDefinitionsDocument doc) {
       fail("activeDocumentChanged fired unexpectedly");
+    }
+    
+    public void activeDocumentRefreshed(OpenDefinitionsDocument doc) {
+      fail("activeDocumentRefreshed fired unexpectedly");
     }
     
     public int getInterpreterReadyCount() { return interpreterReadyCount; }

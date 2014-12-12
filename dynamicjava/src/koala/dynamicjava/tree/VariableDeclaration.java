@@ -37,32 +37,7 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/05/11
  */
 
-public class VariableDeclaration extends Node {
-  /**
-   * The final property name
-   */
-  public final static String FINAL = "final";
-  
-  /**
-   * The type property name
-   */
-  public final static String TYPE = "type";
-  
-  /**
-   * The name property name
-   */
-  public final static String NAME = "name";
-  
-  /**
-   * The initializer property name
-   */
-  public final static String INITIALIZER = "initializer";
-  
-  /**
-   * Whether this variable is final
-   */
-  private boolean finalVariable;
-  
+public class VariableDeclaration extends Declaration {
   /**
    * The type of this variable
    */
@@ -80,37 +55,32 @@ public class VariableDeclaration extends Node {
   
   /**
    * Creates a new variable declaration
-   * @param fin    is this variable final?
+   * @param mods   the modifiers
    * @param type   the type of this variable
    * @param name   the name of this variable
    * @param init   the initializer
    * @exception IllegalArgumentException if name is null or type is null
    */
-  public VariableDeclaration(boolean fin, TypeName type, String name, Expression init) {
-    this(fin, type, name, init, null, 0, 0, 0, 0);
+  public VariableDeclaration(ModifierSet mods, TypeName type, String name, Expression init) {
+    this(mods, type, name, init, SourceInfo.NONE);
   }
   
   /**
    * Creates a new variable declaration
-   * @param fin    is this variable final?
+   * @param mods   the modifiers
    * @param type   the type of this variable
    * @param name   the name of this variable
    * @param init   the initializer
-   * @param fn     the filename
-   * @param bl     the begin line
-   * @param bc     the begin column
-   * @param el     the end line
-   * @param ec     the end column
    * @exception IllegalArgumentException if name is null or type is null
    */
-  public VariableDeclaration(boolean fin, TypeName type, String name, Expression init,
-                             String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public VariableDeclaration(ModifierSet mods, TypeName type, String name, Expression init,
+                             SourceInfo si) {
+    super(mods, si);
     
-    if (type == null) throw new IllegalArgumentException("type == null");
+    // TODO: restore this check? -- we're allowing an inferred type for now
+    //if (type == null) throw new IllegalArgumentException("type == null");
     if (name == null) throw new IllegalArgumentException("name == null");
     
-    finalVariable = fin;
     this.type     = type;
     this.name     = name;
     initializer   = init;
@@ -121,20 +91,6 @@ public class VariableDeclaration extends Node {
           (((ArrayTypeName)type).getElementType());
       }
     }
-  }
-  
-  /**
-   * Returns true if this variable is final
-   */
-  public boolean isFinal() {
-    return finalVariable;
-  }
-  
-  /**
-   * Sets the final flag
-   */
-  public void setFinal(boolean b) {
-    firePropertyChange(FINAL, finalVariable, finalVariable = b);
   }
   
   /**
@@ -150,8 +106,7 @@ public class VariableDeclaration extends Node {
    */
   public void setType(TypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-    
-    firePropertyChange(TYPE, type, type = t);
+    type = t;
   }
   
   /**
@@ -167,8 +122,7 @@ public class VariableDeclaration extends Node {
    */
   public void setName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-    
-    firePropertyChange(NAME, name, name = s);
+    name = s;
   }
   
   /**
@@ -182,7 +136,7 @@ public class VariableDeclaration extends Node {
    * Sets the initializer
    */
   public void setInitializer(Expression e) {
-    firePropertyChange(INITIALIZER, initializer, initializer = e);
+    initializer = e;
   }
   
   /**
@@ -196,6 +150,6 @@ public class VariableDeclaration extends Node {
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+isFinal()+" "+getType()+" "+getName()+" "+getInitializer()+")";
+    return "("+getClass().getName()+": "+getModifiers()+" "+getType()+" "+getName()+" "+getInitializer()+")";
   }
 }

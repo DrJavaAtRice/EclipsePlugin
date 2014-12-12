@@ -41,16 +41,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class WhileStatement extends Statement implements ContinueTarget {
   /**
-   * The condition property name
-   */
-  public final static String CONDITION = "condition";
-  
-  /**
-   * The body property name
-   */
-  public final static String BODY = "body";
-  
-  /**
    * The condition to evaluate at each loop
    */
   private Expression condition;
@@ -72,23 +62,18 @@ public class WhileStatement extends Statement implements ContinueTarget {
    * @exception IllegalArgumentException if cond is null or body is null
    */
   public WhileStatement(Expression cond, Node body) {
-    this(cond, body, null, 0, 0, 0, 0);
+    this(cond, body, SourceInfo.NONE);
   }
   
   /**
    * Creates a new while statement
    * @param cond  the condition to evaluate at each loop
    * @param body  the body
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if cond is null or body is null
    */
   public WhileStatement(Expression cond, Node body,
-                        String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                        SourceInfo si) {
+    super(si);
     
     if (cond == null) throw new IllegalArgumentException("cond == null");
     if (body == null) throw new IllegalArgumentException("body == null");
@@ -111,8 +96,7 @@ public class WhileStatement extends Statement implements ContinueTarget {
    */
   public void setCondition(Expression e) {
     if (e == null) throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(CONDITION, condition, condition = e);
+    condition = e;
   }
   
   /**
@@ -128,8 +112,7 @@ public class WhileStatement extends Statement implements ContinueTarget {
    */
   public void setBody(Node node) {
     if (node == null) throw new IllegalArgumentException("node == null");
-    
-    firePropertyChange(BODY, body, body = node);
+    body = node;
   }
   
   /**

@@ -1,59 +1,56 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model;
 
 import edu.rice.cs.drjava.model.definitions.InvalidPackageException; 
-
+import edu.rice.cs.util.swing.Utilities;
 import java.io.*;
 
 import javax.swing.text.BadLocationException;
 
-/**
- * Tests to ensure that compilation succeeds when expected.
- * 
- * Every test in this class is run for *each* of the compilers that is available.
- *
- * @version $Id$
- */
+/** Tests to ensure that compilation succeeds when expected.  Every test in this class is run for *each* of the
+  * available compilers.
+  * @version $Id$
+  */
 public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSuccessTestCase {
 
-  /**
-   * Tests calling compileAll with different source roots works.
+  /** Tests calling compileAll with different source roots works.
    */
-  public void testCompileAllDifferentSourceRoots()
-    throws BadLocationException, IOException, InterruptedException
-  {
+  public void testCompileAllDifferentSourceRoots() throws BadLocationException, IOException, InterruptedException {
 //    System.out.println("testCompileAllDifferentSourceRoots()");
     File aDir = new File(_tempDir, "a");
     File bDir = new File(_tempDir, "b");
@@ -61,14 +58,17 @@ public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSucce
     bDir.mkdir();
     OpenDefinitionsDocument doc = setupDocument(FOO_TEXT);
     final File file = new File(aDir, "DrJavaTestFoo.java");
-    doc.saveFile(new FileSelector(file));
+    saveFile(doc, new FileSelector(file));
     OpenDefinitionsDocument doc2 = setupDocument(BAR_TEXT);
     final File file2 = new File(bDir, "DrJavaTestBar.java");
-    doc2.saveFile(new FileSelector(file2));
+    saveFile(doc2, new FileSelector(file2));
     
-    CompileShouldSucceedListener listener = new CompileShouldSucceedListener(false);
+    CompileShouldSucceedListener listener = new CompileShouldSucceedListener();
     _model.addListener(listener);
     _model.getCompilerModel().compileAll();
+    
+    Utilities.clearEventQueue();
+    
     if (_model.getCompilerModel().getNumErrors() > 0) {
       fail("compile failed: " + getCompilerErrorString());
     }
@@ -77,17 +77,14 @@ public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSucce
 
     // Make sure .class exists for both files
     File compiled = classForJava(file, "DrJavaTestFoo");
-    assertTrue(_name() + "Foo Class file doesn't exist after compile",
-               compiled.exists());
+    assertTrue(_name() + "Foo Class file doesn't exist after compile", compiled.exists());
     File compiled2 = classForJava(file2, "DrJavaTestBar");
-    assertTrue(_name() + "Bar Class file doesn't exist after compile",
-               compiled2.exists());
+    assertTrue(_name() + "Bar Class file doesn't exist after compile", compiled2.exists());
     _model.removeListener(listener);
   }
   
 
-  /**
-   * Test that one compiled file can depend on the other and that when a keyword
+  /** Test that one compiled file can depend on the other and that when a keyword
    * is part of a field name, the file will compile.
    * We compile DrJavaTestFoo and then DrJavaTestFoo2 (which extends
    * DrJavaTestFoo). This shows that the compiler successfully found
@@ -102,10 +99,11 @@ public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSucce
     OpenDefinitionsDocument doc1 = setupDocument(FOO_PACKAGE_AS_PART_OF_FIELD);
     final File fooFile = new File(_tempDir, "DrJavaTestFoo.java");
     
-    doc1.saveFile(new FileSelector(fooFile));
-    CompileShouldSucceedListener listener = new CompileShouldSucceedListener(false);
+    saveFile(doc1, new FileSelector(fooFile));
+    CompileShouldSucceedListener listener = new CompileShouldSucceedListener();
     _model.addListener(listener);
-    doc1.startCompile();
+    testStartCompile(doc1);
+    listener.waitCompileDone();
     if (_model.getCompilerModel().getNumErrors() > 0) {
       fail("compile failed: " + getCompilerErrorString());
     }
@@ -114,11 +112,12 @@ public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSucce
 
     OpenDefinitionsDocument doc2 = setupDocument(FOO2_EXTENDS_FOO_TEXT);
     final File foo2File = new File(_tempDir, "DrJavaTestFoo2.java");
-    doc2.saveFile(new FileSelector(foo2File));
+    saveFile(doc2, new FileSelector(foo2File));
 
-    CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener(false);
+    CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener();
     _model.addListener(listener2);
-    doc2.startCompile();
+    testStartCompile(doc2);
+    listener2.waitCompileDone();
     if (_model.getCompilerModel().getNumErrors() > 0) {
       fail("compile failed: " + getCompilerErrorString());
     }
@@ -132,8 +131,7 @@ public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSucce
     _model.removeListener(listener2);
   }
 
-  /**
-   * Test that one compiled file can depend on the other.
+  /** Test that one compiled file can depend on the other.
    * We compile a.DrJavaTestFoo and then b.DrJavaTestFoo2 (which extends
    * DrJavaTestFoo). This shows that the compiler successfully found
    * DrJavaTestFoo2 when compiling DrJavaTestFoo.
@@ -152,15 +150,17 @@ public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSucce
     OpenDefinitionsDocument doc1 = setupDocument("package a;\n" + "public " + FOO_TEXT);
     final File fooFile = new File(aDir, "DrJavaTestFoo.java");
 //    System.err.println("fooFile = " + fooFile.getCanonicalPath());
-    doc1.saveFile(new FileSelector(fooFile));
+    saveFile(doc1, new FileSelector(fooFile));
     // _packageName must be updated on save
     assertEquals("Check package name of doc1", "a", ((AbstractGlobalModel.ConcreteOpenDefDoc) doc1)._packageName); 
 //    System.err.println("doc1 = " + doc1);
 //    System.err.println("doc1 has source root " + doc1.getSourceRoot());
-    CompileShouldSucceedListener listener = new CompileShouldSucceedListener(false);
+    CompileShouldSucceedListener listener = new CompileShouldSucceedListener();
     _model.addListener(listener);
     
-    doc1.startCompile();
+    testStartCompile(doc1);
+    
+    listener.waitCompileDone();
     if (_model.getCompilerModel().getNumErrors() > 0) {
       fail("compile failed: " + getCompilerErrorString());
     }
@@ -171,15 +171,16 @@ public final class GlobalModelCompileSuccessTest extends GlobalModelCompileSucce
       setupDocument("package b;\nimport a.DrJavaTestFoo;\n" + FOO2_EXTENDS_FOO_TEXT);
     final File foo2File = new File(bDir, "DrJavaTestFoo2.java");
 //    System.err.println("foo2File = " + foo2File.getCanonicalPath());
-    doc2.saveFile(new FileSelector(foo2File));
+    saveFile(doc2, new FileSelector(foo2File));
     // _packageName must be updated on save
     assertEquals("Check packangeName of doc2", "b", ((AbstractGlobalModel.ConcreteOpenDefDoc) doc2)._packageName); 
 //    System.err.println("doc2 = " + doc2);
 
-    CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener(false);
+    CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener();
     _model.addListener(listener2);
     
-    doc2.startCompile();
+    testStartCompile(doc2);
+    listener2.waitCompileDone();
     if (_model.getCompilerModel().getNumErrors() > 0) {
       fail("compile failed: " + getCompilerErrorString());
     }

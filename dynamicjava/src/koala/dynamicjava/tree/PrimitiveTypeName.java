@@ -28,8 +28,6 @@
 
 package koala.dynamicjava.tree;
 
-import koala.dynamicjava.tree.visitor.*;
-
 /**
  * This class represents the primitive type nodes of the syntax tree
  *
@@ -39,11 +37,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public abstract class PrimitiveTypeName extends TypeName {
   /**
-   * The value property name
-   */
-  public final static String VALUE = "value";
-  
-  /**
    * The value of the node
    */
   private Class<?> value;
@@ -51,15 +44,10 @@ public abstract class PrimitiveTypeName extends TypeName {
   /**
    * Initializes the type
    * @param val   the value of this type
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if val is null
    */
-  protected PrimitiveTypeName(Class<?> val, String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  protected PrimitiveTypeName(Class<?> val, SourceInfo si) {
+    super(si);
     
     if (val == null) throw new IllegalArgumentException("val == null");
     
@@ -69,7 +57,7 @@ public abstract class PrimitiveTypeName extends TypeName {
   /**
    * Returns the value of this node
    */
-  public Class<?> getValue() {
+  @Deprecated public Class<?> getValue() {
     return value;
   }
   
@@ -79,18 +67,10 @@ public abstract class PrimitiveTypeName extends TypeName {
    */
   public void setValue(Class<?> c) {
     if (c == null) throw new IllegalArgumentException("c == null");
-    
-    firePropertyChange(VALUE, value, value = c);
+    value = c;
   }
   
   /**
-   * Allows a visitor to traverse the tree
-   * @param visitor the visitor to accept
-   */
-  public <T> T acceptVisitor(Visitor<T> visitor) {
-    return visitor.visit(this);
-  }
-     /**
    * Implementation of toString for use in unit testing
    */
   public String toString() {

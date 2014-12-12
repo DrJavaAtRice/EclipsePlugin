@@ -1,62 +1,63 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.text.JTextComponent;
-import javax.swing.text.Keymap;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.NoSuchElementException;
 
 import edu.rice.cs.drjava.DrJava;
 import edu.rice.cs.drjava.config.OptionConstants;
 import edu.rice.cs.drjava.model.ClipboardHistoryModel;
-import edu.rice.cs.util.Lambda;
+import edu.rice.cs.plt.lambda.Lambda;
+import edu.rice.cs.util.StringOps;
+import edu.rice.cs.util.swing.SwingFrame;
+import edu.rice.cs.util.swing.Utilities;
 
 /** Frame with history of clipboard. */
-public class ClipboardHistoryFrame extends JFrame {
+public class ClipboardHistoryFrame extends SwingFrame {
   /** Interface for an action to be performed when the user closes the frame,
    *  either by using "OK" or "Cancel".
    */
-  public static interface CloseAction extends Lambda<Object, String> {
-    public Object apply(String selected);
-  }
+  public static interface CloseAction extends Lambda<String, Object> { }
   
   /** Class to save the frame state, i.e. location and dimensions.*/
   public static class FrameState {
@@ -115,7 +116,7 @@ public class ClipboardHistoryFrame extends JFrame {
   private JButton _cancelButton;
 
   /** List with history. */
-  private JList _historyList;
+  private JList<HistoryString> _historyList;
 
   /** Text area for that previews the history content. */
   private JTextArea _previewArea;
@@ -134,7 +135,7 @@ public class ClipboardHistoryFrame extends JFrame {
    *  @param title dialog title
    *  @param chm the clipboard history model
    *  @param okAction the action to perform when OK is clicked
-   *  @param okAction the action to perform when Cancel is clicked
+   *  @param cancelAction the action to perform when Cancel is clicked
    */
   public ClipboardHistoryFrame(MainFrame owner, String title, ClipboardHistoryModel chm,
                                CloseAction okAction, CloseAction cancelAction) {
@@ -144,6 +145,7 @@ public class ClipboardHistoryFrame extends JFrame {
     _okAction = okAction;
     _cancelAction = cancelAction;
     init();
+    initDone();  // call mandated by SwingFrame contract
   }
   
   /** Returns the last state of the frame, i.e. the location and dimension.
@@ -156,7 +158,7 @@ public class ClipboardHistoryFrame extends JFrame {
    */
   public void setFrameState(FrameState ds) {
     _lastState = ds;
-    if (_lastState!=null) {
+    if (_lastState != null) {
       setSize(_lastState.getDimension());
       setLocation(_lastState.getLocation());
       validate();
@@ -169,17 +171,17 @@ public class ClipboardHistoryFrame extends JFrame {
   public void setFrameState(String s) {
     try { _lastState = new FrameState(s); }
     catch(IllegalArgumentException e) { _lastState = null; }
-    if (_lastState!=null) {
+    if (_lastState != null) {
       setSize(_lastState.getDimension());
       setLocation(_lastState.getLocation());
       validate();
     }
     else {
-      Dimension parentDim = (_mainFrame!=null)?(_mainFrame.getSize()):getToolkit().getScreenSize();
+      Dimension parentDim = (_mainFrame != null) ? _mainFrame.getSize() : getToolkit().getScreenSize();
       int xs = (int)parentDim.getWidth()/3;
       int ys = (int)parentDim.getHeight()/4;
       setSize(Math.max(xs,400), Math.max(ys, 400));
-      MainFrame.setPopupLoc(this, _mainFrame);
+      Utilities.setPopupLoc(this, _mainFrame);
     }
   }
 
@@ -191,14 +193,8 @@ public class ClipboardHistoryFrame extends JFrame {
     return _buttonPressed;
   }
 
-  /** Initialize the frame.
-   */
+  /** Initialize the frame. */
   private void init() {
-    addWindowListener(new java.awt.event.WindowAdapter() {
-      public void windowClosing(WindowEvent winEvt) {
-        cancelButtonPressed();
-      }
-    });
     addComponentListener(new java.awt.event.ComponentAdapter() {
       public void componentResized(ComponentEvent e) {
         validate();
@@ -217,7 +213,7 @@ public class ClipboardHistoryFrame extends JFrame {
       }
     });
 
-    _historyList = new JList();
+    _historyList = new JList<HistoryString>();
     _historyList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     _historyList.addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
@@ -227,19 +223,17 @@ public class ClipboardHistoryFrame extends JFrame {
     _historyList.setFont(DrJava.getConfig().getSetting(OptionConstants.FONT_MAIN));
     _historyList.setCellRenderer(new DefaultListCellRenderer()  {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        Component c = super.getListCellRendererComponent(list,value,index,isSelected,cellHasFocus);
+        Component c = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         c.setForeground(DrJava.getConfig().getSetting(OptionConstants.DEFINITIONS_NORMAL_COLOR));
         return c;
       }
     });
-    _historyList.addFocusListener(new FocusListener() {
-      public void focusGained(FocusEvent e) {
-      }
+    _historyList.addFocusListener(new FocusAdapter() {
 
       public void focusLost(FocusEvent e) {
-        if ((e.getOppositeComponent()!=_previewArea) && 
-            (e.getOppositeComponent()!=_okButton) && 
-            (e.getOppositeComponent()!=_cancelButton)) {
+        if ((e.getOppositeComponent() != _previewArea) && 
+            (e.getOppositeComponent() != _okButton) && 
+            (e.getOppositeComponent() != _cancelButton)) {
           _historyList.requestFocus();
         }
       }
@@ -305,39 +299,51 @@ public class ClipboardHistoryFrame extends JFrame {
     c.weighty = 0.0;
     contentPane.add(buttonPanel, c);
 
-    Dimension parentDim = (_mainFrame!=null)?(_mainFrame.getSize()):getToolkit().getScreenSize();
+    Dimension parentDim = (_mainFrame != null) ? _mainFrame.getSize() : getToolkit().getScreenSize();
     int xs = (int)parentDim.getWidth()/3;
     int ys = (int)parentDim.getHeight()/4;
     setSize(Math.max(xs,400), Math.max(ys, 300));
-    MainFrame.setPopupLoc(this, _mainFrame);
+    Utilities.setPopupLoc(this, _mainFrame);
 
     updateView();
   }
   
-  /** Validates before changing visibility,
-   *  @param b true if frame should be shown, false if it should be hidden.
-   */
-  public void setVisible(boolean b) {
+  protected WindowAdapter _windowListener = new WindowAdapter() {
+    public void windowDeactivated(WindowEvent we) {
+      ClipboardHistoryFrame.this.toFront();
+    }
+    public void windowClosing(WindowEvent we) {
+      cancelButtonPressed();
+    }
+  };
+  
+  /** Validates before changing visibility.  Only runs in the event thread.
+    * @param vis true if frame should be shown, false if it should be hidden.
+    */
+  public void setVisible(boolean vis) {
+    assert EventQueue.isDispatchThread();
     validate();
-    super.setVisible(b);
-    if (b) {
+    if (vis) {
       _mainFrame.hourglassOn();
       updateView();
       _historyList.requestFocus();
+      toFront();
     }
     else {
+      removeWindowFocusListener(_windowListener);
       _mainFrame.hourglassOff();
       _mainFrame.toFront();
     }
+    super.setVisible(vis);
   }
 
   /** Update the displays based on the model. */
   private void updateView() {
     List<String> strs = _chm.getStrings();
-    ListItem[] arr = new ListItem[strs.size()];
-    for(int i=0; i<strs.size(); ++i) arr[strs.size()-i-1] = new ListItem(strs.get(i));
+    HistoryString[] arr = new HistoryString[strs.size()];
+    for(int i = 0; i < strs.size(); ++i) arr[strs.size()-i-1] = new HistoryString(strs.get(i));
     _historyList.setListData(arr);
-    if (_historyList.getModel().getSize()>0) {
+    if (_historyList.getModel().getSize() > 0) {
       _historyList.setSelectedIndex(0);
       getRootPane().setDefaultButton(_okButton);
       _okButton.setEnabled(true);
@@ -352,10 +358,10 @@ public class ClipboardHistoryFrame extends JFrame {
   /** Update the preview area based on the model. */
   private void updatePreview() {
     String text = "";
-    if (_historyList.getModel().getSize()>0) {
+    if (_historyList.getModel().getSize() > 0) {
       int index = _historyList.getSelectedIndex();
-      if (index!=-1) {
-        text = ((ListItem)_historyList.getModel().getElementAt(_historyList.getSelectedIndex())).getFull();
+      if (index != -1) {
+        text = _historyList.getModel().getElementAt(_historyList.getSelectedIndex()).getFull();
       }
     }
 
@@ -367,16 +373,16 @@ public class ClipboardHistoryFrame extends JFrame {
   private void okButtonPressed() {
     _lastState = new FrameState(ClipboardHistoryFrame.this);
     setVisible(false);
-    if (_historyList.getModel().getSize()>0) {
+    if (_historyList.getModel().getSize() > 0) {
       _buttonPressed = JOptionPane.OK_OPTION;
-      String s = ((ListItem)_historyList.getModel().getElementAt(_historyList.getSelectedIndex())).getFull();
+      String s = _historyList.getModel().getElementAt(_historyList.getSelectedIndex()).getFull();
       _chm.put(s);
-      _okAction.apply(s);
+      _okAction.value(s);
     }
     else {
       _buttonPressed = JOptionPane.CANCEL_OPTION;
       Toolkit.getDefaultToolkit().beep();
-      _cancelAction.apply(null);
+      _cancelAction.value(null);
     }
   }
   
@@ -385,25 +391,26 @@ public class ClipboardHistoryFrame extends JFrame {
     _buttonPressed = JOptionPane.CANCEL_OPTION;
     _lastState = new FrameState(ClipboardHistoryFrame.this);
     setVisible(false);
-    _cancelAction.apply(null);
+    _cancelAction.value(null);
   }
   
   /** Keeps a full string, but toString is only the first line. */
-  private static class ListItem {
+  private static class HistoryString {
     private String full, display;
-    public ListItem(String s) {
+    public HistoryString(String s) {
       full = s;
       int index1 = s.indexOf('\n');
-      if (index1==-1) index1 = s.length();
-      int index2 = s.indexOf(System.getProperty("line.separator"));
-      if (index2==-1) index2 = s.length();
+      if (index1 == -1) index1 = s.length();
+      int index2 = s.indexOf(StringOps.EOL);
+      if (index2 == -1) index2 = s.length();
       display = s.substring(0, Math.min(index1, index2));
     }
     public String getFull() { return full; }
     public String toString() { return display; }
-    public boolean equals(Object o) {
-      if ((o==null) || !(o instanceof ListItem)) return false;
-      return full.equals(((ListItem)o).full);
-    }
+//    public boolean equals(Object o) {
+//      if (o == null || getClass() != o.getClass()) return false;
+//      return full.equals(((ListItem)o).full);
+//    }
+//    public int hashCode() { return  (full != null ? full.hashCode() : 0); }
   }
 }

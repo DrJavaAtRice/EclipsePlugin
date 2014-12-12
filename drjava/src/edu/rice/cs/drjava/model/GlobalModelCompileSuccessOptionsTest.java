@@ -1,35 +1,38 @@
  /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model;
 
@@ -51,8 +54,7 @@ import edu.rice.cs.util.swing.Utilities;
  */
 public final class GlobalModelCompileSuccessOptionsTest extends GlobalModelCompileSuccessTestCase {
 
-  /**
-   * Tests a compile on a file that references a non-public class defined in
+  /** Tests a compile on a file that references a non-public class defined in
    * another class with a name different than the non-public class.
    * Doesn't reset interactions because no interpretations are performed.
    */
@@ -63,9 +65,9 @@ public final class GlobalModelCompileSuccessOptionsTest extends GlobalModelCompi
     OpenDefinitionsDocument doc2 = setupDocument(FOO2_REFERENCES_NON_PUBLIC_CLASS_TEXT);
     final File file = tempFile();
     final File file2 = tempFile(1);
-    doc.saveFile(new FileSelector(file));
-    doc2.saveFile(new FileSelector(file2));
-    CompileShouldSucceedListener listener = new CompileShouldSucceedListener(false);
+    saveFile(doc, new FileSelector(file));
+    saveFile(doc2, new FileSelector(file2));
+    CompileShouldSucceedListener listener = new CompileShouldSucceedListener();
     _model.addListener(listener);
     listener.compile(doc);
     if (_model.getCompilerModel().getNumErrors() > 0) {
@@ -73,7 +75,7 @@ public final class GlobalModelCompileSuccessOptionsTest extends GlobalModelCompi
     }
     listener.checkCompileOccurred();
     _model.removeListener(listener);
-    CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener(false);
+    CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener();
     _model.addListener(listener2);
     listener2.compile(doc2);
     if (_model.getCompilerModel().getNumErrors() > 0) {
@@ -91,8 +93,7 @@ public final class GlobalModelCompileSuccessOptionsTest extends GlobalModelCompi
     assertTrue(_name() + "Class file should exist after compile", compiled2.exists());
   }
   
-  /**
-   * Test support for assert keyword if enabled.
+  /** Test support for assert keyword if enabled.
    * Note that this test only runs in Java 1.4 or higher.
    * Doesn't reset interactions because no interpretations are performed.
    */
@@ -103,7 +104,7 @@ public final class GlobalModelCompileSuccessOptionsTest extends GlobalModelCompi
     if (Float.valueOf(System.getProperty("java.specification.version")) < 1.5) {
       OpenDefinitionsDocument doc = setupDocument(FOO_WITH_ASSERT);
       final File file = tempFile();
-      doc.saveFile(new FileSelector(file));
+      saveFile(doc, new FileSelector(file));
       CompileShouldFailListener listener = new CompileShouldFailListener();
       _model.addListener(listener);
       
@@ -124,7 +125,7 @@ public final class GlobalModelCompileSuccessOptionsTest extends GlobalModelCompi
         DrJava.getConfig().setSetting(OptionConstants.RUN_WITH_ASSERT,
                                       Boolean.TRUE);
         
-        CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener(false);
+        CompileShouldSucceedListener listener2 = new CompileShouldSucceedListener();
         _model.addListener(listener2);
         listener2.compile(doc);
         if (_model.getCompilerModel().getNumErrors() > 0) {
@@ -142,28 +143,26 @@ public final class GlobalModelCompileSuccessOptionsTest extends GlobalModelCompi
     }
   }
 
-  /**
-   * Tests compiling a file with generics works with generic compilers.
+  /** Tests compiling a file with generics works with generic compilers.
    * (NOTE: this currently tests the GJ compiler, but not JSR-14...
-   *  JSR-14 is only available if the config option is set, and we clear
-   *  the config before running the tests.  We have a guess where the jar
-   *  is -- the lib directory -- but how can we get a URL for that?)
+   * JSR-14 is only available if the config option is set, and we clear
+   * the config before running the tests.  We have a guess where the jar
+   * is -- the lib directory -- but how can we get a URL for that?)
    */
-  public void testCompileWithGenerics()
-    throws BadLocationException, IOException, InterruptedException
-  {
+  public void testCompileWithGenerics()throws BadLocationException, IOException, InterruptedException {
 //    System.out.println("testCompileWithGenerics()");
     // Only run this test if using a compiler with generics
     if (_isGenericCompiler()) {
       
       OpenDefinitionsDocument doc = setupDocument(FOO_WITH_GENERICS);
       final File file = new File(_tempDir, "DrJavaTestFooGenerics.java");
-      doc.saveFile(new FileSelector(file));
+      saveFile(doc, new FileSelector(file));
       
-      CompileShouldSucceedListener listener = new CompileShouldSucceedListener(false);
+      CompileShouldSucceedListener listener = new CompileShouldSucceedListener();
       _model.addListener(listener);
-      _model.getCompilerModel().compileAll();
-      Utilities.clearEventQueue();
+//      _model.getCompilerModel().compileAll();
+      listener.compile(doc);
+
       if (_model.getCompilerModel().getNumErrors() > 0) {
         fail("compile failed: " + getCompilerErrorString());
       }

@@ -39,11 +39,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class TypeExpression extends PrimaryExpression {
   /**
-   * The type property name
-   */
-  public final static String TYPE = "type";
-  
-  /**
    * The type represented by this expression
    */
   private TypeName type;
@@ -54,21 +49,16 @@ public class TypeExpression extends PrimaryExpression {
    * @exception IllegalArgumentException if t is null
    */
   public TypeExpression(TypeName t) {
-    this(t, null, 0, 0, 0, 0);
+    this(t, SourceInfo.NONE);
   }
   
   /**
    * Initializes the expression
    * @param t     the type represented by this expression
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if t is null
    */
-  public TypeExpression(TypeName t, String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public TypeExpression(TypeName t, SourceInfo si) {
+    super(si);
     
     if (t == null) throw new IllegalArgumentException("t == null");
     
@@ -88,8 +78,7 @@ public class TypeExpression extends PrimaryExpression {
    */
   public void setType(ReferenceTypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-    
-    firePropertyChange(TYPE, type, type = t);
+    type = t;
   }
   
   /**

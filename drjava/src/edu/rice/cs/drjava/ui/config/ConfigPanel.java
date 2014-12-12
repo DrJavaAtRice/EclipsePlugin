@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui.config;
 
@@ -48,7 +51,7 @@ import java.util.Vector;
 public class ConfigPanel extends JPanel {
 
   protected final String _title;
-  protected final Vector<OptionComponent> _components;
+  protected final Vector<OptionComponent<?,?>> _components;
 
   /** Constructor for this ConfigPanel
    *  @param title the title for this panel
@@ -56,7 +59,7 @@ public class ConfigPanel extends JPanel {
   public ConfigPanel(String title) {
     //_title = new JLabel(title);
     _title = title;
-    _components = new Vector<OptionComponent>();
+    _components = new Vector<OptionComponent<?,?>>();
   }
 
   public String getTitle() { return _title; }
@@ -64,7 +67,7 @@ public class ConfigPanel extends JPanel {
   /** The method for adding new OptionComponents to this ConfigPanel
    *  @param oc the OptionComponent to be added
    */
-  public void addComponent( OptionComponent oc) { _components.add(oc); }
+  public void addComponent(OptionComponent<?,?> oc) { _components.add(oc); }
 
   public void displayComponents() {
     this.setLayout(new BorderLayout());
@@ -89,29 +92,39 @@ public class ConfigPanel extends JPanel {
     c.fill = GridBagConstraints.HORIZONTAL;
     Insets labelInsets = new Insets(0, 10, 0, 10);
     Insets compInsets  = new Insets(0, 0, 0, 0);
-    for (int i=0; i<_components.size(); i++) {
-      OptionComponent comp = _components.get(i);
+    for (int i = 0; i < _components.size(); i++) {
+      OptionComponent<?,?> comp = _components.get(i);
 
-      c.weightx = 0.0;
-      c.gridwidth = 1;
-      c.insets = labelInsets;
+      if (!comp.useEntireColumn()) {
+        c.anchor = GridBagConstraints.CENTER;
+        c.weightx = 0.0;
+        c.gridwidth = 1;
+        c.insets = labelInsets;
 
-      JLabel label= comp.getLabel();
-      gridbag.setConstraints(label, c);
-      panel2.add(label);
+        JLabel label= comp.getLabel();
+        gridbag.setConstraints(label, c);
+        panel2.add(label);
 
-      c.weightx = 1.0;
-      c.gridwidth = GridBagConstraints.REMAINDER;
-      c.insets = compInsets;
+        c.weightx = 1.0;
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        c.insets = compInsets;
 
-      JComponent otherC = comp.getComponent();
-      gridbag.setConstraints(otherC, c);
-      panel2.add(otherC);
+        JComponent otherC = comp.getComponent();
+        gridbag.setConstraints(otherC, c);
+        panel2.add(otherC);
+      }
+      else {
+        c.anchor = GridBagConstraints.NORTH;
+        c.weightx = 0.0;
+        c.gridwidth = 2;
+        c.gridwidth = GridBagConstraints.REMAINDER;
+        c.insets = compInsets;
+
+        JComponent otherC = comp.getComponent();
+        gridbag.setConstraints(otherC, c);
+        panel2.add(otherC);
+      }
     }
-    /*
-     for (int i=0; i<_components.size(); i++) {
-     panel2.add(_components.get(i));
-     }*/
 
     // Reset Button
     JButton _resetToDefaultButton = new JButton("Reset to Defaults");
@@ -127,12 +140,12 @@ public class ConfigPanel extends JPanel {
     this.add(scroll, BorderLayout.CENTER);
   }
 
-  /** Tells each component in the vector to update Config with its value
+  /** Tells each component in the vector to update Config with its value.  Should run in event thread.
    *  @return whether update() of all the components succeeded
    */
   public boolean update() {
 
-    for (int i = 0; i < _components.size();i++) {
+    for (int i = 0; i < _components.size(); i++) {
       boolean isValidUpdate = _components.get(i).updateConfig();
       if (! isValidUpdate) return false;
     }
@@ -141,11 +154,21 @@ public class ConfigPanel extends JPanel {
 
   /** Tells each component to reset its display field to the current value. */
   public void resetToCurrent() {
-    for (int i=0; i < _components.size(); i++) _components.get(i).resetToCurrent();
+    for (int i = 0; i < _components.size(); i++) {
+      _components.get(i).resetToCurrent();
+      if (_components.get(i) instanceof VectorOptionComponent<?>)
+        ((VectorOptionComponent<?>)_components.get(i)).resizeTable();
+    }
   }
 
-  /** Tells each component to reset its value to the component's default. */
+  /** Tells each component to reset its value to its default. Each component creates an event thread task. */
   public void resetToDefault() {
-    for (int i=0; i < _components.size(); i++) _components.get(i).resetToDefault();
+    for (int i = 0; i < _components.size(); i++) {
+      _components.get(i).resetToDefault();
+      if (_components.get(i) instanceof VectorOptionComponent<?>)
+        ((VectorOptionComponent<?>)_components.get(i)).resizeTable();
+    }
+    // must reset the "current keystroke map" when resetting
+    VectorKeyStrokeOptionComponent.resetCurrentKeyStrokeMap();
   }
 }

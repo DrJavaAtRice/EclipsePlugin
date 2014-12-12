@@ -1,48 +1,51 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.platform;
 
 import edu.rice.cs.drjava.DrJava;
 import edu.rice.cs.drjava.config.Configuration;
-import edu.rice.cs.drjava.config.FileOption;
 import edu.rice.cs.drjava.config.OptionConstants;
+
 import edu.rice.cs.util.ArgumentTokenizer;
+import edu.rice.cs.util.FileOps;
 import edu.rice.cs.util.StringOps;
 
 import javax.swing.*;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.List;
 
@@ -92,35 +95,16 @@ class DefaultPlatform implements PlatformSupport {
     return System.getProperty("java.specification.version");
   }
 
-  /** Returns true if the classpath's tools.jar is from version 1.3. */
-  public boolean has13ToolsJar() {
-    // Javadoc's Main class should not have an execute(String[]) method.
-    try {
-      Class<?> main = Class.forName("com.sun.tools.javadoc.Main");
-      return !_javadocMainHasExecuteMethod(main);
-    }
-    catch (Throwable t) { return false; }
-  }
-
-  /** Returns true if the classpath's tools.jar is from version 1.4. */
-  public boolean has14ToolsJar() {
-    // Javadoc's Main class should have an execute(String[]) method.
-    try {
-      Class<?> main = Class.forName("com.sun.tools.javadoc.Main");
-      return _javadocMainHasExecuteMethod(main);
-    }
-    catch (Throwable t) { return false; }
-  }
-
   /** Returns true if the given class object for com.sun.tools.javadoc.Main
    *  has an execute(String[]) method.  If so, that means we have a 1.4
    *  version of tools.jar.
    *
    * @param main Class object for com.sun.tools.javadoc.Main
    */
-  private boolean _javadocMainHasExecuteMethod(Class main) {
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  private boolean _javadocMainHasExecuteMethod(Class<?> main) {
     try {
-      @SuppressWarnings("unchecked") Class<String[]>[] arr = new Class[]{String[].class};
+      Class<String[]>[] arr = new Class[]{String[].class};
       main.getMethod("execute", arr);
       return true;
     }
@@ -143,7 +127,7 @@ class DefaultPlatform implements PlatformSupport {
     String command = config.getSetting(OptionConstants.BROWSER_STRING);
 
     // Check for empty settings.
-    if ((exe == FileOption.NULL_FILE) && (command.equals(""))) {
+    if ((exe == FileOps.NULL_FILE) && (command.equals(""))) {
       // If the user hasn't specified anything, don't try to run it.
       return false;
     }
@@ -169,7 +153,7 @@ class DefaultPlatform implements PlatformSupport {
       List<String> args = ArgumentTokenizer.tokenize(command);
 
       // Prepend the file only if it exists.
-      if (exe != FileOption.NULL_FILE) args.add(0, exe.getAbsolutePath());
+      if (exe != FileOps.NULL_FILE) args.add(0, exe.getAbsolutePath());
 
       // Call the command.
       try {
@@ -185,4 +169,73 @@ class DefaultPlatform implements PlatformSupport {
     // Otherwise, trust that it worked.
     return true;
   }
+  
+  /** Set the keyboard mnemonic for the component in a way that is consistent with
+    * the current platform.
+    * @param obj the component whose mnemonic should be set
+    * @param mnemonic the key code which represents the mnemonic
+    * @see javax.swing.AbstractButton#setMnemonic(int)
+    * @see java.awt.event.KeyEvent */
+  public void setMnemonic(javax.swing.AbstractButton obj, int mnemonic) {
+    // by default just set the object's mnemonic
+    obj.setMnemonic(mnemonic);
+  }
+
+  /** Set the keyboard mnemonic for the component in a way that is consistent with
+    * the current platform.
+    * @param obj the component whose mnemonic should be set
+    * @param mnemonic a char specifying the mnemonic value
+    * @see javax.swing.AbstractButton#setMnemonic(char) */
+  public void setMnemonic(javax.swing.AbstractButton obj, char mnemonic) {
+    // by default just set the object's mnemonic
+    obj.setMnemonic(mnemonic);
+  }
+  
+  /** Set the keyboard mnemonic for the component in a way that is consistent with
+    * the current platform.
+    * @param obj the component whose mnemonic should be set
+    * @param mnemonic the key code which represents the mnemonic
+    * @see javax.swing.ButtonModel#setMnemonic(int)
+    * @see java.awt.event.KeyEvent */
+  public void setMnemonic(javax.swing.ButtonModel obj, int mnemonic) {
+    // by default just set the object's mnemonic
+    obj.setMnemonic(mnemonic);
+  }
+  
+  /** Set the keyboard mnemonic for the component in a way that is consistent with
+    * the current platform.
+    * @param obj the component whose mnemonic should be set
+    * @param tabIndex the index of the tab that the mnemonic refers to
+    * @param mnemonic the key code which represents the mnemonic
+    * @see javax.swing.JTabbedPane#setMnemonicAt(int,int)
+    * @see java.awt.event.KeyEvent */
+  public void setMnemonicAt(javax.swing.JTabbedPane obj, int tabIndex, int mnemonic) {
+    // by default just set the object's mnemonic
+    obj.setMnemonicAt(tabIndex, mnemonic);
+  }
+  
+  /** @return true if file extensions can be registered and unregistered. */
+  public boolean canRegisterFileExtensions() { return false; }
+  
+  /** Register .drjava and .djapp file extensions.
+    * @return true if registering succeeded */
+  public boolean registerDrJavaFileExtensions() { return false; }
+
+  /** Unregister .drjava and .djapp file extensions.
+    * @return true if unregistering succeeded */
+  public boolean unregisterDrJavaFileExtensions() { return false; }
+  
+  /** @return true if .drjava and .djapp file extensions are registered. */
+  public boolean areDrJavaFileExtensionsRegistered() { return false; }
+  
+  /** Register .java file extension.
+    * @return true if registering succeeded */
+  public boolean registerJavaFileExtension() { return false; }
+  
+  /** Unregister .java file extension.
+    * @return true if unregistering succeeded */
+  public boolean unregisterJavaFileExtension() { return false; }
+  
+  /** @return true if .java file extension is registered. */
+  public boolean isJavaFileExtensionRegistered() { return false; }
 }

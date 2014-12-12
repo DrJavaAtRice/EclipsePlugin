@@ -1,7 +1,6 @@
-/**
- * Grammar for J-expressions.
- * Adapted from Java1.0.2LS.jj from the JavaCC distribution. 
- */
+/** Grammar for J-expressions.
+  * Adapted from Java1.0.2LS.jj from the JavaCC distribution. 
+  */
 
 options {
   JAVA_UNICODE_ESCAPE = true;
@@ -11,7 +10,7 @@ options {
   */
   DEBUG_PARSER = false;
   STATIC = false;
-  JDK_VERSION = "1.5";
+  JDK_VERSION = "1.6";
 }
 
 PARSER_BEGIN(JExprParser)
@@ -36,9 +35,8 @@ import edu.rice.cs.javalanglevels.*;
 import edu.rice.cs.javalanglevels.tree.*;
 
 public class JExprParser {
-  public static final SourceInfo NO_SOURCE_INFO = new SourceInfo(null, -1, -1, -1, -1);
 
-  public static final ClassOrInterfaceType NO_TYPE = new ClassOrInterfaceType(NO_SOURCE_INFO, "Object", new Type[0]);
+  public static final ClassOrInterfaceType NO_TYPE = new ClassOrInterfaceType(SourceInfo.NO_INFO, "Object", new Type[0]);
   private boolean _inInterface;
 
 //  private Vector<ParseException> _errors;
@@ -84,7 +82,7 @@ public class JExprParser {
     _currentFile = file;
   }
 
-  /** Strips off the "l" or "L" off the end of long literals */   
+  /** Strips off the "l" or "L" off the end of long literals. */   
   private static String _stripL(String in) {
     if (in.endsWith("l") || in.endsWith("L")) {
       return in.substring(0, in.length() - 1);
@@ -101,10 +99,7 @@ public class JExprParser {
     return in.substring(1, len - 1);
   }
 
-  /**
-   * Creates a source location that starts at the given first token
-   * and ends in the last token yet read.
-   */
+  /** Creates a source location that starts at the given first token and ends in the last token yet read. */
   private SourceInfo _loc(Token first) {
     return new SourceInfo(_currentFile,
                           first.beginLine,
@@ -113,10 +108,7 @@ public class JExprParser {
                           token.endColumn);
   }
 
-  /**
-   * Creates a source location that starts at the given first AST piece
-   * and ends in the last token yet read.
-   */
+  /** Creates a source location that starts at the given first AST piece and ends in the last token yet read. */
   private SourceInfo _loc(JExpressionIF first) {
     return new SourceInfo(_currentFile,
                           first.getSourceInfo().getStartLine(),
@@ -128,9 +120,14 @@ public class JExprParser {
   private void _throwParseException(String message) throws ParseException {
     // The error typically occurs on the next token.
     Token t = token;
-    if (token.next != null) {
-      t = token.next;
-    }
+/* The following three lines are commented out as a wild guess as to what is going wrong in parsing erroneous .dj files.
+ * Corky 11-11-14 after encountering NullPointerExceptions in the testShouldBeErrors test methods in ElementaryLevelTest 
+ * IntermediateLevelTest.  The initialise method in the generated parser appeared to performing this next operation as well,
+ * generating the NullPoinerException in some cases.  This fix appears to work.  Amazing ...
+ */
+//    if (token.next != null) {
+//      t = token.next;
+//    }
     // If a certain token or sequence of tokens is expected, display it.
     ParseException pe = generateParseException();
 //    if (pe.expectedTokenSequences.length == 1) {
@@ -546,9 +543,7 @@ TOKEN:
  * THE JAVA LANGUAGE GRAMMAR STARTS HERE *
  *****************************************/
 
-/*
- * Program structuring syntax follows.
- */
+/* Program structuring syntax follows. */
 
 SourceFile SourceFile() :
 {
@@ -638,20 +633,15 @@ SourceFile SourceFile() :
 void MethodDefLookahead() :
 {}
 {
-//  ( <PUBLIC> | <PROTECTED> | <PRIVATE> | <STATIC> | <ABSTRACT> | <FINAL> |
-// <NATIVE> | <SYNCHRONIZED> )*
   ModifiersAndVisibility()
- [ TypeParameters() ]
-  ReturnType() <IDENTIFIER> <LPAREN>//(FormalParameter() | <RPAREN>)
+  [ TypeParameters() ]
+  ReturnType() <IDENTIFIER> <LPAREN> (FormalParameter() | <RPAREN>)
 }
   
 void ConstructorDefLookahead() :
 {}
 {
-//  ( <PUBLIC> | <PROTECTED> | <PRIVATE> | <STATIC> | <ABSTRACT> | <FINAL> |
-// <NATIVE> | <SYNCHRONIZED> )*
-  ModifiersAndVisibility()
-  <IDENTIFIER> <LPAREN>(FormalParameter() | <RPAREN>)
+  ModifiersAndVisibility() <IDENTIFIER> FormalParameters() (<THROWS> | <LBRACE>)
 }
 
 // This production is to determine lookahead only.  It will be used instead
@@ -713,7 +703,7 @@ CompoundWord CompoundWord() :
     /* lookahead to check for ".*" */
     LOOKAHEAD(2) <DOT> word = Word() { list.add(word); }
   )*
-  { return new CompoundWord(_loc((Word) list.getFirst()), list.toArray(new Word[list.size()])); }
+  { return new CompoundWord(_loc(list.getFirst()), list.toArray(new Word[list.size()])); }
 }
 
 ModifiersAndVisibility ModifiersAndVisibility() :
@@ -930,7 +920,7 @@ UnbracedBody UnbracedBody() :
   { return new UnbracedBody(_loc(first), items.toArray(new BodyItemI[items.size()])); }
 }
 
-// A BodyItem is a method declaration, field declaration, statments, initializer, constructor, or inner declaration.
+// A BodyItem is a method declaration, field declaration, statements, initializer, constructor, or inner declaration.
 BodyItemI BodyItem() :
 {
   BodyItemI temp;
@@ -942,7 +932,6 @@ BodyItemI BodyItem() :
     | LOOKAHEAD(ModifiersAndVisibility() <INTERFACE>) temp = InnerInterfaceDef()
     | LOOKAHEAD(2) temp = Initializer()
     | LOOKAHEAD(MethodDefLookahead()) temp = MethodDef()
-//    | LOOKAHEAD(ModifiersAndVisibility() <IDENTIFIER> FormalParameters() [ <THROWS> NameList() ] <LBRACE>)
     | LOOKAHEAD(ConstructorDefLookahead()) temp = ConstructorDef()
     | LOOKAHEAD(ModifiersAndVisibility() Type() <IDENTIFIER>) temp = VariableDeclaration() (<SEMICOLON> | _errorString(";("))
     | temp = Statement()
@@ -980,7 +969,7 @@ MethodDef MethodDef() :
       // This is obsolete but allowed as per JLS 8.4
       (
        LOOKAHEAD(<LBRACKET>)
-       <LBRACKET> <RBRACKET>
+         <LBRACKET> <RBRACKET>
        {
       if (returnType instanceof Type) {
         returnType = new ArrayType(_loc(returnType), ((Type)returnType).getName() + "[]", (Type) returnType);

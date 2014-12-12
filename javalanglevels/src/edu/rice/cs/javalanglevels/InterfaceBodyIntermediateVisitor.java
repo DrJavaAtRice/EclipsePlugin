@@ -1,161 +1,157 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project:
- * http://sourceforge.net/projects/drjava/ or http://www.drjava.org/
- *
- * DrJava Open Source License
- * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu)
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
  * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Developed by:   Java Programming Languages Team
- *                 Rice University
- *                 http://www.cs.rice.edu/~javaplt/
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"),
- * to deal with the Software without restriction, including without 
- * limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to 
- * whom the Software is furnished to do so, subject to the following 
- * conditions:
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- *     - Redistributions of source code must retain the above copyright 
- *       notice, this list of conditions and the following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright 
- *       notice, this list of conditions and the following disclaimers in the
- *       documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor
- *       use the term "DrJava" as part of their names without prior written
- *       permission from the JavaPLT group.  For permission, write to
- *       javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
- * OTHER DEALINGS WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.javalanglevels;
 
 import edu.rice.cs.javalanglevels.tree.*;
 import edu.rice.cs.javalanglevels.parser.*;
+import edu.rice.cs.plt.reflect.JavaVersion;
+import edu.rice.cs.plt.iter.IterUtil;
 import java.util.*;
 import java.io.*;
 
 import junit.framework.TestCase;
 
-
-/*
- * Language Level Visitor that represents the Intermediate Language Level.  Enforces constraints during the
- * first walk of the AST (checking for langauge specific errors and building the symbol table).
- * This class enforces things that are common to all contexts reachable within an interface body at 
- * the Intermediate Language Level. 
- */
+/** Language Level Visitor that represents the Intermediate Language Level.  Enforces constraints during the first walk of 
+  * the AST (checking for langauge specific errors and building the symbol table). This class enforces things that are 
+  * common to all contexts reachable within an interface body at the Intermediate Language Level. 
+  */
 public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
   
   /**The SymbolData corresponding to this interface.*/
-  private SymbolData _symbolData;
+  private SymbolData _enclosing;
   
-  /*
-   * Constructor for InterfaceBodyIntermediateVisitor.
-   * @param sd  The SymbolData that encloses the context we are visiting.
-   * @param file  The source file this came from.
-   * @param packageName  The package the source file is in
-   * @importedFiles  A list of classes that were specifically imported
-   * @param importedPackages  A list of package names that were specifically imported
-   * @param classDefsInThisFile  A list of the classes that are defined in the source file
-   * @param continuations  A hashtable corresponding to the continuations (unresolved Symbol Datas) that will need to be resolved
-   */
-  public InterfaceBodyIntermediateVisitor(SymbolData sd, File file, String packageName, LinkedList<String> importedFiles, 
-                                  LinkedList<String> importedPackages, LinkedList<String> classDefsInThisFile,Hashtable<String, Pair<SourceInfo, LanguageLevelVisitor>> continuations) {
-    super(file, packageName, importedFiles, importedPackages, classDefsInThisFile, continuations);
-    _symbolData = sd;
+  /** Constructor for InterfaceBodyIntermediateVisitor.
+    * @param sd  The SymbolData that encloses the context we are visiting.
+    * @param file  The source file this came from.
+    * @param packageName  The package the source file is in
+    * @importedFiles  A list of classes that were specifically imported
+    * @param importedPackages  A list of package names that were specifically imported
+    * @param classesInThisFile  A list of the classes that are yet to be defined in this source file
+    * @param continuations  A hashtable corresponding to the continuations (unresolved Symbol Datas) that will need to be resolved
+    */
+  public InterfaceBodyIntermediateVisitor(SymbolData sd, 
+                                          File file, 
+                                          String packageName, 
+                                          LinkedList<String> importedFiles, 
+                                          LinkedList<String> importedPackages, 
+                                          HashSet<String> classesInThisFile, 
+                                          Hashtable<String, Triple<SourceInfo, LanguageLevelVisitor, SymbolData>> continuations,
+                                          LinkedList<Command> fixUps) {
+    super(file, packageName, sd.getName(), importedFiles, importedPackages, classesInThisFile, continuations, fixUps);
+    _enclosing = sd;
   }
   
   /*Throw an appropriate error*/
-  public void forStatementDoFirst(Statement that) {
+  public Void forStatementDoFirst(Statement that) {
     _addError("Statements cannot appear outside of method bodies", that);
+    return null;
   }
   
   /*Throw an appropriate error*/
-  public void forConcreteMethodDefDoFirst(ConcreteMethodDef that) {
+  public Void forConcreteMethodDefDoFirst(ConcreteMethodDef that) {
     _addError("You cannot have concrete methods definitions in interfaces", that);
+    return null;
   }
 
   /**Throw an appropriate error*/
-  public void forInstanceInitializerDoFirst(InstanceInitializer that) {
+  public Void forInstanceInitializerDoFirst(InstanceInitializer that) {
     _addError("This open brace must mark the beginning of an interface body", that);
+    return null;
   }
   
   /**No fields in interfaces at Intermediate Level.  Give an appropriate error.*/
-  public void forVariableDeclarationDoFirst(VariableDeclaration that) {
+  public Void forVariableDeclarationDoFirst(VariableDeclaration that) {
     _addError("You cannot have fields in interfaces at the Intermediate level", that);
+    return null;
   }
   
   /** No super references for interfaces--give an appropriate error.*/
-  public void forSuperReferenceDoFirst(SuperReference that) {
+  public Void forSuperReferenceDoFirst(SuperReference that) {
     _addAndIgnoreError("The field 'super' does not exist in interfaces.  Only classes have a 'super' field", that);
+    return null;
   }
   
   /**No This literal in interfaces--give an appropriate error*/
-  public void forThisReferenceDoFirst(ThisReference that) {
+  public Void forThisReferenceDoFirst(ThisReference that) {
     _addAndIgnoreError("The field 'this' does not exist in interfaces.  Only classes have a 'this' field.", that);
+    return null;
   }
 
-  /*
-   * Make sure that the method is not declared to be private or protected.  Make it public and abstract
+  /* Make sure that the method is not declared to be private or protected.  Make it public and abstract
    * if it is not already declared to be so (since this is the default in the absence of modifiers). 
    * Make sure the method name is not the same as the interface name.
    */
-  public void forAbstractMethodDef(AbstractMethodDef that) {
+  public Void forAbstractMethodDef(AbstractMethodDef that) {
     forAbstractMethodDefDoFirst(that);
-    if (_checkError()) {
-      return;
-    }
+    if (_checkError()) return null;
     
-    MethodData md = createMethodData(that, _symbolData);
+    MethodData md = createMethodData(that, _enclosing);
     
     //All interface methods are considered public by default: enforce this.
     if (md.hasModifier("private")) {
-      _addAndIgnoreError("Interface methods cannot be made private.  They must be public.", that.getMav());
+      _addAndIgnoreError("Interface methods cannot be private.  They must be public.", that.getMav());
     }
     if (md.hasModifier("protected")) {
-      _addAndIgnoreError("Interface methods cannot be made protected.  They must be public.", that.getMav());
+      _addAndIgnoreError("Interface methods cannot be protected.  They must be public.", that.getMav());
     }
     
- //All interface methods are considered public by default.
-    md.addModifier("public"); //(if it was already public, won't be added)
+ // All interface methods are considered public by default.
+    md.addModifier("public");
     md.addModifier("abstract"); //and all interface methods are abstract. 
-    String className = getUnqualifiedClassName(_symbolData.getName());
+    String className = getUnqualifiedClassName(_enclosing.getName());
     if (className.equals(md.getName())) {
-      _addAndIgnoreError("Only constructors can have the same name as the class they appear in, and constructors cannot appear in interfaces.",
-                         that);
+      _addAndIgnoreError("Only constructors can have the same name as the class they appear in, " + 
+                         "and constructors cannot appear in interfaces.", that);
     }
-    else {
-      _symbolData.addMethod(md);
-    }
+    else _enclosing.addMethod(md);
+    return null;
   }
-  
- 
   
   /** Throw an error: Interfaces cannot have constructors */
-  public void forConstructorDefDoFirst(ConstructorDef that) {
-      _addAndIgnoreError("Constructor definitions cannot appear in interfaces", that);
+  public Void forConstructorDefDoFirst(ConstructorDef that) {
+    _addAndIgnoreError("Constructor definitions cannot appear in interfaces", that);
+    return null;
   }
   
-  /**
-   * Call the super method to convert these to a VariableData array, then make sure that
-   * each VariableData is final, as required at the Intermediate level.
-   * @param enclosingData  The Data immediately enclosing the variables
-   */
+  /** Processes a static field declaration within an interface. Calls the super method to convert the VariableDeclaration
+    * to a VariableData array, then makes sure that each VariableData is final and static, as required in an
+    * interface.
+    * @param enclosingData  The Data immediately enclosing the variables
+    */
   protected VariableData[] _variableDeclaration2VariableData(VariableDeclaration vd, Data enclosingData) {
     VariableData[] vds = super._variableDeclaration2VariableData(vd, enclosingData);
     for (int i = 0; i < vds.length; i++) {
@@ -165,29 +161,29 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
   }
   
   /** Delegate to method in LLV */
-  public void forComplexAnonymousClassInstantiation(ComplexAnonymousClassInstantiation that) {
-    complexAnonymousClassInstantiationHelper(that, _symbolData);
+  public Void forComplexAnonymousClassInstantiation(ComplexAnonymousClassInstantiation that) {
+    complexAnonymousClassInstantiationHelper(that, _enclosing);   // TODO: the wrong enclosing context?
+    return null;
   }
 
   /** Delegate to method in LLV */
-  public void forSimpleAnonymousClassInstantiation(SimpleAnonymousClassInstantiation that) {
-    simpleAnonymousClassInstantiationHelper(that, _symbolData);
+  public Void forSimpleAnonymousClassInstantiation(SimpleAnonymousClassInstantiation that) {
+    simpleAnonymousClassInstantiationHelper(that, _enclosing);
+    return null;
   }
   
-   /**
-    * Test the methods declared in the above class.
-    */
+  /** Test the methods declared in the above class. */
   public static class InterfaceBodyIntermediateVisitorTest extends TestCase {
     
     private InterfaceBodyIntermediateVisitor _ibiv;
     
     private SymbolData _sd1;
-    private ModifiersAndVisibility _publicMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"public"});
-    private ModifiersAndVisibility _protectedMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"protected"});
-    private ModifiersAndVisibility _privateMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"private"});
-    private ModifiersAndVisibility _packageMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[0]);
-    private ModifiersAndVisibility _abstractMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"abstract"});
-    private ModifiersAndVisibility _finalMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"final"});
+    private ModifiersAndVisibility _publicMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"public"});
+    private ModifiersAndVisibility _protectedMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"protected"});
+    private ModifiersAndVisibility _privateMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"private"});
+    private ModifiersAndVisibility _packageMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[0]);
+    private ModifiersAndVisibility _abstractMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"abstract"});
+    private ModifiersAndVisibility _finalMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"final"});
     
     
     public InterfaceBodyIntermediateVisitorTest() {
@@ -199,29 +195,45 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
     
     public void setUp() {
       _sd1 = new SymbolData("i.like.monkey");
+      _sd1.setIsContinuation(false);
+      _sd1.setInterface(false);
+      _sd1.setPackage("");
+      _sd1.setTypeParameters(new TypeParameter[0]);
+      _sd1.setInterfaces(new ArrayList<SymbolData>());
 
       errors = new LinkedList<Pair<String, JExpressionIF>>();
-      symbolTable = new Symboltable();
+      LanguageLevelConverter.symbolTable.clear();
+      LanguageLevelConverter._newSDs.clear();
+      LanguageLevelConverter.OPT = new Options(JavaVersion.JAVA_6, IterUtil.make(new File("lib/buildlib/junit.jar")));
       visitedFiles = new LinkedList<Pair<LanguageLevelVisitor, edu.rice.cs.javalanglevels.tree.SourceFile>>();      
-      _hierarchy = new Hashtable<String, TypeDefBase>();
-      _classesToBeParsed = new Hashtable<String, Pair<TypeDefBase, LanguageLevelVisitor>>();
-      _ibiv = new InterfaceBodyIntermediateVisitor(_sd1, new File(""), "", new LinkedList<String>(), new LinkedList<String>(), new LinkedList<String>(), new Hashtable<String, Pair<SourceInfo, LanguageLevelVisitor>>());
-      _ibiv.continuations = new Hashtable<String, Pair<SourceInfo, LanguageLevelVisitor>>();
-      _ibiv._resetNonStaticFields();
+//      _hierarchy = new Hashtable<String, TypeDefBase>();
+      _ibiv = 
+        new InterfaceBodyIntermediateVisitor(_sd1, 
+                                             new File(""), 
+                                             "", 
+                                             new LinkedList<String>(), 
+                                             new LinkedList<String>(), 
+                                             new HashSet<String>(), 
+                                             new Hashtable<String, Triple<SourceInfo, LanguageLevelVisitor, SymbolData>>(),
+                                             new LinkedList<Command>());
+      _ibiv._classesInThisFile = new HashSet<String>();
+      _ibiv.continuations = new Hashtable<String, Triple<SourceInfo, LanguageLevelVisitor, SymbolData>>();
       _ibiv._importedPackages.addFirst("java.lang");
+      _ibiv._enclosingClassName = "i.like.monkey";
+      _ibiv.symbolTable.put("i.like.monkey", _sd1);
       _errorAdded = false;
     }
     
     public void testForConcreteMethodDefDoFirst() {
       // Check that an error is thrown
-      ConcreteMethodDef cmd = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO, 
+      ConcreteMethodDef cmd = new ConcreteMethodDef(SourceInfo.NONE, 
                                                     _publicMav, 
                                                     new TypeParameter[0], 
-                                                    new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                                    new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                                    new PrimitiveType(SourceInfo.NONE, "int"), 
+                                                    new Word(SourceInfo.NONE, "methodName"),
                                                     new FormalParameter[0],
                                                     new ReferenceType[0], 
-                                                    new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+                                                    new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       cmd.visit(_ibiv);
       assertEquals("There should not be 1 error", 1, errors.size());
       assertEquals("The error message should be correct", "You cannot have concrete methods definitions in interfaces", errors.getLast().getFirst());
@@ -230,31 +242,31 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
     
     public void testForAbstractMethodDefDoFirst() {
       // Check one that works
-      _ibiv._symbolData.setMav(_abstractMav);
-      AbstractMethodDef amd2 = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      _ibiv._enclosing.setMav(_abstractMav);
+      AbstractMethodDef amd2 = new AbstractMethodDef(SourceInfo.NONE, 
                                                      _abstractMav, 
                                                      new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                     new Word(SourceInfo.NONE, "methodName"),
                                                      new FormalParameter[0],
                                                      new ReferenceType[0]);
       amd2.visit(_ibiv);
       assertEquals("There should be no errors", 0, errors.size());
-      assertTrue("The method def should be public", _ibiv._symbolData.getMethods().get(0).hasModifier("public"));
+      assertTrue("The method def should be public", _ibiv._enclosing.getMethods().get(0).hasModifier("public"));
 
     }
 
     public void testForInstanceInitializerDoFirst() {
-      InstanceInitializer ii = new InstanceInitializer(JExprParser.NO_SOURCE_INFO, 
-                                                       new Block(JExprParser.NO_SOURCE_INFO, 
-                                                                 new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0])));
+      InstanceInitializer ii = new InstanceInitializer(SourceInfo.NONE, 
+                                                       new Block(SourceInfo.NONE, 
+                                                                 new BracedBody(SourceInfo.NONE, new BodyItemI[0])));
       ii.visit(_ibiv);
       assertEquals("There should be one error.", 1, errors.size());
       assertEquals("The error message should be correct.", "This open brace must mark the beginning of an interface body", errors.get(0).getFirst());    
     }
 
     public void testForSimpleThisReferenceDoFirst() {
-     SimpleThisReference tl = new SimpleThisReference(JExprParser.NO_SOURCE_INFO);
+     SimpleThisReference tl = new SimpleThisReference(SourceInfo.NONE);
      tl.visit(_ibiv);
      assertEquals("There should be one error", 1, errors.size());
      assertEquals("The error message should be correct", "The field 'this' does not exist in interfaces.  Only classes have a 'this' field.", errors.get(0).getFirst());
@@ -262,7 +274,7 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
     
     
     public void testForComplexThisReferenceDoFirst() {
-     ComplexThisReference tl = new ComplexThisReference(JExprParser.NO_SOURCE_INFO, new NullLiteral(JExprParser.NO_SOURCE_INFO));
+     ComplexThisReference tl = new ComplexThisReference(SourceInfo.NONE, new NullLiteral(SourceInfo.NONE));
      tl.visit(_ibiv);
      assertEquals("There should be one error", 1, errors.size());
      assertEquals("The error message should be correct", "The field 'this' does not exist in interfaces.  Only classes have a 'this' field.", errors.get(0).getFirst());
@@ -270,14 +282,14 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
     }
     
     public void testForSimpleSuperReferenceDoFirst() {
-      SimpleSuperReference sr = new SimpleSuperReference(JExprParser.NO_SOURCE_INFO);
+      SimpleSuperReference sr = new SimpleSuperReference(SourceInfo.NONE);
       sr.visit(_ibiv);
       assertEquals("There should be one error", 1, errors.size());
       assertEquals("The error message should be correct", "The field 'super' does not exist in interfaces.  Only classes have a 'super' field", errors.get(0).getFirst());
     }
 
     public void testForComplexSuperReferenceDoFirst() {
-      ComplexSuperReference cr = new ComplexSuperReference(JExprParser.NO_SOURCE_INFO, new NullLiteral(JExprParser.NO_SOURCE_INFO));
+      ComplexSuperReference cr = new ComplexSuperReference(SourceInfo.NONE, new NullLiteral(SourceInfo.NONE));
       cr.visit(_ibiv);
       assertEquals("There should be one error", 1, errors.size());
       assertEquals("The error message should be correct", "The field 'super' does not exist in interfaces.  Only classes have a 'super' field", errors.get(0).getFirst());
@@ -286,15 +298,15 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
     
     public void testForVariableDeclarationDoFirst() {
       // Check that an error is thrown
-      VariableDeclaration vdecl = new VariableDeclaration(JExprParser.NO_SOURCE_INFO,
+      VariableDeclaration vdecl = new VariableDeclaration(SourceInfo.NONE,
                                                        _packageMav,
                                                        new VariableDeclarator[] {
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                               new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                               new Word (JExprParser.NO_SOURCE_INFO, "field1")),
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                               new PrimitiveType(JExprParser.NO_SOURCE_INFO, "boolean"), 
-                               new Word (JExprParser.NO_SOURCE_INFO, "field2"))});
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                               new PrimitiveType(SourceInfo.NONE, "double"), 
+                               new Word (SourceInfo.NONE, "field1")),
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                               new PrimitiveType(SourceInfo.NONE, "boolean"), 
+                               new Word (SourceInfo.NONE, "field2"))});
       vdecl.visit(_ibiv);
       assertEquals("There should be one error", 1, errors.size());
       assertEquals("The error message should be correct", "You cannot have fields in interfaces at the Intermediate level", errors.getLast().getFirst());
@@ -302,23 +314,24 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
     
     public void testForAbstractMethodDef() {
       // Test one that works.
-      MethodDef mdef = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      MethodDef mdef = new AbstractMethodDef(SourceInfo.NONE, 
                                              _abstractMav, 
                                              new TypeParameter[0], 
-                                             new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                             new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                             new PrimitiveType(SourceInfo.NONE, "int"), 
+                                             new Word(SourceInfo.NONE, "methodName"),
                                              new FormalParameter[0],
                                              new ReferenceType[0]);
-      _ibiv._symbolData.setMav(_abstractMav);
+      _ibiv._enclosing.setMav(_abstractMav);
+      
       mdef.visit(_ibiv);
       assertEquals("There should not be any errors.", 0, errors.size());
       
       // Test one that doesn't work.
-      mdef = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      mdef = new AbstractMethodDef(SourceInfo.NONE, 
                                              _abstractMav, 
                                              new TypeParameter[0], 
-                                             new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                             new Word(JExprParser.NO_SOURCE_INFO, "monkey"),
+                                             new PrimitiveType(SourceInfo.NONE, "int"), 
+                                             new Word(SourceInfo.NONE, "monkey"),
                                              new FormalParameter[0],
                                              new ReferenceType[0]);
       mdef.visit(_ibiv);
@@ -329,47 +342,47 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
       
       
       //It's okay for the method to be public
-      AbstractMethodDef amd3 = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      AbstractMethodDef amd3 = new AbstractMethodDef(SourceInfo.NONE, 
                                                      _publicMav, 
                                                      new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName2"),
+                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                     new Word(SourceInfo.NONE, "methodName2"),
                                                      new FormalParameter[0],
                                                      new ReferenceType[0]);
       amd3.visit(_ibiv);
       assertEquals("There should still be one error", 1, errors.size());
-      assertTrue("The method def should be public", _ibiv._symbolData.getMethods().get(1).hasModifier("public"));
+      assertTrue("The method def should be public", _ibiv._enclosing.getMethods().get(1).hasModifier("public"));
 
       //What if the method is called private? Should throw error
-      AbstractMethodDef amd4 = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      AbstractMethodDef amd4 = new AbstractMethodDef(SourceInfo.NONE, 
                                                      _privateMav, 
                                                      new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName3"),
+                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                     new Word(SourceInfo.NONE, "methodName3"),
                                                      new FormalParameter[0],
                                                      new ReferenceType[0]);
       amd4.visit(_ibiv);
       assertEquals("There should be two errors", 2, errors.size());
-      assertEquals("The error message should be correct","Interface methods cannot be made private.  They must be public." , errors.get(1).getFirst());
+      assertEquals("The error message should be correct","Interface methods cannot be private.  They must be public." , errors.get(1).getFirst());
     
       //What if the method is protected: Should throw error
-      AbstractMethodDef amd5 = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      AbstractMethodDef amd5 = new AbstractMethodDef(SourceInfo.NONE, 
                                                      _protectedMav, 
                                                      new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName4"),
+                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                     new Word(SourceInfo.NONE, "methodName4"),
                                                      new FormalParameter[0],
                                                      new ReferenceType[0]);
       amd5.visit(_ibiv);
       assertEquals("There should be three errors", 3, errors.size());
-      assertEquals("The error message should be correct","Interface methods cannot be made protected.  They must be public." , errors.get(2).getFirst());
+      assertEquals("The error message should be correct","Interface methods cannot be protected.  They must be public." , errors.get(2).getFirst());
     }
     
     
     public void testForConstructorDef() {
      ///this is a ConstructorDef with no formal paramaters and no throws
-      ConstructorDef cd = new ConstructorDef(JExprParser.NO_SOURCE_INFO, new Word(JExprParser.NO_SOURCE_INFO, "MyClass"), _publicMav, new FormalParameter[0], new ReferenceType[0], 
-                                             new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+      ConstructorDef cd = new ConstructorDef(SourceInfo.NONE, new Word(SourceInfo.NONE, "MyClass"), _publicMav, new FormalParameter[0], new ReferenceType[0], 
+                                             new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       
       //Check that the appropriate error is thrown.
       cd.visit(_ibiv);
@@ -377,7 +390,5 @@ public class InterfaceBodyIntermediateVisitor extends IntermediateVisitor {
       assertEquals("The error message should be correct", "Constructor definitions cannot appear in interfaces", errors.get(0).getFirst());
       
     }
-    
-    
   }
 }

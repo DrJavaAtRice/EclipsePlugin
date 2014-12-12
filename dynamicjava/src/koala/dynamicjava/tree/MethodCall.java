@@ -30,55 +30,44 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
 /**
- * This class represents the method call nodes of the syntax tree
- *
- * @author  Stephane Hillion
- * @version 1.0 - 1999/04/24
+ * An abstract parent for all method calls.  Concrete implementations include:<ul>
+ * <li>{@link SimpleMethodCall}</li>
+ * <li>{@link ObjectMethodCall}</li>
+ * <li>{@link StaticMethodCall}</li>
+ * <li>{@link SuperMethodCall}</li>
+ * </ul>
  */
 
 public abstract class MethodCall extends PrimaryExpression
-  implements ExpressionStatement {
-  /**
-   * The methodName property name
-   */
-  public final static String METHOD_NAME = "methodName";
+  implements StatementExpression {
   
-  /**
-   * The arguments property name
-   */
-  public final static String ARGUMENTS = "arguments";
-  
-  /**
-   * The method name
-   */
+  private Option<List<TypeName>> typeArgs;
   private String methodName;
-  
-  /**
-   * The arguments
-   */
   private List<Expression> arguments;
   
   /**
    * Creates a new node
    * @param mn    the field name
    * @param args  the arguments. null if no arguments.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if mn is null
    */
-  protected MethodCall(String mn, List<Expression> args,
-                       String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
-    
-
-    if (mn == null) throw new IllegalArgumentException("mn == null");
-    
+  protected MethodCall(Option<List<TypeName>> targs, String mn, List<? extends Expression> args,
+                       SourceInfo si) {
+    super(si);
+    if (mn == null || targs == null) throw new IllegalArgumentException();
+    typeArgs = targs;
     methodName = mn;
-    arguments  = args;
+    arguments  = (args == null) ? new ArrayList<Expression>(0) : new ArrayList<Expression>(args);
+  }
+  
+  public Option<List<TypeName>> getTypeArgs() { return typeArgs; }
+  public void setTypeArgs(List<TypeName> targs) { typeArgs = Option.wrap(targs); }
+  public void setTypeArgs(Option<List<TypeName>> targs) {
+    if (targs == null) throw new IllegalArgumentException();
+    typeArgs = targs;
   }
   
   /**
@@ -94,8 +83,7 @@ public abstract class MethodCall extends PrimaryExpression
    */
   public void setMethodName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-    
-    firePropertyChange(METHOD_NAME, methodName, methodName = s);
+    methodName = s;
   }
   
   /**
@@ -109,7 +97,7 @@ public abstract class MethodCall extends PrimaryExpression
   /**
    * Sets the constructor arguments.
    */
-  public void setArguments(List<Expression> l) {
-    firePropertyChange(ARGUMENTS, arguments, arguments = l);
+  public void setArguments(List<? extends Expression> l) {
+    arguments = (l == null) ? new ArrayList<Expression>(0) : new ArrayList<Expression>(l);
   }
 }

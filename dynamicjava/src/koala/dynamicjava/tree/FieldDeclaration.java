@@ -37,32 +37,7 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/05/11
  */
 
-public class FieldDeclaration extends Node {
-  /**
-   * The accessFlags property name
-   */
-  public final static String ACCESS_FLAGS = "accessFlags";
-
-  /**
-   * The type property name
-   */
-  public final static String TYPE = "type";
-
-  /**
-   * The name property name
-   */
-  public final static String NAME = "name";
-
-  /**
-   * The initializer property name
-   */
-  public final static String INITIALIZER = "initializer";
-
-  /**
-   * The access flags
-   */
-  private int accessFlags;
-
+public class FieldDeclaration extends Declaration {
   /**
    * The type of this field
    */
@@ -80,37 +55,30 @@ public class FieldDeclaration extends Node {
 
   /**
    * Creates a new field declaration
-   * @param flags  the access flags
+   * @param mods   the modifiers
    * @param type   the type of this field
    * @param name   the name of this field
    * @param init   the initializer. Can be null
    * @exception IllegalArgumentException if name is null or type is null
    */
-  public FieldDeclaration(int flags, TypeName type, String name, Expression init) {
-    this(flags, type, name, init, null, 0, 0 ,0 ,0);
+  public FieldDeclaration(ModifierSet mods, TypeName type, String name, Expression init) {
+    this(mods, type, name, init, SourceInfo.NONE);
   }
 
   /**
    * Creates a new field declaration
-   * @param flags  the access flags
+   * @param mods   the modifiers
    * @param type   the type of this field
    * @param name   the name of this field
    * @param init   the initializer. Can be null
-   * @param fn     the filename
-   * @param bl     the begin line
-   * @param bc     the begin column
-   * @param el     the end line
-   * @param ec     the end column
    * @exception IllegalArgumentException if name is null or type is null
    */
-  public FieldDeclaration(int flags, TypeName type, String name, Expression init,
-                          String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public FieldDeclaration(ModifierSet mods, TypeName type, String name, Expression init,
+                          SourceInfo si) {
+    super(mods, si);
 
     if (type == null) throw new IllegalArgumentException("type == null");
     if (name == null) throw new IllegalArgumentException("name == null");
-
-    accessFlags = flags;
     this.type   = type;
     this.name   = name;
     initializer = init;
@@ -121,20 +89,6 @@ public class FieldDeclaration extends Node {
           (((ArrayTypeName)type).getElementType());
       }
     }
-  }
-
-  /**
-   * Returns the access flags for this method
-   */
-  public int getAccessFlags() {
-    return accessFlags;
-  }
-
-  /**
-   * Sets the access flags for this constructor
-   */
-  public void setAccessFlags(int f) {
-    firePropertyChange(ACCESS_FLAGS, accessFlags, accessFlags = f);
   }
 
   /**
@@ -150,8 +104,7 @@ public class FieldDeclaration extends Node {
    */
   public void setType(TypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-
-    firePropertyChange(TYPE, type, type = t);
+    type = t;
   }
 
   /**
@@ -167,8 +120,7 @@ public class FieldDeclaration extends Node {
    */
   public void setName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-
-    firePropertyChange(NAME, name, name = s);
+    name = s;
   }
 
   /**
@@ -182,7 +134,7 @@ public class FieldDeclaration extends Node {
    * Sets the initializer
    */
   public void setInitializer(Expression e) {
-    firePropertyChange(INITIALIZER, initializer, initializer = e);
+    initializer = e;
   }
 
   /**
@@ -196,6 +148,6 @@ public class FieldDeclaration extends Node {
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+java.lang.reflect.Modifier.toString(getAccessFlags())+" "+getType()+" "+getName()+" "+getInitializer()+")";
+    return "("+getClass().getName()+": "+getModifiers()+" "+getType()+" "+getName()+" "+getInitializer()+")";
   }
 }

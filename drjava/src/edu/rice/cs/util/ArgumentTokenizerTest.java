@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util;
 
@@ -46,15 +49,13 @@ import java.util.List;
  */
 public class ArgumentTokenizerTest extends DrJavaTestCase {
 
-  /**
-   * Creates a new ArgumentTokenizer to be used in every test.
+  /** Creates a new ArgumentTokenizer to be used in every test.
    */
   public ArgumentTokenizerTest(String name) {
     super(name);
   }
 
-  /**
-   * Asserts that the given string is tokenized to become the
+  /** Asserts that the given string is tokenized to become the
    * given array of string arguments.
    * @param typed A string containing all arguments (as typed by a user)
    * @param expected What the tokenizer should return
@@ -63,8 +64,7 @@ public class ArgumentTokenizerTest extends DrJavaTestCase {
     _assertTokenized(typed, expected, false);
   }
 
-  /**
-   * Asserts that the given string is tokenized to become the
+  /** Asserts that the given string is tokenized to become the
    * given array of string arguments.
    * @param typed A string containing all arguments (as typed by a user)
    * @param expected What the tokenizer should return
@@ -74,13 +74,12 @@ public class ArgumentTokenizerTest extends DrJavaTestCase {
   protected void _assertTokenized(String typed, String[] expected,
                                   boolean stringify) {
     List<String> actual = ArgumentTokenizer.tokenize(typed, stringify);
-    List expectedList = Arrays.asList(expected);
+    List<String> expectedList = Arrays.asList(expected);
     assertEquals("tokenized argument list should match expected",
                  expectedList, actual);
   }
 
-  /**
-   * Tests that the argument tokenizer can split up a simple list of arguments.
+  /** Tests that the argument tokenizer can split up a simple list of arguments.
    */
   public void testTokenizeArguments() {
     // a b c
@@ -141,8 +140,7 @@ public class ArgumentTokenizerTest extends DrJavaTestCase {
                      new String[]{"asdf"});
   }
 
-  /**
-   * Tests that escaped characters just return the character itself.
+  /** Tests that escaped characters just return the character itself.
    * Escaped whitespace is considered a character, not a delimiter.
    * (This is how Unix behaves.)
    *
@@ -168,8 +166,7 @@ public class ArgumentTokenizerTest extends DrJavaTestCase {
                      new String[]{"a b"});
   }
 
-  /**
-   * Tests that within a quote, everything is correctly escaped.
+  /** Tests that within a quote, everything is correctly escaped.
    * (Special characters are passed to the program correctly.)
    */
   public void testTokenizeQuotedEscapedArgs() {
@@ -211,8 +208,7 @@ public class ArgumentTokenizerTest extends DrJavaTestCase {
                      new String[]{"\\b"});
   }
 
-  /**
-   * Tests that single quotes can be used as argument delimiters.
+  /** Tests that single quotes can be used as argument delimiters.
    * This is consistent with Unix, not with DOS.
    */
   public void testTokenizeSingleQuotedArgs() {
@@ -230,8 +226,7 @@ public class ArgumentTokenizerTest extends DrJavaTestCase {
                      new String[]{"\\"});
   }
 
-  /**
-   * Tests that arguments can be "stringified" properly.
+  /** Tests that arguments can be "stringified" properly.
    * (ie. formatted to be printed as a String)
    */
   public void testTokenizeAndStringify() {

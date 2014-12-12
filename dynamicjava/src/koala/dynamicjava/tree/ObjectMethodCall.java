@@ -30,10 +30,13 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
 import koala.dynamicjava.tree.visitor.*;
 
 /**
- * This class represents the method call nodes of the syntax tree
+ * This class represents the method call nodes of the syntax tree.
+ * For example: "obj.foo(x, y+3)"
  *
  * @author  Stephane Hillion
  * @version 1.0 - 1999/04/24
@@ -48,18 +51,14 @@ public class ObjectMethodCall extends MethodCall implements ExpressionContainer 
   /**
    * Creates a new node
    * @param exp   the expression on which this method call applies
+   * @param targs type arguments
    * @param mn    the field name
    * @param args  the arguments. Can be null.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
-   * @exception IllegalArgumentException if mn is null
    */
-  public ObjectMethodCall(Expression exp, String mn, List<Expression> args,
-                          String fn, int bl, int bc, int el, int ec) {
-    super(mn, args, fn, bl, bc, el, ec);
+  public ObjectMethodCall(Expression exp, Option<List<TypeName>> targs, String mn,
+                           List<? extends Expression> args, SourceInfo si) {
+    super(targs, mn, args, si);
+    if (exp == null) { throw new IllegalArgumentException("exp == null"); }
     expression = exp;
   }
 
@@ -68,15 +67,31 @@ public class ObjectMethodCall extends MethodCall implements ExpressionContainer 
    * @param exp   the expression on which this method call applies
    * @param mn    the field name
    * @param args  the arguments. Can be null.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
-   * @exception IllegalArgumentException if mn is null
    */
-  public ObjectMethodCall(Expression exp, String mn, List<Expression> args) {
-    this(exp, mn, args, null, 0, 0, 0, 0);
+  public ObjectMethodCall(Expression exp, String mn, List<? extends Expression> args, SourceInfo si) {
+    this(exp, Option.<List<TypeName>>none(), mn, args, si);
+  }
+
+  /**
+   * Creates a new node
+   * @param exp   the expression on which this method call applies
+   * @param targs type arguments
+   * @param mn    the field name
+   * @param args  the arguments. Can be null.
+   */
+  public ObjectMethodCall(Expression exp, Option<List<TypeName>> targs, String mn,
+                           List<? extends Expression> args) {
+    this(exp, targs, mn, args, SourceInfo.NONE);
+  }
+
+  /**
+   * Creates a new node
+   * @param exp   the expression on which this method call applies
+   * @param mn    the field name
+   * @param args  the arguments. Can be null.
+   */
+  public ObjectMethodCall(Expression exp, String mn, List<? extends Expression> args) {
+    this(exp, Option.<List<TypeName>>none(), mn, args, SourceInfo.NONE);
   }
 
   /**
@@ -90,7 +105,8 @@ public class ObjectMethodCall extends MethodCall implements ExpressionContainer 
    * Sets the expression on which this method call applies
    */
   public void setExpression(Expression e) {
-    firePropertyChange(EXPRESSION, expression, expression = e);
+    if (e == null) { throw new IllegalArgumentException("e == null"); }
+    expression = e;
   }
 
   /**
@@ -109,6 +125,6 @@ public class ObjectMethodCall extends MethodCall implements ExpressionContainer 
    * Implementation of toString for use in unit testing
    */
   public String toStringHelper() {
-    return getMethodName()+" "+getArguments()+" "+getExpression();
+    return getTypeArgs()+" "+getMethodName()+" "+getArguments()+" "+getExpression();
   }
 }

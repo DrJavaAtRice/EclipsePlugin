@@ -1,101 +1,130 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.compiler;
 
-import  java.io.File;
-import  edu.rice.cs.util.ClassPathVector;
+import java.io.File;
+import java.util.List;
+import java.util.Set;
+import javax.swing.filechooser.FileFilter;
+import edu.rice.cs.drjava.model.DJError;
+import edu.rice.cs.plt.reflect.JavaVersion;
 
 /** The minimum interface that a compiler must meet to be used by DrJava.
- *  @version $Id$
- */
+  * @version $Id$
+  */
 public interface CompilerInterface {
   
-  /** Compile the given files.
-   *  @param files Source files to compile.
-   *  @param sourceRoot Source root directory, the base of the package structure.
-   *  @return Array of errors that occurred. If no errors, should be zero length array (not null).
-   */
-  
-  CompilerError[] compile(File sourceRoot, File[] files);
-  
-  /** Compile the given files.
-   *  @param files Source files to compile.
-   *  @param sourceRoots Array of source root directories, the base of the package structure for all files to compile.
-   *  @return Array of errors that occurred. If no errors, should be zero length array (not null).
-   */
-  CompilerError[] compile(File[] sourceRoots, File[] files);
-
   /** Indicates whether this compiler is actually available. As in: Is it installed and located? This method 
-   *  should load the compiler class, which should hopefully prove whether the class can load.  If this 
-   *  method returns true, the {@link #compile} method should not fail due to class not being found.
-   */
+    * should load the compiler class, which should hopefully prove whether the class can load.  If this 
+    * method returns true, the {@link #compile} method should not fail due to class not being found.
+    */
   boolean isAvailable();
-
+  
+  /** Compile the given files.
+    * @param files  Source files to compile.
+    * @param classPath  Support jars or directories that should be on the classpath.  If <code>null</code>, the default is used.
+    * @param sourcePath  Location of additional sources to be compiled on-demand.  If <code>null</code>, the default is used.
+    * @param destination  Location (directory) for compiled classes.  If <code>null</code>, the default in-place location is used.
+    * @param bootClassPath  The bootclasspath (contains Java API jars or directories); should be consistent with
+    * <code>sourceVersion</code> 
+    *                       If <code>null</code>, the default is used.
+    * @param sourceVersion  The language version of the sources.  Should be consistent with <code>bootClassPath</code>.  
+    * If <code>null</code>, the default is used.
+    * 
+    * NOTE: currently, sourceVersion is ALWAYS null.  This method is only called from two places in DefaultCompilerModel.
+    * 
+    * @param showWarnings  Whether compiler warnings should be shown or ignored.
+    * @return Errors that occurred. If no errors, should be zero length (not null).
+    */
+  List<? extends DJError> compile(List<? extends File> files, List<? extends File> classPath, 
+                                        List<? extends File> sourcePath, File destination, 
+                                        List<? extends File> bootClassPath, String sourceVersion, boolean showWarnings);
+  
+  /** The latest version of Java supported by the compiler */
+  JavaVersion version();
+  
   /** Returns the name of this compiler, appropriate to show to the user. */
   String getName();
-
-  /** Should return info about compiler, at least including name. */
+  
+  /** Returns a one-line description of the compiler (such as the name and file location) */
+  String getDescription();
+  
+  /** String to display in a combo box (generally {@code getName()}) */
   String toString();
   
-  /** Allows us to set the extra classpath for the compilers without referencing the config object in a loaded class 
-   *  file.
-   */ 
-  void setExtraClassPath(String extraClassPath);
+  /** A compiler can instruct DrJava to include additional elements for the boot
+    * class path of the Interactions JVM. */
+  List<File> additionalBootClassPathForInteractions();
   
-  /** Sets the extra classpath in the form of a ClasspathVector. This should include any classpath entries from 
-   *  the project's classpath, if any, and the entries from EXTRA_CLASSPATH.
-   * @param extraClassPath the classpath to use as the compiler's extra classpath
-   */
-  void setExtraClassPath(ClassPathVector extraClassPath);
+  /** Transform the command line to be interpreted into something the Interactions JVM can use.
+    * This replaces "java MyClass a b c" with Java code to call MyClass.main(new String[]{"a","b","c"}).
+    * "import MyClass" is not handled here.
+    * transformCommands should support at least "run", "java" and "applet".
+    * @param interactionsString unprocessed command line
+    * @return command line with commands transformed */
+  String transformCommands(String interactionsString);
   
-  /** Sets whether to allow assertions in Java 1.4.  (Allows us not to reference the config object in a 
-   *  loaded class file.)
-   */
-  void setAllowAssertions(boolean allow);
+  /** Return true if the specified file is a source file for this compiler. 
+    * @param f file to check if it is a source file
+    * @return true if the specified file is a source file for this compiler. */
+  boolean isSourceFileForThisCompiler(File f);
   
-  /** Sets whether or not warnings are allowed. */
-  void setWarningsEnabled(boolean warningsEnabled);
+  /** Return the set of source file extensions that this compiler supports.
+    * @return the set of source file extensions that this compiler supports. */
+  Set<String> getSourceFileExtensions();
+
+  /** Return the suggested file extension that will be appended to a file without extension.
+    * @return the suggested file extension */
+  public String getSuggestedFileExtension();
   
-  /** This method allows us to set the JSR14 collections path across a class loader.
-   *  (cannot cast a loaded class to a subclass, so all compiler interfaces must have this method)
-   */ 
-  void addToBootClassPath(File s);
+  /** Return a file filter that can be used to open files this compiler supports.
+    * @return file filter for appropriate source files for this compiler. */
+  FileFilter getFileFilter();
   
-  /** Sets the output directory, or null for default */
-  void setBuildDirectory(File dir);
+  /** Return the extension of the files that should be opened with the "Open Folder..." command.
+    * @return file extension for the "Open Folder..." command for this compiler. */
+  String getOpenAllFilesInFolderExtension();
   
+  /** Return the set of keywords that should be highlighted in the specified file.
+    * @param f file for which to return the keywords
+    * @return the set of keywords that should be highlighted in the specified file. */
+  Set<String> getKeywordsForFile(File f);
+  
+  /** Return true if this compiler can be used in conjunction with the language level facility.
+    * @return true if language levels can be used. */
+  boolean supportsLanguageLevels();
 }
-
-
-

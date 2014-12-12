@@ -30,10 +30,13 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
 import koala.dynamicjava.tree.visitor.*;
 
 /**
  * This class represents the static method call nodes of the syntax tree.
+ * For example: "SomeClass.foo(x, y+3)"
  *
  * @author  Stephane Hillion
  * @version 1.0 - 1999/05/01
@@ -41,26 +44,46 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class StaticMethodCall extends MethodCall {
   /**
-   * The methodType property name
-   */
-  public final static String METHOD_TYPE = "methodType";
-
-  /**
    * The type on which this method call applies
    */
   private TypeName methodType;
 
   /**
-   * Creates a new node. (Note: TypeName has been changed from ReferenceTypeName so that it can accept an ArrayTypeName as input.
-   * A better solution would be to make ArrayTypeName extend ReferenceTypeName. This would alleviate some problems with
-   * static method call being able to take in a primitive type)
+   * Creates a new node.
+   * @param typ   the type on which this method call applies
+   * @param targs type arguments
+   * @param mn    the field name
+   * @param args  the arguments. Can be null.
+   * @exception IllegalArgumentException if typ is null or mn is null
+   */
+  public StaticMethodCall(TypeName typ, Option<List<TypeName>> targs, String mn, List<? extends Expression> args) {
+    this(typ, targs, mn, args, SourceInfo.NONE);
+  }
+
+  /**
+   * Creates a new node.
    * @param typ   the type on which this method call applies
    * @param mn    the field name
    * @param args  the arguments. Can be null.
    * @exception IllegalArgumentException if typ is null or mn is null
    */
-  public StaticMethodCall(TypeName typ, String mn, List<Expression> args) {
-    this(typ, mn, args, null, 0, 0, 0, 0);
+  public StaticMethodCall(TypeName typ, String mn, List<? extends Expression> args) {
+    this(typ, Option.<List<TypeName>>none(), mn, args, SourceInfo.NONE);
+  }
+
+  /**
+   * Creates a new node
+   * @param typ   the type on which this method call applies
+   * @param targs type arguments
+   * @param mn    the field name
+   * @param args  the arguments. Can be null.
+   * @exception IllegalArgumentException if typ is null or mn is null
+   */
+  public StaticMethodCall(TypeName typ, Option<List<TypeName>> targs, String mn, List<? extends Expression> args,
+                          SourceInfo si) {
+    super(targs, mn, args, si);
+    if (typ == null) throw new IllegalArgumentException("typ == null");
+    methodType = typ;
   }
 
   /**
@@ -68,20 +91,10 @@ public class StaticMethodCall extends MethodCall {
    * @param typ   the type on which this method call applies
    * @param mn    the field name
    * @param args  the arguments. Can be null.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if typ is null or mn is null
    */
-  public StaticMethodCall(TypeName typ, String mn, List<Expression> args,
-                          String fn, int bl, int bc, int el, int ec) {
-    super(mn, args, fn, bl, bc, el, ec);
-
-    if (typ == null) throw new IllegalArgumentException("typ == null");
-
-    methodType = typ;
+  public StaticMethodCall(TypeName typ, String mn, List<? extends Expression> args, SourceInfo si) {
+    this(typ, Option.<List<TypeName>>none(), mn, args, si);
   }
 
   /**
@@ -97,8 +110,7 @@ public class StaticMethodCall extends MethodCall {
    */
   public void setMethodType(ReferenceTypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-
-    firePropertyChange(METHOD_TYPE, methodType, methodType = t);
+    methodType = t;
   }
 
   /**
@@ -112,6 +124,6 @@ public class StaticMethodCall extends MethodCall {
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+getMethodName()+" "+getArguments()+" "+getMethodType()+")";
+    return "("+getClass().getName()+": "+getTypeArgs()+" "+getMethodName()+" "+getArguments()+" "+getMethodType()+")";
   }
 }

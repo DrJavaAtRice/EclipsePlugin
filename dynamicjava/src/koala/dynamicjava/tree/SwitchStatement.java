@@ -41,16 +41,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class SwitchStatement extends Statement {
   /**
-   * The selector property name
-   */
-  public final static String SELECTOR = "selector";
-  
-  /**
-   * The bindings property name
-   */
-  public final static String BINDINGS = "bindings";
-  
-  /**
    * The selector
    */
   private Expression selector;
@@ -64,16 +54,11 @@ public class SwitchStatement extends Statement {
    * Creates a new switch statement
    * @param sel   the selector
    * @param cases the case bindings (SwitchBlocks)
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if sel is null or cases is null
    */
   public SwitchStatement(Expression sel, List<SwitchBlock> cases,
-                         String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                         SourceInfo si) {
+    super(si);
     
     if (sel == null)   throw new IllegalArgumentException("sel == null");
     if (cases == null) throw new IllegalArgumentException("cases == null");
@@ -95,8 +80,7 @@ public class SwitchStatement extends Statement {
    */
   public void setSelector(Expression e) {
     if (e == null) throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(SELECTOR, selector, selector = e);
+    selector = e;
   }
   
   /**
@@ -112,8 +96,7 @@ public class SwitchStatement extends Statement {
    */
   public void setBindings(List<SwitchBlock> l) {
     if (l == null) throw new IllegalArgumentException("l == null");
-    
-    firePropertyChange(BINDINGS, bindings, bindings = l);
+    bindings = l;
   }
   
   /**

@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util.jar;
 
@@ -40,9 +43,8 @@ import java.util.jar.Manifest;
 
 public class JarBuilder {
   private JarOutputStream _output;
-
-  /**
-   * Creates a file file without a manifest
+  
+  /** Creates a file file without a manifest
    *
    * @param file the file to write the jar to
    * @throws IOException thrown if the file cannot be opened for writing
@@ -50,9 +52,8 @@ public class JarBuilder {
   public JarBuilder(File file) throws IOException {
     _output = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), ManifestWriter.DEFAULT);
   }
-
-  /**
-   * Creates an empty jar file with the given manifest
+  
+  /** Creates an empty jar file with the given manifest
    *
    * @param jar      the file to write the jar to
    * @param manifest the file that is the manifest for the archive
@@ -61,9 +62,8 @@ public class JarBuilder {
   public JarBuilder(File jar, File manifest) throws IOException {
     _output = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(jar)), new Manifest(new FileInputStream(manifest)));
   }
-
-  /**
-   * Creates an empty jar file with the given manifest
+  
+  /** Creates an empty jar file with the given manifest
    *
    * @param jar      the file to write the jar to
    * @param manifest the manifest file for the jar
@@ -77,9 +77,8 @@ public class JarBuilder {
       e.printStackTrace();
     }
   }
-
-  /**
-   * Takes a parent name and a field name and returns the concatenation of them correctly
+  
+  /** Takes a parent name and a field name and returns the concatenation of them correctly
    *
    * @param parent The parent directory
    * @param name   The name of the file or directory
@@ -93,9 +92,8 @@ public class JarBuilder {
       return parent + name;
     return parent + sep + name;
   }
-
-  /**
-   * Adds the file to the given path and name
+  
+  /** Adds the file to the given path and name
    *
    * @param file     the file to be added
    * @param parent   the directory to the path in which the file is to be added
@@ -103,44 +101,42 @@ public class JarBuilder {
    */
   public void addFile(File file, String parent, String fileName) throws IOException {
     byte data[] = new byte[2048];
-
+    
     FileInputStream fi = new FileInputStream(file.getAbsolutePath());
     BufferedInputStream origin = new BufferedInputStream(fi, 2048);
-
+    
     JarEntry entry = new JarEntry(makeName(parent, fileName));
     _output.putNextEntry(entry);
-
+    
     int count = origin.read(data, 0, 2048);
     while (count != -1) {
       _output.write(data, 0, count);
       count = origin.read(data, 0, 2048);
     }
-
+    
     origin.close();
   }
-
+  
   /** Add the directory into the directory specified by parent
-   *  @param dir the directory to add
-   *  @param parent the path inside the jar that the directory should be added to
-   */
+    * @param dir the directory to add
+    * @param parent the path inside the jar that the directory should be added to
+    */
   public void addDirectoryRecursive(File dir, String parent) {
     addDirectoryRecursiveHelper(dir, parent, new byte[2048], new FileFilter() {
       public boolean accept(File pathname) { return true; }
     });
   }
-
-  /**
-   * Add the directory into the directory specified by parent
-   * @param dir the directory to add
-   * @param parent the path inside the jar that the directory should be added to
-   * @param filter the filter used to filter the files
-   */
+  
+  /** Add the directory into the directory specified by parent
+    * @param dir the directory to add
+    * @param parent the path inside the jar that the directory should be added to
+    * @param filter the filter used to filter the files
+    */
   public void addDirectoryRecursive(File dir, String parent, FileFilter filter) {
     addDirectoryRecursiveHelper(dir, parent, new byte[2048], filter);
   }
-
-  /**
-   * Add the contents of a directory that match a filter to the archive
+  
+  /** Add the contents of a directory that match a filter to the archive
    * @param dir the directory to add
    * @param parent the directory to add into
    * @param buffer a buffer that is 2048 bytes
@@ -151,16 +147,16 @@ public class JarBuilder {
     try {
       File[] files = dir.listFiles(filter);
       BufferedInputStream origin = null;
-
+      
       if( files == null ) // listFiles may return null if there's an IO error
         return true;
       for (int i = 0; i < files.length; i++) {
         if( files[i].isFile() ) {
           origin = new BufferedInputStream(new FileInputStream(files[i]), 2048);
-
+          
           JarEntry entry = new JarEntry(makeName(parent, files[i].getName()));
           _output.putNextEntry(entry);
-
+          
           int count;
           while((count = origin.read(buffer, 0, 2048)) != -1) {
             _output.write(buffer, 0, count);
@@ -176,9 +172,8 @@ public class JarBuilder {
     }
     return true;
   }
-
-  /**
-   * Makes a directory in the jar file
+  
+  /** Makes a directory in the jar file
    *
    * @param parent  The name of the parent that the directory is to be created in
    * @param dirName The name of the directory to be created
@@ -194,9 +189,8 @@ public class JarBuilder {
     }
     return true;
   }
-
-  /**
-   * Close writing on the jar file
+  
+  /** Close writing on the jar file
    */
   public void close() throws IOException {
     _output.flush();

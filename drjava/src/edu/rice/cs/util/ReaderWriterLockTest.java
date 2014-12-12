@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util;
 
@@ -43,7 +46,7 @@ import edu.rice.cs.drjava.DrJavaTestCase;
   */
 public class ReaderWriterLockTest extends DrJavaTestCase {
 
-  protected ReaderWriterLock _lock;
+  protected volatile ReaderWriterLock _lock;
 
   /** Creates a new lock for the tests. */
   public void setUp() throws Exception {
@@ -54,14 +57,14 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
   // TO DO: Pull the next few lines out into a Semaphore class
 
   /** Number of notifications expected before we actually notify. */
-  private int _notifyCount = 0;
+  private volatile int _notifyCount = 0;
 
   /** Object to provide semaphore-like synchronization. */
   private final Object _notifyObject = new Object();
 
   /** Notifies the _notifyObject (semaphore) when the _notifyCount reaches 0.  (Decrements the count on each call.) */
   private void _notify() {
-    synchronized (_notifyObject) {
+    synchronized(_notifyObject) {
       _notifyCount--;
       if (_notifyCount <= 0) {
         _notifyObject.notify();
@@ -73,7 +76,7 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
   /** Tests that multiple readers can run without causing deadlock. We can't really impose any ordering on their output.
     */
   public void testMultipleReaders() throws InterruptedException {
-    final StringBuilder buf = new StringBuilder();
+    final StringBuffer buf = new StringBuffer();  // StringBuffer is designed for concurrent access
 
     // Create three threads
     ReaderThread r1 = new PrinterReaderThread("r1 ", buf);
@@ -84,7 +87,7 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
     _notifyCount = 3;
 
     // Start the readers
-    synchronized (_notifyObject) {
+    synchronized(_notifyObject) {
       r1.start();
       r2.start();
       r3.start();
@@ -92,11 +95,14 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
     }
 //    String output = buf.toString();
 //    System.out.println(output);
+    r1.join();
+    r2.join();
+    r3.join();
   }
 
   /** Tests that multiple writers run in mutually exclusive intervals without causing deadlock. */
   public void testMultipleWriters() throws InterruptedException {
-    final StringBuilder buf = new StringBuilder();
+    final StringBuffer buf = new StringBuffer();  // StringBuffer is designed for concurrent access
 
     // Create three threads
     WriterThread w1 = new PrinterWriterThread("w1 ", buf);
@@ -107,7 +113,7 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
     _notifyCount = 3;
 
     // Start the readers
-    synchronized (_notifyObject) {
+    synchronized(_notifyObject) {
       w1.start();
       w2.start();
       w3.start();
@@ -120,6 +126,10 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
     assertTrue("w1 writes should happen in order", output.indexOf("w1 w1 w1 ") != -1);
     assertTrue("w2 writes should happen in order", output.indexOf("w2 w2 w2 ") != -1);
     assertTrue("w1 writes should happen in order", output.indexOf("w3 w3 w3 ") != -1);
+    
+    w1.join();
+    w2.join();
+    w3.join();
   }
 
   /** Ensure that a single thread can perform multiple reads. */
@@ -135,7 +145,7 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
     _lock.startRead();
     Thread w = new Thread() {
       public void run() {
-        synchronized (_lock) {
+        synchronized(_lock) {
           _lock.notifyAll();
           _lock.startWrite();
           // Waits here and releases _lock...
@@ -143,13 +153,15 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
         }
       }
     };
-    synchronized (_lock) {
+    synchronized(_lock) {
       w.start();
       _lock.wait();
     }
     _lock.startRead();
     _lock.endRead();
     _lock.endRead();
+    
+    w.join();
   }
 
   /** Ensure that a reading thread cannot perform a write. */
@@ -189,8 +201,7 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
   }
 
 
-  /**
-   * We would like to test the following schedule.
+  /** We would like to test the following schedule.
    *
    * <pre>
    * W1 |***********|
@@ -215,7 +226,7 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
    * enforce that no one interferes with output from a writer.
    */
   public void testMultipleReadersAndWriters() throws InterruptedException {
-    final StringBuilder buf = new StringBuilder();
+    final StringBuffer buf = new StringBuffer();  // StringBuffer is designed for concurrent access
 
     // Create threads
     WriterThread w1 = new PrinterWriterThread("w1 ", buf);
@@ -232,7 +243,7 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
     _notifyCount = 8;
 
     // Start the readers
-    synchronized (_notifyObject) {
+    synchronized(_notifyObject) {
       w1.start();
       w2.start();
       r1.start();
@@ -250,6 +261,15 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
     assertTrue("w1 writes should happen in order", output.indexOf("w1 w1 w1 ") != -1);
     assertTrue("w2 writes should happen in order",  output.indexOf("w2 w2 w2 ") != -1);
     assertTrue("w1 writes should happen in order", output.indexOf("w3 w3 w3 ") != -1);
+    
+    w1.join();
+    w2.join();
+    w3.join();
+    r1.join();
+    r2.join();
+    r3.join();
+    r4.join();
+    r5.join();
   }
 
 
@@ -278,35 +298,35 @@ public class ReaderWriterLockTest extends DrJavaTestCase {
   /** A ReaderThread which repeatedly prints to a buffer. */
   public class PrinterReaderThread extends ReaderThread {
     PrintCommand _command;
-    public PrinterReaderThread(String msg, final StringBuilder buf) { _command = new PrintCommand(msg, buf); }
+    public PrinterReaderThread(String msg, final StringBuffer buf) { _command = new PrintCommand(msg, buf); }
     public void read() { _command.print(); }
   }
 
   /** A WriterThread which repeatedly prints to a buffer. */
   public class PrinterWriterThread extends WriterThread {
     PrintCommand _command;
-    public PrinterWriterThread(String msg, final StringBuilder buf) { _command = new PrintCommand(msg, buf); }
+    public PrinterWriterThread(String msg, final StringBuffer buf) { _command = new PrintCommand(msg, buf); }
     public void write() { _command.print(); }
   }
 
   /** Command pattern class to print to a buffer. */
   public class PrintCommand {
     /** Number of times to print */
-    int _numIterations = 3;
+    volatile int _numIterations = 3;
     /** Number of milliseconds to wait between iterations */
-    int _waitMillis = 5;
+    volatile int _waitMillis = 5;
     /** Buffer to print to */
-    final StringBuilder _buf;
+    final StringBuffer _buf;  // StringBuffer is designed for concurrent access
     /** Message to print */
     final String _msg;
     /** Creates a new command to print to a buffer during a read or write. */
-    public PrintCommand(String msg, StringBuilder buf) {
+    public PrintCommand(String msg, StringBuffer buf) {
       _msg = msg;
       _buf = buf;
     }
     /** Prints the message to the buffer. */
     public void print() {
-      for (int i=0; i < _numIterations; i++) {
+      for (int i = 0; i < _numIterations; i++) {
         _buf.append(_msg);
         try { Thread.sleep(_waitMillis); }
         catch (InterruptedException e) { _buf.append(e); }

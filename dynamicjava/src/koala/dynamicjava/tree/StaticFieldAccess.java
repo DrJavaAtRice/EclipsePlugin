@@ -39,11 +39,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class StaticFieldAccess extends FieldAccess {
   /**
-   * The fieldType property name
-   */
-  public final static String FIELD_TYPE = "fieldType";
-  
-  /**
    * The type on which this field access applies
    */
   private ReferenceTypeName fieldType;
@@ -55,23 +50,18 @@ public class StaticFieldAccess extends FieldAccess {
    * @exception IllegalArgumentException if typ is null or fln is null
    */
   public StaticFieldAccess(ReferenceTypeName typ, String fln) {
-    this(typ, fln, null, 0, 0, 0, 0);
+    this(typ, fln, SourceInfo.NONE);
   }
   
   /**
    * Creates a new field access node
    * @param typ   the type on which this field access applies
    * @param fln   the field name
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if typ is null or fln is null
    */
   public StaticFieldAccess(ReferenceTypeName typ, String fln,
-                           String fn, int bl, int bc, int el, int ec) {
-    super(fln, fn, bl, bc, el, ec);
+                           SourceInfo si) {
+    super(fln, si);
     
     if (typ == null) throw new IllegalArgumentException("typ == null");
     
@@ -91,8 +81,7 @@ public class StaticFieldAccess extends FieldAccess {
    */
   public void setFieldType(ReferenceTypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-    
-    firePropertyChange(FIELD_TYPE, fieldType, fieldType = t);
+    fieldType = t;
   }
   
   /**

@@ -1,190 +1,235 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (javaplt@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui;
 
-import java.util.Vector;
 import java.util.LinkedList;
 import java.util.ArrayList;
-import java.util.Enumeration;
-import java.io.File;
+import java.util.Collection;
+import java.lang.ref.WeakReference;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.tree.*;
-import javax.swing.table.*;
-import javax.swing.text.BadLocationException;
+import javax.swing.text.LayeredHighlighter;
 import java.awt.event.*;
 import java.awt.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Position;
 
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 
-import edu.rice.cs.drjava.model.RegionManagerListener;
-import edu.rice.cs.drjava.model.DocumentRegion;
 import edu.rice.cs.drjava.model.MovingDocumentRegion;
-import edu.rice.cs.drjava.model.SimpleDocumentRegion;
 import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
-import edu.rice.cs.drjava.model.FileMovedException;
 import edu.rice.cs.drjava.model.RegionManager;
+import edu.rice.cs.drjava.model.RegionManagerListener;
 import edu.rice.cs.drjava.config.*;
 import edu.rice.cs.drjava.DrJava;
-import edu.rice.cs.util.swing.Utilities;
-import edu.rice.cs.util.UnexpectedException;
-import edu.rice.cs.util.Pair;
-import edu.rice.cs.util.StringOps;
+import edu.rice.cs.plt.tuple.Pair;
 import edu.rice.cs.drjava.config.OptionConstants;
 
-/**
- * Panel for displaying find results.
- * This class is a swing view class and hence should only be accessed from the event-handling thread.
- * @version $Id$
- */
+/** Panel for displaying find results. This class is a swing class which should only be accessed from the event thread.
+  * @version $Id$
+  */
 public class FindResultsPanel extends RegionsTreePanel<MovingDocumentRegion> {
-  protected JButton _goToButton;
-  protected JButton _bookmarkButton;
-  protected JButton _removeButton;
-  protected JComboBox _colorBox;
-  protected RegionManager<MovingDocumentRegion> _regionManager;
-  protected int _lastIndex;
+
+  // The following field has been hoisted into RegionsTreePanel
+//  protected final RegionManager<MovingDocumentRegion> _regionManager;
+  private final String _searchString;
+  private final boolean _searchAll;
+  private final boolean _searchSelectionOnly;
+  private final boolean _matchCase;
+  private final boolean _wholeWord;
+  private final boolean _noComments;
+  private final boolean _noTestCases;
+  private final WeakReference<OpenDefinitionsDocument> _doc;
+  private final FindReplacePanel _findReplace;
+  private final MovingDocumentRegion _region; //document region used for search limited selection function
+    
+  private volatile JButton _findAgainButton;
+  private volatile JButton _goToButton;
+  private volatile JButton _bookmarkButton;
+  private volatile JButton _removeButton;
+  private volatile JComboBox<Color> _colorBox;
+  private volatile int _lastIndex;
   
   /** Saved option listeners kept in this field so they can be removed for garbage collection  */
-  private LinkedList<Pair<Option<Color>, OptionListener<Color>>> _colorOptionListeners = 
+  private final LinkedList<Pair<Option<Color>, OptionListener<Color>>> _colorOptionListeners = 
     new LinkedList<Pair<Option<Color>, OptionListener<Color>>>();
   
-  /** Constructs a new find results panel.
-   *  This is swing view class and hence should only be accessed from the event-handling thread.
-   *  @param frame the MainFrame
-   *  @param rm the region manager associated with this panel
-   *  @param title for the panel
-   */
-  public FindResultsPanel(MainFrame frame, RegionManager<MovingDocumentRegion> rm, String title) {
-    super(frame, title);
-    _regionManager = rm;
-    _regionManager.addListener(new RegionManagerListener<MovingDocumentRegion>() {      
-      public void regionAdded(MovingDocumentRegion r, int index) {
-        addRegion(r);
-      }
-      public void regionChanged(MovingDocumentRegion r, int index) { 
+  /** Constructs a new find results panel. This is swing class which should only be accessed from the event thread.
+    * @param frame the MainFrame
+    * @param regionManager the region manager associated with this panel
+    * @param title for the panel
+    * @param searchString string that was searched for
+    * @param searchAll whether all files were searched
+    * @param searchSelectionOnly whether the selection within the document was searched
+    * @param doc weak reference to the document in which the search occurred (or started, if all documents were searched)
+    * @param findReplace the FindReplacePanel that created this FindResultsPanel
+    */
+  public FindResultsPanel(MainFrame frame, RegionManager<MovingDocumentRegion> regionManager, MovingDocumentRegion region, String title, 
+                          String searchString, boolean searchAll, boolean searchSelectionOnly, boolean matchCase, boolean wholeWord, 
+                          boolean noComments, boolean noTestCases, WeakReference<OpenDefinitionsDocument> doc, 
+                          FindReplacePanel findReplace) {
+    super(frame, title, regionManager);
+    
+//  _regionManager is inherited from RegionsTreePanel
+    _region = region;
+    _searchString = searchString;
+    _searchAll    = searchAll;
+    _searchSelectionOnly = searchSelectionOnly;
+    _matchCase    = matchCase;
+    _wholeWord    = wholeWord;
+    _noComments   = noComments;
+    _noTestCases  = noTestCases;
+    _doc          = doc;
+    _findReplace  = findReplace;
+    
+    // set "Find Again" button tooltip
+    StringBuilder sb = new StringBuilder();
+    sb.append("<html>Find '").append(title);
+    if (!title.equals(_searchString)) sb.append("...");
+    sb.append("'");
+    if (_searchAll) sb.append(" in all files");
+    else if (_searchSelectionOnly) sb.append(" only in original selection.");
+    sb.append(".");
+    if (_matchCase) sb.append("<br>Case must match.");
+    if (_wholeWord) sb.append("<br>Whole words only.");
+    if (_noComments) sb.append("<br>No comments or strings.");
+    if (_noTestCases) sb.append("<br>No test cases.");
+    sb.append("</html>");
+    _findAgainButton.setToolTipText(sb.toString());
+
+    // Similar (but NOT identical) code found in BookmarksPanel and BreakpointsPanel
+    getRegionManager().addListener(new RegionManagerListener<MovingDocumentRegion>() {      
+      public void regionAdded(MovingDocumentRegion r) { addRegion(r); }
+      public void regionChanged(MovingDocumentRegion r) { 
         regionRemoved(r);
-        regionAdded(r, index);
+        regionAdded(r);
       }
-      public void regionRemoved(MovingDocumentRegion r) {
-        removeRegion(r);
-      }
+      public void regionRemoved(MovingDocumentRegion r) { removeRegion(r); }
     });
     
-    OptionListener<Color> temp;
-    Pair<Option<Color>, OptionListener<Color>> pair;
-    for(int i=0; i<OptionConstants.FIND_RESULTS_COLORS.length; ++i) {
-      temp = new FindResultsColorOptionListener(i);
-      pair = new Pair<Option<Color>, OptionListener<Color>>(OptionConstants.FIND_RESULTS_COLORS[i], temp);
+    for(int i = 0; i < OptionConstants.FIND_RESULTS_COLORS.length; ++i) {
+      final OptionListener<Color> listener = new FindResultsColorOptionListener(i);
+      final Pair<Option<Color>, OptionListener<Color>> pair = 
+        new Pair<Option<Color>, OptionListener<Color>>(OptionConstants.FIND_RESULTS_COLORS[i], listener);
       _colorOptionListeners.add(pair);
-      DrJava.getConfig().addOptionListener( OptionConstants.FIND_RESULTS_COLORS[i], temp);
+      DrJava.getConfig().addOptionListener(OptionConstants.FIND_RESULTS_COLORS[i], listener);
     }
   }
   
-  static class ColorComboRenderer extends JPanel implements ListCellRenderer {
-    private Color m_c = Color.black;
-    private DefaultListCellRenderer defaultRenderer = new DefaultListCellRenderer();
-    private final static Dimension preferredSize = new Dimension(0, 20);    
+  class ColorComboRenderer extends JPanel implements ListCellRenderer<Color> {
+    private volatile Color _color = DrJava.getConfig().getSetting(OptionConstants.FIND_RESULTS_COLORS[_colorBox.getSelectedIndex()]);
+    private final DefaultListCellRenderer _defaultRenderer = new DefaultListCellRenderer();
+    private final Dimension _size = new Dimension(0, 20);  
+    private final CompoundBorder _compoundBorder = 
+      new CompoundBorder(new MatteBorder(2, 10, 2, 10, Color.white), new LineBorder(Color.black));
     
     public ColorComboRenderer() {
       super();
-      setBorder(new CompoundBorder(
-                                   new MatteBorder(2, 10, 2, 10, Color.white), new LineBorder(
-                                                                                              Color.black)));
+      setBackground(_color);
+      setBorder(_compoundBorder);
     }
     
-    public Component getListCellRendererComponent(JList list, Object value,
-                                                  int row, boolean sel, boolean hasFocus) {
-      Component renderer;
-      if (value instanceof Color) {
-        m_c = (Color) value;
+    public Component getListCellRendererComponent(JList<? extends Color> list, Color color, int row, boolean sel, boolean hasFocus) {
+      JComponent renderer;
+      if (color != null) {
+        _color = color;
         renderer = this;
       }
       else {
-        JLabel l = (JLabel) defaultRenderer.getListCellRendererComponent(list, value, row, sel, hasFocus);
+        JLabel l = (JLabel) _defaultRenderer.getListCellRendererComponent(list, color, row, sel, hasFocus);
         l.setHorizontalAlignment(JLabel.CENTER);
         renderer = l;
       }
       // Taken out because this is a 1.5 method; not sure if it's necessary
-      //renderer.setPreferredSize(preferredSize);
+      renderer.setPreferredSize(_size);
       return renderer;
     }
     
     public void paint(Graphics g) {
-      setBackground(m_c);
+      setBackground(_color);
+      setBorder(_compoundBorder);
       super.paint(g);
     }
   }
   
   /** Creates the buttons for controlling the regions. Should be overridden. */
   protected JComponent[] makeButtons() {    
+    Action findAgainAction = new AbstractAction("Find Again") {
+      public void actionPerformed(ActionEvent ae) { _findAgain(); }
+    };
+    _findAgainButton = new JButton(findAgainAction);
+
     Action goToAction = new AbstractAction("Go to") {
-      public void actionPerformed(ActionEvent ae) {
-        goToRegion();
-      }
+      public void actionPerformed(ActionEvent ae) { goToRegion(); }
     };
     _goToButton = new JButton(goToAction);
-
+    
     Action bookmarkAction = new AbstractAction("Bookmark") {
-      public void actionPerformed(ActionEvent ae) {
-        _bookmark();
-      }
+      public void actionPerformed(ActionEvent ae) { _bookmark(); }
     };
     _bookmarkButton = new JButton(bookmarkAction);
-
+    
     Action removeAction = new AbstractAction("Remove") {
-      public void actionPerformed(ActionEvent ae) {
-        _remove();
-      }
+      public void actionPerformed(ActionEvent ae) { _remove(); }  // _remove is inherited from RegionsTreePanel
     };
     _removeButton = new JButton(removeAction);
-
+    
     // "Highlight" label panel
     final JPanel highlightPanel = new JPanel();
     final Color normalColor = highlightPanel.getBackground();
     highlightPanel.add(new JLabel("Highlight:"));
     
-    _colorBox = new JComboBox();    
-    for(int i=0; i<OptionConstants.FIND_RESULTS_COLORS.length; ++i) {
+    // find the first available color, or choose "None"
+    int smallestIndex = 0;
+    int smallestUsage = DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[smallestIndex];
+    for(_lastIndex = 0; _lastIndex < OptionConstants.FIND_RESULTS_COLORS.length; ++_lastIndex) {
+      if (DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[_lastIndex] < smallestUsage) {
+        smallestIndex = _lastIndex;
+        smallestUsage = DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[smallestIndex];
+      }
+    }
+    _lastIndex = smallestIndex;
+    ++DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[_lastIndex];
+    _colorBox = new JComboBox<Color>();    
+    for (int i = 0; i < OptionConstants.FIND_RESULTS_COLORS.length; ++i) {
       _colorBox.addItem(DrJava.getConfig().getSetting(OptionConstants.FIND_RESULTS_COLORS[i]));
     }
-    _colorBox.addItem("None");
+    _colorBox.addItem(null);  // formerly "None"
     _colorBox.setRenderer(new ColorComboRenderer());
     _colorBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -196,147 +241,145 @@ public class FindResultsPanel extends RegionsTreePanel<MovingDocumentRegion> {
           ++DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[_lastIndex];
           highlightPanel.setBackground(DrJava.getConfig().getSetting(OptionConstants.FIND_RESULTS_COLORS[_lastIndex]));
         }
-        else {
-          highlightPanel.setBackground(normalColor);
-        }
+        else highlightPanel.setBackground(normalColor);
+        
         _frame.refreshFindResultsHighlightPainter(FindResultsPanel.this, 
                                                   DefinitionsPane.FIND_RESULTS_PAINTERS[_lastIndex]);
       }
     });
-    // find the first available color, or choose "None"
-    for(_lastIndex=0; _lastIndex<OptionConstants.FIND_RESULTS_COLORS.length; ++_lastIndex) {
-      if (DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[_lastIndex]==0) {
-        break;
-      }
-    }
-    if (_lastIndex<OptionConstants.FIND_RESULTS_COLORS.length) {
-      ++DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[_lastIndex];
-    }
+    _colorBox.setMaximumRowCount(OptionConstants.FIND_RESULTS_COLORS.length + 1);
+    _colorBox.addPopupMenuListener(new PopupMenuListener() {
+      public void popupMenuCanceled(PopupMenuEvent e) { _colorBox.revalidate(); }
+      public void popupMenuWillBecomeInvisible(PopupMenuEvent e) { _colorBox.revalidate(); }
+      public void popupMenuWillBecomeVisible(PopupMenuEvent e) { _colorBox.revalidate(); }
+    });
     _colorBox.setSelectedIndex(_lastIndex);
     _frame.refreshFindResultsHighlightPainter(FindResultsPanel.this, 
                                               DefinitionsPane.FIND_RESULTS_PAINTERS[_lastIndex]);
     
-    JComponent[] buts = new JComponent[] { 
-      _goToButton, 
-        _bookmarkButton,
-        _removeButton,
-        highlightPanel,
-        _colorBox
-    };
-    
-    return buts;
+    updateButtons();
+    return new JComponent[] { _findAgainButton, _goToButton, _bookmarkButton, _removeButton, highlightPanel, _colorBox};
   }
   
   /** @return the selected painter for these find results. */
-  public ReverseHighlighter.DefaultUnderlineHighlightPainter getSelectedPainter() {
+  public LayeredHighlighter.LayerPainter getSelectedPainter() {
     return DefinitionsPane.FIND_RESULTS_PAINTERS[_lastIndex];
   }
   
-  /** Turn the selected regions into bookmarks. */
-  private void _bookmark() {
-    for (final MovingDocumentRegion r: getSelectedRegions()) {
-      DocumentRegion bookmark = _model.getBookmarkManager().getRegionOverlapping(r.getDocument(),
-                                                                                 r.getStartOffset(),
-                                                                                 r.getEndOffset());
-      if (bookmark==null) {
-        try {
-          _model.getBookmarkManager().addRegion(new SimpleDocumentRegion(r.getDocument(), r.getDocument().getFile(), r.getStartOffset(), r.getEndOffset()));
-        }
-        catch (FileMovedException fme) {
-          throw new UnexpectedException(fme);
-        }
-      }
+  /** Find again. */
+  private void _findAgain() {
+    _updateButtons();   // force an update buttons operation
+    OpenDefinitionsDocument odd = null;
+    if (_searchAll) odd = getGlobalModel().getActiveDocument();
+    else if (_doc != null) { odd = _doc.get(); }
+    if (odd != null) {
+
+      getRegionManager().clearRegions();
+      assert getRootNode() == getRegTreeModel().getRoot();
+      getRootNode().removeAllChildren();
+      _docToTreeNode.clear();
+      _regionToTreeNode.clear();
+      getRegTreeModel().nodeStructureChanged(getRootNode());
+      _lastSelectedRegion = null;
+//      _requestFocusInWindow();
+//      System.err.println("Root has been cleared; child count = " + getRootNode().getChildCount());
+      _findReplace.findAll(_searchString, _searchAll, _searchSelectionOnly, _matchCase, _wholeWord, _noComments, _noTestCases, odd, 
+                           getRegionManager(), _region, this);
+      getRegTree().scrollRowToVisible(0);  // Scroll to the first line in the new panel
+      _requestFocusInWindow();
     }
+  }
+  
+  /** Turn the selected regions into bookmarks. */
+  private void _bookmark() {  // TODO: consolidate with _toggleBookmark in MainFrame/AbstractGlobalModel?
+    updateButtons();
+    RegionManager<MovingDocumentRegion> bm = getGlobalModel().getBookmarkManager();
+    for (MovingDocumentRegion r: getSelectedRegions()) {
+      OpenDefinitionsDocument doc = r.getDocument();
+      int start = r.getStartOffset();
+      int end = r.getEndOffset();
+      Collection<MovingDocumentRegion> conflictingRegions = bm.getRegionsOverlapping(doc, start, end);
+      for (MovingDocumentRegion cr: conflictingRegions) bm.removeRegion(cr);
+
+      int lineStart = r.getLineStartOffset();
+      int lineEnd = r.getLineEndOffset();
+      bm.addRegion(new MovingDocumentRegion(doc, start, end, lineStart, lineEnd));
+    }
+    _frame.showBookmarks();
   }
   
   /** Action performed when the Enter key is pressed. Should be overridden. */
-  protected void performDefaultAction() {
-    goToRegion();
-  }
+  protected void performDefaultAction() { goToRegion(); }
   
-  /** Remove the selected regions. */
-  private void _remove() {
-    for (MovingDocumentRegion r: getSelectedRegions()) {
-      _regionManager.removeRegion(r);
-    }
-    if (_regionManager.getRegions().size()==0) { _close(); }
-  }
-
   /** Update button state and text. */
-  protected void updateButtons() {
+  protected void _updateButtons() {
     ArrayList<MovingDocumentRegion> regs = getSelectedRegions();
-    _goToButton.setEnabled(regs.size()==1);
-    _bookmarkButton.setEnabled(regs.size()>0);
-    _removeButton.setEnabled(regs.size()>0);
+    OpenDefinitionsDocument odd = null;
+    if (_doc != null) { odd = _doc.get(); }
+    _findAgainButton.setEnabled(odd != null || _searchAll);
+    _goToButton.setEnabled(regs.size() == 1);
+    _bookmarkButton.setEnabled(regs.size() > 0);
+    _removeButton.setEnabled(regs.size() > 0);
   }
   
-  /** Makes the popup menu actions. Should be overridden if additional actions besides "Go to" and "Remove" are added. */
+  /** Makes popup menu actions. Should be overridden if additional actions besides "Go to" and "Remove" are added. */
   protected AbstractAction[] makePopupMenuActions() {
     AbstractAction[] acts = new AbstractAction[] {
-      new AbstractAction("Go to") {
-        public void actionPerformed(ActionEvent e) {
-          goToRegion();
-        }
-      },
-        
-        new AbstractAction("Bookmark") {
-          public void actionPerformed(ActionEvent e) {
-            _bookmark();
-          }
-        },
-        
-        new AbstractAction("Remove") {
-          public void actionPerformed(ActionEvent e) {
-            _remove();
-          }
-        }
+      new AbstractAction("Go to") { public void actionPerformed(ActionEvent e) { goToRegion(); } },
+        new AbstractAction("Bookmark") { public void actionPerformed(ActionEvent e) { _bookmark(); } },
+          new AbstractAction("Remove") { public void actionPerformed(ActionEvent e) { _remove(); } }
     };
     return acts;
   }
   
-  /** Close the pane. */
-  public void _close() {
-    super._close();
-    freeResources();
+  /** Go to region. */
+  protected void goToRegion() {
+    ArrayList<MovingDocumentRegion> r = getSelectedRegions();
+    // we highlight the current location using the teal band
+    if (r.size() == 1) {
+      _frame.removeCurrentLocationHighlight();
+      _frame.goToRegionAndHighlight(r.get(0));
+    }
   }
   
-  /** Free the resources; this can be used if the panel was never actually displayed. */
+  /** Destroys this panel and its contents. This is a more comprehensive command than _closePanel (which is the
+    * _close operation inherited from RegionsTreePanel).  The latter merely removes the panel from the TabbedPane but 
+    * does not affect its contents, so panels like Find/Replace can be regenerated with their contents preserved.
+    */
+  @Override
+  protected void _close() {
+//    System.err.println("FindResultsPanel.close() called on " + this);
+    getRegionManager().clearRegions();  // removes and unhighlights each region; regionListener closes the panel at the end
+    getGlobalModel().removeFindResultsManager(getRegionManager());  // removes manager from global model (should be done by listener!)
+    _frame.removeCurrentLocationHighlight();
+    freeResources();
+    super._close();  // Not redundant.  _close may be called from removeRegion.
+  }
+  
+  /** Called from FindReplacePanel.findAll if search finds no matches. */
   public void freeResources() {
-    _regionManager.clearRegions();
-    _model.disposeFindResultsManager(_regionManager);
+    _docToTreeNode.clear();
+    _regionToTreeNode.clear();
+    getGlobalModel().removeFindResultsManager(getRegionManager());  // removes manager from global model (should be done by listener!)
     for (Pair<Option<Color>, OptionListener<Color>> p: _colorOptionListeners) {
-      DrJava.getConfig().removeOptionListener(p.getFirst(), p.getSecond());
+      DrJava.getConfig().removeOptionListener(p.first(), p.second());
     }
-    if (_lastIndex<OptionConstants.FIND_RESULTS_COLORS.length) {
+    if (_lastIndex < OptionConstants.FIND_RESULTS_COLORS.length) {
       --DefinitionsPane.FIND_RESULTS_PAINTERS_USAGE[_lastIndex];
     }
   }
 
-  /** Factory method to create user objects put in the tree.
-   *  If subclasses extend RegionTreeUserObj, they need to override this method. */
-  protected RegionTreeUserObj<MovingDocumentRegion> makeRegionTreeUserObj(MovingDocumentRegion r) {
-    return new FindResultsRegionTreeUserObj(r);
-  }
+  /** Return true if all documents were searched. */
+  public boolean isSearchAll() { return _searchAll; }
+  
+  /** Return the document which was searched (or where the search started, if _searchAll is true).
+    * May return null if the weak reference to the document was severed. */
+  public OpenDefinitionsDocument getDocument() { return _doc.get(); }
 
-  /** Class that gets put into the tree. The toString() method determines what's displayed in the three. */
-  protected static class FindResultsRegionTreeUserObj extends RegionTreeUserObj<MovingDocumentRegion> {
-    protected int _lineNumber;
-    public FindResultsRegionTreeUserObj(MovingDocumentRegion r) {
-      super(r);
-      _lineNumber = _region.getDocument().getLineOfOffset(_region.getStartOffset())+1;
-    }
-//    public int lineNumber() {
-//      return _lineNumber;
-//    }
-    public String toString() {
-      final StringBuilder sb = new StringBuilder();
-      sb.append("<html>");
-      sb.append(lineNumber());
-      sb.append(": ");
-      sb.append(_region.getString());
-      sb.append("</html>");
-      return sb.toString();
-    }
+  /** Disables "Find Again", e.g. because the document was closed. */
+  public void disableFindAgain() {
+    _doc.clear(); 
+    updateButtons(); 
   }
   
   /** The OptionListener for FIND_RESULTS_COLOR. */
@@ -348,7 +391,7 @@ public class FindResultsPanel extends RegionsTreePanel<MovingDocumentRegion> {
       _colorBox.removeItemAt(_index);
       _colorBox.insertItemAt(oce.value, _index);
       _colorBox.setSelectedIndex(pos);
-      if (pos==_index) {
+      if (pos == _index) {
         _frame.refreshFindResultsHighlightPainter(FindResultsPanel.this, DefinitionsPane.FIND_RESULTS_PAINTERS[_index]);
       }
     }

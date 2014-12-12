@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.definitions.indent;
 
@@ -43,74 +46,66 @@ import javax.swing.text.BadLocationException;
  */
 public final class QuestionNewParenPhraseTest extends IndentRulesTestCase {
 
-  /**
-   * Tests hitting start of document.
+  /** Tests hitting start of document.
    */
   public void testStartOfDocument() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
     
     // Hits docstart
     _setDocText("\nfoo();");
-    assertTrue("first line", !rule.applyRule(_doc, 0, Indenter.OTHER));
-    assertTrue("second line", !rule.applyRule(_doc, 2, Indenter.OTHER));
+    assertTrue("first line", !rule.testApplyRule(_doc, 0, Indenter.IndentReason.OTHER));
+    assertTrue("second line", !rule.testApplyRule(_doc, 2, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having no paren phrase delimiters on prev line.
+  /** Tests having no paren phrase delimiters on prev line.
    */
   public void testNoParenDelims() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
     
     // No paren delimiters
     _setDocText("foo\nbar.\ny");
-    assertTrue("second line", !rule.applyRule(_doc, 4, Indenter.OTHER));
-    assertTrue("third line", !rule.applyRule(_doc, 9, Indenter.OTHER));
+    assertTrue("second line", !rule.testApplyRule(_doc, 4, Indenter.IndentReason.OTHER));
+    assertTrue("third line", !rule.testApplyRule(_doc, 9, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having delimiter on prev line, with text preceding
-   */
+  /** Tests having delimiter on prev line, with text preceding. */
   public void testParenDelimsWithText() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
-        
+    
     // Lines ending in delimiter, each with preceding text
     _setDocText("new Foo(\nx,\ny;\na[\nbar])\n{");
-    assertTrue("line after paren", rule.applyRule(_doc, 9, Indenter.OTHER));
-    assertTrue("line after comma", rule.applyRule(_doc, 12, Indenter.OTHER));
-    assertTrue("line after semicolon", rule.applyRule(_doc, 15, Indenter.OTHER));
-    assertTrue("line after bracket", rule.applyRule(_doc, 18, Indenter.OTHER));
-    assertTrue("line after close paren", !rule.applyRule(_doc, 24, Indenter.OTHER));
+    assertTrue("line after paren", rule.testApplyRule(_doc, 9, Indenter.IndentReason.OTHER));
+    assertTrue("line after comma", rule.testApplyRule(_doc, 12, Indenter.IndentReason.OTHER));
+    assertTrue("line after semicolon", rule.testApplyRule(_doc, 15, Indenter.IndentReason.OTHER));
+    assertTrue("line after bracket", rule.testApplyRule(_doc, 18, Indenter.IndentReason.OTHER));
+    assertTrue("line after close paren", !rule.testApplyRule(_doc, 24, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having delimiter on prev line, with no text preceding
-   */
+  /** Tests having delimiter on prev line, with no text preceding. */
   public void testParenDelimsNoText() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
     
     // Paren delims with no leading text
     _setDocText("(\n,\n;\n[\nfoo\nbar");
-    assertTrue("line after paren", rule.applyRule(_doc, 2, Indenter.OTHER));
-    assertTrue("line after comma", rule.applyRule(_doc, 4, Indenter.OTHER));
-    assertTrue("line after semicolon", rule.applyRule(_doc, 6, Indenter.OTHER));
-    assertTrue("line after bracket", rule.applyRule(_doc, 8, Indenter.OTHER));
-    assertTrue("line after text", !rule.applyRule(_doc, 12, Indenter.OTHER));
+    assertTrue("line after paren", rule.testApplyRule(_doc, 2, Indenter.IndentReason.OTHER));
+    assertTrue("line after comma", rule.testApplyRule(_doc, 4, Indenter.IndentReason.OTHER));
+    assertTrue("line after semicolon", rule.testApplyRule(_doc, 6, Indenter.IndentReason.OTHER));
+    assertTrue("line after bracket", rule.testApplyRule(_doc, 8, Indenter.IndentReason.OTHER));
+    assertTrue("line after text", !rule.testApplyRule(_doc, 12, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having a comment after the delimiter
+  /** Tests having a comment after the delimiter
    */
   public void testParenDelimsWithComment() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
     
     // Delim in text, with comment before
     _setDocText("for (int i; // comment\ni < 2; /** comment */\ni++) {");
-    assertTrue("// comment", rule.applyRule(_doc, 23, Indenter.OTHER));
-    assertTrue("/* */ comment", rule.applyRule(_doc, 45, Indenter.OTHER));
+    assertTrue("// comment", rule.testApplyRule(_doc, 23, Indenter.IndentReason.OTHER));
+    assertTrue("/* */ comment", rule.testApplyRule(_doc, 45, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having a paren delimiter several lines back, with only
+  /** Tests having a paren delimiter several lines back, with only
    * whitespace inbetween.
    */
   public void testMultipleBlankLinesBack() throws BadLocationException {
@@ -118,14 +113,13 @@ public final class QuestionNewParenPhraseTest extends IndentRulesTestCase {
     
     // Blank lines between
     _setDocText("for(\n\nint i;\n\n\ni > 0;;\n)");
-    assertTrue("line after open paren", rule.applyRule(_doc, 5, Indenter.OTHER));
-    assertTrue("two lines after open paren", rule.applyRule(_doc, 6, Indenter.OTHER));
-    assertTrue("line after semicolon", rule.applyRule(_doc, 13, Indenter.OTHER));
-    assertTrue("two lines after semicolon", rule.applyRule(_doc, 16, Indenter.OTHER));
+    assertTrue("line after open paren", rule.testApplyRule(_doc, 5, Indenter.IndentReason.OTHER));
+    assertTrue("two lines after open paren", rule.testApplyRule(_doc, 6, Indenter.IndentReason.OTHER));
+    assertTrue("line after semicolon", rule.testApplyRule(_doc, 13, Indenter.IndentReason.OTHER));
+    assertTrue("two lines after semicolon", rule.testApplyRule(_doc, 16, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having a paren delimiter several lines back, with only
+  /** Tests having a paren delimiter several lines back, with only
    * blank space and comments inbetween.
    */
   public void testMultipleCommentLinesBack() throws BadLocationException {
@@ -133,45 +127,42 @@ public final class QuestionNewParenPhraseTest extends IndentRulesTestCase {
     
     // Comments between
     _setDocText("for(\n//\n/** foo * /int i;\n\n// bar\ni > 0;;\n)");
-    assertTrue("line after open paren", rule.applyRule(_doc, 7, Indenter.OTHER));
-    assertTrue("two lines after open paren", rule.applyRule(_doc, 18, Indenter.OTHER));
-    assertTrue("line after semicolon", rule.applyRule(_doc, 25, Indenter.OTHER));
-    assertTrue("two lines after semicolon", rule.applyRule(_doc, 28, Indenter.OTHER));
+    assertTrue("line after open paren", rule.testApplyRule(_doc, 7, Indenter.IndentReason.OTHER));
+    assertTrue("two lines after open paren", rule.testApplyRule(_doc, 18, Indenter.IndentReason.OTHER));
+    assertTrue("line after semicolon", rule.testApplyRule(_doc, 25, Indenter.IndentReason.OTHER));
+    assertTrue("two lines after semicolon", rule.testApplyRule(_doc, 28, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having text on a line after the delimiter.
+  /** Tests having text on a line after the delimiter.
    */
   public void testDoesNotEndWithParenDelim() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
     
     // Delim in text, not ending line
     _setDocText("foo(bar.\nx,y\n)");
-    assertTrue("line after paren", !rule.applyRule(_doc, 9, Indenter.OTHER));
-    assertTrue("line after comma", !rule.applyRule(_doc, 13, Indenter.OTHER));
+    assertTrue("line after paren", !rule.testApplyRule(_doc, 9, Indenter.IndentReason.OTHER));
+    assertTrue("line after comma", !rule.testApplyRule(_doc, 13, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests having an operator as a delimiter.
+  /** Tests having an operator as a delimiter.
    */
   public void testOperatorDelim() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
     
     // Delim in text, not ending line
     _setDocText("foo(x +\ny\n)");
-    assertTrue("line after operator", rule.applyRule(_doc, 8, Indenter.OTHER));
-    assertTrue("line after comma", !rule.applyRule(_doc, 10, Indenter.OTHER));
+    assertTrue("line after operator", rule.testApplyRule(_doc, 8, Indenter.IndentReason.OTHER));
+    assertTrue("line after comma", !rule.testApplyRule(_doc, 10, Indenter.IndentReason.OTHER));
   }
   
-  /**
-   * Tests ignoring delims on line.
+  /** Tests ignoring delims on line.
    */
   public void testIgnoreDelimsOnLine() throws BadLocationException {
     IndentRuleQuestion rule = new QuestionNewParenPhrase(null, null);
     
     // Delim in text, not ending line
     _setDocText("foo(x.\ny()\n)");
-    assertTrue("after paren, but not new phrase", !rule.applyRule(_doc, 10, Indenter.OTHER));
+    assertTrue("after paren, but not new phrase", !rule.testApplyRule(_doc, 10, Indenter.IndentReason.OTHER));
   }
 
 }

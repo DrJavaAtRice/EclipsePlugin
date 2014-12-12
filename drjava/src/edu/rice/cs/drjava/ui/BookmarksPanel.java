@@ -1,65 +1,54 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui;
 
-import java.util.Vector;
 import java.util.ArrayList;
-import java.util.Enumeration;
 
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.tree.*;
-import javax.swing.table.*;
-import javax.swing.text.BadLocationException;
 import java.awt.event.*;
-import java.awt.*;
-import javax.swing.text.BadLocationException;
-import javax.swing.text.Position;
 
+import edu.rice.cs.drjava.model.RegionManager;
 import edu.rice.cs.drjava.model.RegionManagerListener;
-import edu.rice.cs.drjava.model.DocumentRegion;
-import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
-import edu.rice.cs.drjava.config.*;
-import edu.rice.cs.util.swing.Utilities;
-import edu.rice.cs.util.UnexpectedException;
+import edu.rice.cs.drjava.model.MovingDocumentRegion;
 
-/**
- * Panel for displaying bookmarks.
- * This class is a swing view class and hence should only be accessed from the event-handling thread.
- * @version $Id$
- */
-public class BookmarksPanel extends RegionsTreePanel<DocumentRegion> {
+/** Panel for displaying bookmarks. Only runs in the event thread.
+  * @version $Id$
+  */
+public class BookmarksPanel extends RegionsTreePanel<MovingDocumentRegion> {
   protected JButton _goToButton;
   protected JButton _removeButton;
   protected JButton _removeAllButton;
@@ -68,19 +57,15 @@ public class BookmarksPanel extends RegionsTreePanel<DocumentRegion> {
    *  This is swing view class and hence should only be accessed from the event-handling thread.
    *  @param frame the MainFrame
    */
-  public BookmarksPanel(MainFrame frame) {
-    super(frame, "Bookmarks");
-    _model.getBookmarkManager().addListener(new RegionManagerListener<DocumentRegion>() {      
-      public void regionAdded(DocumentRegion r, int index) {
-        addRegion(r);
-      }
-      public void regionChanged(DocumentRegion r, int index) { 
+  public BookmarksPanel(MainFrame frame, RegionManager<MovingDocumentRegion> bookmarkManager) {
+    super(frame, "Bookmarks", bookmarkManager);
+    getRegionManager().addListener(new RegionManagerListener<MovingDocumentRegion>() {      
+      public void regionAdded(MovingDocumentRegion r) { addRegion(r); }
+      public void regionChanged(MovingDocumentRegion r) { 
         regionRemoved(r);
-        regionAdded(r, index);
+        regionAdded(r);
       }
-      public void regionRemoved(DocumentRegion r) {
-        removeRegion(r);
-      }
+      public void regionRemoved(MovingDocumentRegion r) { removeRegion(r); }
     });
   }
   
@@ -99,17 +84,16 @@ public class BookmarksPanel extends RegionsTreePanel<DocumentRegion> {
     _goToButton = new JButton(goToAction);
 
     Action removeAction = new AbstractAction("Remove") {
-      public void actionPerformed(ActionEvent ae) {
-        for (DocumentRegion r: getSelectedRegions()) {
-          _model.getBookmarkManager().removeRegion(r);
-        }
-      }
+      public void actionPerformed(ActionEvent ae) { _remove(); }  // remove is inherited from RegionsTreePanel
     };
+  
     _removeButton = new JButton(removeAction);
     
     Action removeAllAction = new AbstractAction("Remove All") {
       public void actionPerformed(ActionEvent ae) {
-        _model.getBookmarkManager().clearRegions();
+//        startChanging();
+        getRegionManager().clearRegions();
+//        finishChanging();
       }
     };
     _removeAllButton = new JButton(removeAllAction);
@@ -124,29 +108,23 @@ public class BookmarksPanel extends RegionsTreePanel<DocumentRegion> {
   }
 
   /** Update button state and text. */
-  protected void updateButtons() {
-    ArrayList<DocumentRegion> regs = getSelectedRegions();
-    _goToButton.setEnabled(regs.size()==1);
-    _removeButton.setEnabled(regs.size()>0);
-    _removeAllButton.setEnabled((_regionRootNode!=null) && (_regionRootNode.getDepth()>0));
+  protected void _updateButtons() {
+    ArrayList<MovingDocumentRegion> regs = getSelectedRegions();
+    _goToButton.setEnabled(regs.size() == 1);
+    _removeButton.setEnabled(regs.size() > 0);
+    _removeAllButton.setEnabled(getRootNode() != null && getRootNode().getDepth() > 0);
   }
   
   /** Makes the popup menu actions. Should be overridden if additional actions besides "Go to" and "Remove" are added. */
   protected AbstractAction[] makePopupMenuActions() {
     AbstractAction[] acts = new AbstractAction[] {
-      new AbstractAction("Go to") {
-        public void actionPerformed(ActionEvent e) {
-          goToRegion();
-        }
-      },
+      new AbstractAction("Go to") { public void actionPerformed(ActionEvent e) { goToRegion(); } },
         
-        new AbstractAction("Remove") {
-          public void actionPerformed(ActionEvent e) {
-            for (DocumentRegion r: getSelectedRegions()) {
-              _model.getBookmarkManager().removeRegion(r);
-            }
-          }
+      new AbstractAction("Remove") {
+        public void actionPerformed(ActionEvent e) {
+          for (MovingDocumentRegion r: getSelectedRegions()) getRegionManager().removeRegion(r);
         }
+      }
     };
     return acts;
   }

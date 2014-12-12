@@ -28,6 +28,7 @@
 
 package koala.dynamicjava.interpreter.error;
 
+import java.io.*;
 import koala.dynamicjava.interpreter.*;
 import koala.dynamicjava.tree.*;
 import koala.dynamicjava.util.*;
@@ -74,22 +75,6 @@ public class ExecutionError extends Error {
   private String rawMessage;
   
   /**
-   * Constructs an <code>ExecutionError</code> with no detail message. 
-   */
-  public ExecutionError() {
-    this("");
-  }
-  
-  /**
-   * Constructs an <code>ExecutionError</code> with the specified 
-   * detail message. 
-   * @param s the detail message (a key in a resource file).
-   */
-  public ExecutionError(String s) {
-    this(s, null);
-  }
-  
-  /**
    * Constructs an <code>ExecutionError</code> with the specified 
    * detail message, filename, line and column. 
    * @param s  the detail message (a key in a resource file).
@@ -98,10 +83,8 @@ public class ExecutionError extends Error {
   public ExecutionError(String s, Node n) {
     rawMessage = s;
     node       = n;
-  }
-  
-  public ExecutionError(Throwable thrown) {
-    this.thrown = thrown;
+    getMessage(); // ensure that s is valid while we have a useful stack trace
+    NodeProperties.setError(n, this);
   }
   
   /**
@@ -125,15 +108,15 @@ public class ExecutionError extends Error {
    * exception information.
    * @see #printStackTrace(PrintWriter)
    */
-  public void printStackTrace(java.io.PrintStream s) {
-    this.printStackTrace(new java.io.PrintWriter(s, true));
+  public void printStackTrace(PrintStream s) {
+    this.printStackTrace(new PrintWriter(s, true));
   }
   
   /**
    * Handles all calls to printStackTrace(), printing
    * the stack trace of the current exception, and also that of its cause.
    */
-  public void printStackTrace(java.io.PrintWriter w) {
+  public void printStackTrace(PrintWriter w) {
     String trace = System.getProperty(SHOW_TRACE_PROPERTY);
     if (trace != null && !new Boolean(trace).booleanValue()) {
       w.println(this);
@@ -153,10 +136,8 @@ public class ExecutionError extends Error {
    * Returns the error message string of this exception
    */
   public String getMessage() {
-    return reader.getMessage(rawMessage,
-                             node != null &&
-                             node.hasProperty(NodeProperties.ERROR_STRINGS)
-                               ? (String[])node.getProperty(NodeProperties.ERROR_STRINGS)
-                               : null);
+    String [] args = new String[0];
+    if (node != null && NodeProperties.hasErrorStrings(node)) { args = NodeProperties.getErrorStrings(node); }
+    return reader.getMessage(rawMessage, args);
   }
 }

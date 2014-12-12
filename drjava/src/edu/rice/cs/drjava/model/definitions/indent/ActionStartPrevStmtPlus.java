@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.definitions.indent;
 
@@ -38,121 +41,100 @@ import edu.rice.cs.util.UnexpectedException;
 
 import javax.swing.text.BadLocationException;
 
-/**
- * Indents the current line in the document to the indent level of the
- * start of the statement previous to the one the cursor is currently on,
- * plus the given suffix string.
- *
- * @version $Id$
- */
+/** Indents the current line in the document to the indent level of the start of the statement previous to the one the
+  * cursor is currently on, plus the given suffix string.
+  *
+  * @version $Id$
+  */
 public class ActionStartPrevStmtPlus extends IndentRuleAction {
-  private String _suffix;
+  private int _suffix;  // number of blanks in suffix
   private boolean _useColon;
 
-  /**
-   * Constructs a new rule with the given suffix string.
-   * @param suffix String to append to indent level of brace
-   * @param colonIsDelim whether to include colons as statement delimiters
-   */
-  public ActionStartPrevStmtPlus(String suffix, boolean colonIsDelim) {
+  /** Constructs a new rule with the given suffix string.
+    * @param suffix String to append to indent level of brace
+    * @param colonIsDelim whether to include colons as statement delimiters
+    */
+  public ActionStartPrevStmtPlus(int suffix, boolean colonIsDelim) {
     super();
     _suffix = suffix;
     _useColon = colonIsDelim;
   }
 
-  /**
-   * Properly indents the line that the caret is currently on.
-   * Replaces all whitespace characters at the beginning of the
-   * line with the appropriate spacing or characters.
-   *
-   * @param doc AbstractDJDocument containing the line to be indented.
-   * @return true if the caller should update the current location itself,
-   * false if the indenter has already handled this
-   */
-  public boolean indentLine(AbstractDJDocument doc, int reason) {
-    boolean supResult = super.indentLine(doc, reason);
-    String indent = "";
+  /** Properly indents the line that the caret is currently on. Replaces all whitespace characters at the beginning of
+    * the line with the appropriate spacing or characters.  Assumes reduced lock is alread held [Archaic].  Only
+    * runs in the event thread.
+    * @param doc AbstractDJDocument containing the line to be indented.
+    * @param reason The reason that the indentation is taking place
+    * @return true if the caller should update the current location itself, false if the indenter has already handled it
+    */
+  public void indentLine(AbstractDJDocument doc, Indenter.IndentReason reason) {
+    super.indentLine(doc, reason);
     int here = doc.getCurrentLocation();
     
-    // Find end of previous statement (or end of case statement)
+    // Find end of previous statement, immediately enclosing brace, or end of case statement
     char[] delims = {';', '{', '}'};
-    int lineStart = doc.getLineStartPos(here);
+    int lineStart = doc._getLineStartPos(here);  // find start of current line
     int prevDelimiterPos;
-    try {
-      prevDelimiterPos = doc.findPrevDelimiter(lineStart, delims);
-    } catch (BadLocationException e) {
-      // Should not happen
-      throw new UnexpectedException(e);
-    }
+    try { prevDelimiterPos = doc.findPrevDelimiter(lineStart, delims); }  // find pos of delimiter preceding line start
+    catch (BadLocationException e) { throw new UnexpectedException(e); }
     
-    // For DOCSTART, align to left margin
-    if (prevDelimiterPos <= AbstractDJDocument.DOCSTART) {
+    // If no preceding delimiter found, align to left margin
+    if (prevDelimiterPos <= 0) {
       doc.setTab(_suffix, here);
-      return supResult;
+      return;
     }
     
     try {
-      char delim = doc.getText(prevDelimiterPos, 1).charAt(0);
-      char[] ws = {' ', '\t', '\n', ';'};
+      char delim = doc.getText(prevDelimiterPos, 1).charAt(0);    // get delimiter char
+      char[] ws = {' ', '\t', '\n', ';'};  // Note that ';' is whitespace here
       if (delim == ';') {
-        int testPos = doc.findPrevCharPos(prevDelimiterPos, ws);
-        if (doc.getText(testPos,1).charAt(0) == '}') {
-          prevDelimiterPos = testPos;
+        int testPos = doc._findPrevCharPos(prevDelimiterPos, ws);  // find char preceding ';' delimiter
+        char testDelim = doc.getText(testPos,1).charAt(0);
+        if ( testDelim == '}' || testDelim == ')') {
+          prevDelimiterPos = testPos;                             // if this char is '}' or ')', use it as delimiter
         }
       }
-    } catch (BadLocationException e) {
-      //do nothing
-    }
+    } catch (BadLocationException e) { throw new UnexpectedException(e); /* Should never happen */ }
     
     try {
       // Jump over {-} region if delimiter was a close brace.
       char delim = doc.getText(prevDelimiterPos, 1).charAt(0);
       
-      if (delim == '}') {
+      if (delim == '}' || delim == ')') {
         //BraceReduction reduced = doc.getReduced();
         //we're pretty sure the doc is in sync.
-        doc.resetReducedModelLocation();
+//        doc.resetReducedModelLocation();  // why reset the reduced model comment walker?
         
-        int dist = prevDelimiterPos - here + 1;
+        assert doc.getCurrentLocation() == here;
+        doc.setCurrentLocation(prevDelimiterPos + 1);   // move cursor to right of '}' or ')' delim
+        int delta = doc.balanceBackward(); // Number of chars backward to matching '{' or '('
+        if (delta < 0) { // no matching delimiter!
+          // No matching '{' or '(' preceding this delimiter here
+          // but throwing an unexpected exception is not right, because the
+          // user may be trying to indent code that is not balanced!
+          return;
+        }
+        prevDelimiterPos -= (delta - 1);  // Position just to right of matching '{' or '('
+        doc.setCurrentLocation(here);
         
-        doc.move(dist);
-        prevDelimiterPos -= doc.balanceBackward() - 1;
-        doc.move(-dist);
-        
+        assert doc.getText(prevDelimiterPos, 1).charAt(0) == '{' || 
+          doc.getText(prevDelimiterPos, 1).charAt(0) == '(';
       }
     }
     catch (BadLocationException e) { throw new UnexpectedException(e); }
     
-    
     // Get indent of prev statement
-    try {
-      // Include colons as end of statement (ie. "case")
-      char[] indentDelims;
-      char[] indentDelimsWithColon = {';', '{', '}', ':'};
-      char[] indentDelimsWithoutColon = {';', '{', '}'};
-      if (_useColon) indentDelims = indentDelimsWithColon;
-      else indentDelims = indentDelimsWithoutColon;
-      
-      indent = doc.getIndentOfCurrStmt(prevDelimiterPos, indentDelims);
-      
-    } catch (BadLocationException e) {
-      throw new UnexpectedException(e);
-    }
+    // Include colons as end of statement (ie. "case")
+    char[] indentDelims;
+    char[] indentDelimsWithColon = {';', '{', '}', ':'};
+    char[] indentDelimsWithoutColon = {';', '{', '}'};
+    if (_useColon) indentDelims = indentDelimsWithColon;
+    else indentDelims = indentDelimsWithoutColon;
+    
+    int indent = doc._getIndentOfCurrStmt(prevDelimiterPos, indentDelims);
     
     indent = indent + _suffix;
     doc.setTab(indent, here);
-    return supResult;
   }
-
-//  private boolean _isPrevNonWSCharEqualTo(AbstractDJDocument doc,int pos,char c) {
-//    try {
-//      int prevPos = doc.findPrevNonWSCharPos(pos);
-//      if (prevPos < 0) return false;
-//      return (doc.getText(prevPos,1).charAt(0) == c);
-//    }
-//    catch (BadLocationException e) {
-//      return false;
-//    }
-//  }
 }
 

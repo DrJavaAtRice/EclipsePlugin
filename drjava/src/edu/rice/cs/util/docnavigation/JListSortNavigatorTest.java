@@ -1,44 +1,44 @@
  /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util.docnavigation;
-
-import junit.framework.TestCase;
 
 import edu.rice.cs.util.swing.Utilities;
 import edu.rice.cs.drjava.DrJavaTestCase;
 
-import java.io.*;
 import java.util.*;
 
 public class JListSortNavigatorTest extends DrJavaTestCase {
@@ -66,10 +66,13 @@ public class JListSortNavigatorTest extends DrJavaTestCase {
     assertSame("getFirst test", i1, list.getFirst());
     assertSame("getLast test", i4, list.getLast());
     
-    list.setNextChangeModelInitiated(true);
-    list.setActiveDoc(i1);
-    
-    Utilities.clearEventQueue();
+    Utilities.invokeAndWait(new Runnable() { 
+      public void run() { 
+        list.setNextChangeModelInitiated(true);
+        list.selectDocument(i1); 
+      } 
+    });
+
     assertSame("getCurrent test", i1, list.getCurrent());
     assertSame("getNext test 1", i2, list.getNext(i1));
     assertSame("getNext test 2", i3, list.getNext(i2));
@@ -86,10 +89,55 @@ public class JListSortNavigatorTest extends DrJavaTestCase {
     
     assertFalse("contains test 5", list.contains(new DummyINavigatorItem("item1")));
     
-    Enumeration<DummyINavigatorItem> docs = list.getDocuments();
-    DummyINavigatorItem[] docsArray = new DummyINavigatorItem[4];
-    for (int i = 0; i < 4; i++) docsArray[i] = docs.nextElement();
+    ArrayList<DummyINavigatorItem> docs = list.getDocuments();
+    DummyINavigatorItem[] docsArray = docs.toArray(new DummyINavigatorItem[0]);
     assertTrue("getDocuments test", Arrays.equals(docsArray, new DummyINavigatorItem[] {i1, i2, i3, i4}));
   }
   
+  /** Test of getting the list of selected items.
+   * Commented out when changes from revision 4171 were reverted.
+   */
+//  public void testGetSelectedDocuments() {
+//    list.clearSelection();
+//    list.addSelectionInterval(0, 1);
+//    assertEquals("Two items should be selected", 2, list.getSelectionCount());
+//    assertEquals("Two items should be selected", 2, list.getDocumentSelectedCount());
+//    assertEquals("Zero groups should be selected", 0, list.getGroupSelectedCount());
+//    java.util.List<DummyINavigatorItem> l = list.getSelectedDocuments();
+//    assertEquals("Two items should be selected", 2, l.size());
+//    assertEquals("Wrong item 1", i1, l.get(0));
+//    assertEquals("Wrong item 2", i2, l.get(1));
+//
+//    list.clearSelection();
+//    list.addSelectionInterval(0, 3);
+//    assertEquals("Four items should be selected", 4, list.getSelectionCount());
+//    assertEquals("Four items should be selected", 4, list.getDocumentSelectedCount());
+//    assertEquals("Zero groups should be selected", 0, list.getGroupSelectedCount());
+//    l = list.getSelectedDocuments();
+//    assertEquals("Four items should be selected", 4, l.size());
+//    assertEquals("Wrong item 1", i1, l.get(0));
+//    assertEquals("Wrong item 2", i2, l.get(1));
+//    assertEquals("Wrong item 3", i3, l.get(2));
+//    assertEquals("Wrong item 4", i4, l.get(3));
+//
+//    list.clearSelection();
+//    list.addSelectionInterval(0, 1);
+//    list.addSelectionInterval(2, 3);
+//    assertEquals("Four items should be selected", 4, list.getSelectionCount());
+//    assertEquals("Four items should be selected", 4, list.getDocumentSelectedCount());
+//    assertEquals("Zero groups should be selected", 0, list.getGroupSelectedCount());
+//    l = list.getSelectedDocuments();
+//    assertEquals("Four items should be selected", 4, l.size());
+//    assertEquals("Wrong item 1", i1, l.get(0));
+//    assertEquals("Wrong item 2", i2, l.get(1));
+//    assertEquals("Wrong item 3", i3, l.get(2));
+//    assertEquals("Wrong item 4", i4, l.get(3));
+//    
+//    list.clearSelection();
+//    assertEquals("Zero items should be selected", 0, list.getSelectionCount());
+//    assertEquals("Zero items should be selected", 0, list.getDocumentSelectedCount());
+//    assertEquals("Zero groups should be selected", 0, list.getGroupSelectedCount());
+//    l = list.getSelectedDocuments();
+//    assertEquals("Zero items should be selected", 0, l.size());
+//  }
 }

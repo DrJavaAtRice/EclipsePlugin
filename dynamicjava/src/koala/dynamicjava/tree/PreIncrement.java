@@ -37,28 +37,23 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/04/25
  */
 
-public class PreIncrement extends UnaryExpression implements ExpressionStatement {
+public class PreIncrement extends UnaryExpression implements StatementExpression {
   /**
    * Initializes the expression
    * @param exp   the pre incremented expression
    * @exception IllegalArgumentException if exp is null
    */
   public PreIncrement(Expression exp) {
-    this(exp, null, 0, 0, 0, 0);
+    this(exp, SourceInfo.NONE);
   }
   
   /**
    * Initializes the expression
    * @param exp   the pre incremented expression
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if exp is null
    */
-  public PreIncrement(Expression exp, String fn, int bl, int bc, int el, int ec) {
-    super(exp, fn, bl, bc, el, ec);
+  public PreIncrement(Expression exp, SourceInfo si) {
+    super(exp, si);
   }
   
   /**

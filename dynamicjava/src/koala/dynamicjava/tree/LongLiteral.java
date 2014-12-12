@@ -28,6 +28,8 @@
 
 package koala.dynamicjava.tree;
 
+import java.math.BigInteger;
+
 /**
  * This class represents the long literal nodes of the syntax tree
  *
@@ -40,66 +42,42 @@ public class LongLiteral extends Literal {
    * Initializes a literal
    * @param rep the representation of the literal
    */
-  public LongLiteral(String rep) {
-    this(rep, null, 0, 0, 0, 0);
+  public LongLiteral(String rep) throws NumberFormatException {
+    this(rep, SourceInfo.NONE);
   }
   
   /**
    * Initializes a literal
    * @param rep the representation of the literal
-   * @param fn  the filename
-   * @param bl  the begin line
-   * @param bc  the begin column
-   * @param el  the end line
-   * @param ec  the end column
    */
-  public LongLiteral(String rep, String fn, int bl, int bc, int el, int ec) {
+  public LongLiteral(String rep, SourceInfo si) throws NumberFormatException {
     super(rep,
-          parse(rep.substring(0, rep.length())), //corrected bug, was rep.length()-1
+          parse(rep.substring(0, rep.length())),
           long.class,
-          fn, bl, bc, el, ec);
+          si);
   }
   
   /**
    * Parse the representation of an integer
    */
-  private static Long parse(String s) {
-    if (s.startsWith("0x")) {
-      return parseHexadecimal(s.substring(2, s.length()));
-    } else if (s.startsWith("0")) {
-      return parseOctal(s);
-    } else {
-      return Long.valueOf(s);
+  private static Long parse(String s) throws NumberFormatException {
+    int radix = 10;
+    int start = 0;
+    boolean negate = false;
+    int end = s.length();
+    if (s.endsWith("l") || s.endsWith("L")) { end--; }
+    // only consider 0x or 0 or - if this doesn't make the string empty
+    if ((end-start>1) && (s.startsWith("-"))) { start++; negate = true; }
+    if ((end-start>2) && (s.startsWith("0x",start))) { radix = 16; start += 2; }
+    else if ((end-start>1) && (s.startsWith("0",start)) && (s.length() > 1)) { radix = 8; start++; }
+    // BigInteger can parse hex numbers representing negative longs; Long can't
+    BigInteger val = new BigInteger(s.substring(start, end), radix);
+    if (negate) { val = val.negate(); }
+    long result = val.longValue();
+    if (val.bitLength() > 64 || (radix == 10 && !val.equals(BigInteger.valueOf(result)))) {
+      throw new NumberFormatException("Literal is out of range: "+s);
     }
+    return result;
   }
   
-  /**
-   * Parses an hexadecimal number
-   */
-  private static Long parseHexadecimal(String s) {
-    long value = 0;
-    for (int i = 0; i < s.length(); i++) {
-      char c = Character.toLowerCase(s.charAt(i));
-      if ((value >>> 60) != 0) {
-        throw new NumberFormatException(s);
-      }
-      value = (value << 4) + c + ((c >= 'a' && c <= 'f') ? 10 - 'a' : - '0');
-    }
-    return new Long(value);
-  }
-  
-  /**
-   * Parses an octal number
-   */
-  private static Long parseOctal(String s) {
-    long value = 0;
-    for (int i = 0; i < s.length(); i++) {
-      char c = s.charAt(i);
-      if ((value >>> 61) != 0) {
-        throw new NumberFormatException(s);
-      }
-      value = (value << 3) + c - '0';
-    }
-    return new Long(value);
-  }
 }

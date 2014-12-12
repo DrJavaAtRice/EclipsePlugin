@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.definitions.indent;
 
@@ -38,8 +41,8 @@ import edu.rice.cs.drjava.model.AbstractDJDocument;
 import edu.rice.cs.drjava.model.definitions.reducedmodel.*;
 import edu.rice.cs.util.UnexpectedException;
 
-/** Determines whether or not the closest non-whitespace character previous to the start of the current line (excluding 
-  * any characters inside comments or strings) is an open brace.
+/** Determines whether or not the closest non-whitespace character preceding the start of the current line (excluding 
+  * any characters inside comments or strings) is on the same line as the enclosing CURLY brace (class is misnamed!).
   *
   * @version $Id$
   */
@@ -49,39 +52,37 @@ public class QuestionStartAfterOpenBrace extends IndentRuleQuestion {
     */
   public QuestionStartAfterOpenBrace(IndentRule yesRule, IndentRule noRule) { super(yesRule, noRule); }
   
-  /** @param doc The AbstractDJDocument containing the current line.
+  /** Assumes read lock is already held.
+    * @param doc The AbstractDJDocument containing the current line.
     * @return True the closest non-whitespace character before the start of the current line (excluding any 
     * characters inside comments or strings) is an open brace.
     */
-  boolean applyRule(AbstractDJDocument doc, int reason)  {
+  boolean applyRule(AbstractDJDocument doc, Indenter.IndentReason reason)  {
     
     int origin = doc.getCurrentLocation();
-    //int origin = doc.getReduced().absOffset();
-    int lineStart = doc.getLineStartPos(doc.getCurrentLocation());
+    int lineStart = doc._getLineStartPos(origin);
     
+    if (lineStart <= 1) return false;  // linestart follows a newLine, which must be preceded by a brace to return true
     // Get brace for start of line
-    doc.move(lineStart - origin);
-    IndentInfo info = doc.getIndentInformation();
-    doc.move(origin - lineStart);    
+    doc.setCurrentLocation(lineStart);
+    BraceInfo info = doc._getLineEnclosingBrace();
+    doc.setCurrentLocation(origin);    
     
-    if ((!info.braceType.equals(IndentInfo.openSquiggly)) ||
-        (info.distToBrace < 0))
+    if (! info.braceType().equals(BraceInfo.OPEN_CURLY) || info.distance() <= 0)
       // Precondition not met: we should have a brace
       return false;
-    int bracePos = lineStart - info.distToBrace;    
+    int bracePos = lineStart - info.distance();    
     
-    // Get brace's end of line
-    int braceEndLinePos = doc.getLineEndPos(bracePos);
+//// Get brace's end of line
+    int braceEndLinePos = doc._getLineEndPos(bracePos);
     
     // Get position of next non-WS char (not in comments)
     int nextNonWS = -1;
-    try { nextNonWS = doc.getFirstNonWSCharPos(braceEndLinePos); }
-    catch (BadLocationException e) {
-      // This shouldn't happen
-      throw new UnexpectedException(e);
-    }
+//    System.err.println("bracePos = " + bracePos + " docLength = " + doc.getLength());
+    try { nextNonWS = doc.getFirstNonWSCharPos(braceEndLinePos /* bracePos + 1*/); }
+    catch (BadLocationException e) { throw new UnexpectedException(e); } // Shouldn't happen
     
-    if (nextNonWS == AbstractDJDocument.ERROR_INDEX) return true;
+    if (nextNonWS == -1) return true;
     
     return (nextNonWS >= lineStart);
   }

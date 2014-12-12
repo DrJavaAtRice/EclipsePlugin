@@ -39,11 +39,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class BreakStatement extends Statement {
   /**
-   * The label property name
-   */
-  public final static String LABEL = "label";
-  
-  /**
    * The label
    */
   private String label;
@@ -54,21 +49,16 @@ public class BreakStatement extends Statement {
    * @exception IllegalArgumentException if label is null
    */
   public BreakStatement(String label) {
-    this(label, null, 0, 0, 0, 0);
+    this(label, SourceInfo.NONE);
   }
   
   /**
    * Creates a new while statement
    * @param label the label
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    */
   public BreakStatement(String label,
-                        String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                        SourceInfo si) {
+    super(si);
     this.label = label;
   }
   
@@ -83,7 +73,7 @@ public class BreakStatement extends Statement {
    * Sets the label
    */
   public void setLabel(String s) {
-    firePropertyChange(LABEL, label, label = s);
+    label = s;
   }
   
   /**

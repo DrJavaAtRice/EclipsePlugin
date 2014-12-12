@@ -39,38 +39,32 @@ public class StringLiteral extends Literal {
   /**
    * Initializes a literal
    * @param rep the representation of the literal
-   * @param val the value of this string
    */
   public StringLiteral(String rep) {
-    this(rep, null, 0, 0, 0, 0);
+    this(rep, SourceInfo.NONE);
   }
   
   /**
    * Initializes a literal
    * @param rep the representation of the literal
-   * @param val the value of this string
-   * @param fn  the filename
-   * @param bl  the begin line
-   * @param bc  the begin column
-   * @param el  the end line
-   * @param ec  the end column
    */
   public StringLiteral(String rep, 
-                       String fn, int bl, int bc, int el, int ec) {
+                       SourceInfo si) {
     super(rep,
           decodeString(rep),
           String.class,
-          fn, bl, bc, el, ec);
+          si);
   }
   
   /**
    * Decodes the representation of a Java literal string.
-   * The input is not checked since this method always called
-   * on a string produced by the parser.
    * @param rep the representation of the character
    * @return the character represented by the given string
    */
   public static String decodeString(String rep) {
+    if (rep.charAt(0) != '"' || rep.charAt(rep.length()-1) != '"') {
+      throw new IllegalArgumentException("Malformed String literal");
+    }
     char[] buf = new char[rep.length()-2];
     int    len = 0;
     int    i   = 1;

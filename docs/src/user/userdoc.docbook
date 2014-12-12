@@ -1,4 +1,6 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V3.1//EN">
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                    "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 
 <!--
   User Documentation for DrJava
@@ -7,7 +9,7 @@
 <book id="index">
   <!-- Meta info -->
   <bookinfo>
-    <date>2005-8-03</date>
+    <date>2009-08-03</date>
     <title>DrJava User Documentation</title>
   </bookinfo>
   <toc></toc>
@@ -24,7 +26,7 @@
   </chapter>
 
 
-  <!-- ---- Chapter: Getting Started ---- -->
+  <!-- **** Chapter: Getting Started **** -->
   <chapter id="gettingstarted">
     <title>Getting Started</title>
     <para>This chapter describes the basics for how to start using DrJava, including where to get the program and how to run it.</para>
@@ -49,39 +51,90 @@
       <title>Running DrJava</title>
       <para>On many platforms, DrJava can be started by simply double-clicking on the <filename>.jar</filename> file you downloaded.  DrJava can also be started from a command prompt, where you can optionally give it a list of source files to open at startup:</para>
       <cmdsynopsis>
- <command>java -jar drjava-DATE-TIME.jar</command>
+ <command>java -jar drjava-RELEASE-DATE-rREVISION.jar</command>
  <arg choice='opt'>-config [CONFIG_FILE]</arg>
  <arg choice='opt' rep='repeat'>filename.java</arg>
       </cmdsynopsis>
-      <para>Replace DATE-TIME with the appropriate value for your version of DrJava, e.g. <command>java -jar drjava-20060420-1406.jar</command>.  The "config" argument is optional and allows you to specify a custom configuration file, rather than the <filename>.drjava</filename> file stored in your home directory.</para>
+      <para>Replace RELEASE-DATE-rREVISION with the appropriate value for your version of DrJava, e.g. <command>java -jar drjava-stable-20080904-r4668.jar</command>.  The "config" argument is optional and allows you to specify a custom configuration file, rather than the <filename>.drjava</filename> file stored in your home directory.</para>
 
       <formalpara>
         <title>Running DrJava on Mac OS X</title>
-        <para>If you are using Mac OS X, you can download DrJava as an Application from our website.  Download the <filename>drjava-DATE-TIME-osx.tar.gz</filename> file and decompress it.  You can then copy the DrJava icon into your Applications folder or keep it on your Dock.</para>
+        <para>If you are using Mac OS X, you can download DrJava as an Application from our website.  Download the <filename>drjava-RELEASE-DATE-rREVISION-osx.tar.gz</filename> file and decompress it.  You can then copy the DrJava icon into your Applications folder or keep it on your Dock.</para>
       </formalpara>
 
       <formalpara>
         <title>Running DrJava on Windows</title>
-        <para>If you are using Windows, you can download DrJava as an executable file from our website.  Download the <filename>drjava-DATE-TIME.exe</filename> file.  You can then run it like a normal Windows program.</para>
+        <para>If you are using Windows, you can download DrJava as an executable file from our website.  Download the <filename>drjava-RELEASE-DATE-rREVISION.exe</filename> file.  You can then run it like a normal Windows program.</para>
       </formalpara>
     </section>
 
     <section id="gs-requirements">
       <title>System Requirements</title>
-      <para>DrJava requires Java 2, version 1.4 or later. Note that you will need to have the JDK (not the JRE) installed if you wish to use the compiler or debugger within DrJava.</para>
-      <para>We recommend downloading and using Sun's JDK 1.5.0, currently in beta releases, (from <ulink url="http://java.sun.com">http://java.sun.com</ulink>) for Solaris, Linux, and Windows.  Other users should use the Java virtual machine that comes with their operating system (including Mac OS X).</para>
+      <para>DrJava requires Java version 5 or later. Note that you will need to have the JDK (not the JRE) installed if you wish to use the debugger or create Javadoc within DrJava.</para>
+      <para>We recommend downloading and using Oracle's JDK 6 (from <ulink url="http://www.oracle.com/technetwork/java/javase/downloads/index.html">http://www.oracle.com/technetwork/java/javase/downloads/index.html</ulink>) for Solaris, Linux, and Windows.  Other users should use the Java virtual machine that comes with their operating system (including Mac OS X).</para>
+      <para>Mac OS X 10.7 "Lion" does not include a default Java runtime anymore. Therefore, the operating system may prompt you to install Java if you have not installed it before. You can also download <ulink url="http://support.apple.com/kb/DL1421">Java for OS X Lion</ulink> from Apple's website, or <ulink url="http://support.apple.com/kb/index?page=search&amp;fac=Downloads&amp;q=java%20for%20os%20x&amp;src=support_site.kbase.search.advanced">search for Java downloads for Mac OS X</ulink>.</para>
       <para>DrJava uses two Java Virtual Machines (one for the main program, and one for the Interactions Pane) that use Java's Remote Method Invocation (RMI) to communicate with each other. RMI uses TCP/IP as the default transport mechanism, so you must have those drivers installed. Without TCP/IP, DrJava will not start properly.</para>
+      <para>Note that there is an incompatibility between Java's Swing
+GUI library and the Compiz window manager on Linux. We, the developers
+of DrJava, cannot do anything to fix this problem. We hope that future
+versions of Java and Compiz will address the incompatibility. In the
+meantime, we recommend that you disable Compiz if you experience
+problems. We also suggest that you use the latest versions of Compiz
+and Java, so you can benefit from possible bug fixes made by Oracle and
+the Compiz developers. For more information, see <ulink url="http://drjava.org/compiz/">http://drjava.org/compiz/</ulink>.</para>
     </section>
 
     <section id="gs-license">
       <title>License</title>
 <para>
-DrJava Open Source License
+Copyright (c) 2001-2009, JavaPLT group at Rice University (drjava@rice.edu)
+All rights reserved.
+</para>
+
+<para> Redistribution and use in source and binary forms, with or
+withoutmodification, are permitted provided that the following
+conditions are met: </para>
+
+<itemizedlist mark="opencircle">
+<listitem>
+<para>
+    Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+</para>
+</listitem>
+<listitem>
+<para>
+    Redistributions in binary form must reproduce the above copyright
+    notice, this list of conditions and the following disclaimer in the
+    documentation and/or other materials provided with the distribution.
+</para>
+</listitem>
+<listitem>
+<para>
+    Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+    names of its contributors may be used to endorse or promote products
+    derived from this software without specific prior written permission.
+</para>
+</listitem>
+</itemizedlist>
+
+<para>
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 </para>
 
 <para>
-Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu)
-All rights reserved.
+    This software is Open Source Initiative approved Open Source Software.
+    Open Source Initative Approved is a trademark of the Open Source Initiative.
 </para>
 
 <para>
@@ -92,56 +145,6 @@ Developed by:   Java Programming Languages Team
 </literallayout>
 </para>
 
-<para>
-Permission is hereby granted, free of charge, to any person obtaining a 
-copy of this software and associated documentation files (the "Software"),
-to deal with the Software without restriction, including without 
-limitation the rights to use, copy, modify, merge, publish, distribute, 
-sublicense, and/or sell copies of the Software, and to permit persons to 
-whom the Software is furnished to do so, subject to the following 
-conditions:
-</para>
-
-<itemizedlist mark=opencircle>
-<listitem>
-<para>
-    Redistributions of source code must retain the above copyright 
-    notice, this list of conditions and the following disclaimers.
-</para>
-</listitem>
-<listitem>
-<para>
-    Redistributions in binary form must reproduce the above copyright 
-    notice, this list of conditions and the following disclaimers in the
-    documentation and/or other materials provided with the distribution.
-</para>
-</listitem>
-<listitem>
-<para>
-    Neither the names of DrJava, the JavaPLT, Rice University, nor the
-    names of its contributors may be used to endorse or promote products
-    derived from this Software without specific prior written permission.
-</para>
-</listitem>
-<listitem>
-<para>
-    Products derived from this software may not be called "DrJava" nor
-    use the term "DrJava" as part of their names without prior written
-    permission from the JavaPLT group.  For permission, write to
-    javaplt@rice.edu.
-</para>
-</listitem>
-</itemizedlist>
-
-<para>
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
-THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
-OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
-ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
-OTHER DEALINGS WITH THE SOFTWARE.
-</para>
       <para>DynamicJava - Copyright (c) 1999 Dyade</para>
       <para>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</para>
       <para>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</para>
@@ -192,12 +195,19 @@ OTHER DEALINGS WITH THE SOFTWARE.
  <title>Auto-Completion</title>
  <para>DrJava supports a very limited notion of auto-completion that is nonetheless useful. This feature is accessible as "Auto-Complete Word Under Cursor" in the Edit menu, and it is also bound to the keyboard shortcut <keycode>Ctrl-Shift-Space</keycode> by default. When invoked, DrJava will look at the word to the left of the cursor and attempt to auto-complete it, based on a list of documents currently open. If there is no unique auto-completion match, DrJava displays a <link linkend="predictive-input">predictive input dialog</link> with the auto-completion candidates.</para></formalpara>
  <para>When a project is open, DrJava can also be configured to scan all class files after a compile to obtain the auto-completion information (see <link linkend="configuration">Configuring DrJava</link>). With that option set, DrJava can auto-complete the names of all classes in your project, even those of inner classes.</para>
- <para>Please note that auto-completion currently only works for class names, is limited to user class names (i.e. it does not auto-complete Java API class names), and completely ignores all context except for the word to the left of the cursor (i.e. it may generate code that does not compile).</para>
+ <para>On the "Auto-Complete Word Under Cursor" diaog, there is a checkbox labeled "Java API". If this is checked, then DrJava will also use the class names from the Standard Java API, JUnit 3.8.2 and the user-specified additional libraries as suggestions for auto-completion. If it is disabled, only class names from your own source files are used.</para>
+ <para>Next to the "OK" button is the "Fully Qualified" button. If the class "Integer" is selected, and the user presses "OK", DrJava will auto-complete the word to "Integer". If, however, "Fully Qualified" is used to close the dialog, DrJava will enter the entire fully qualified class name, "java.lang.Integer" in this case.</para>
+ <para>Please note that auto-completion currently only works for class names, and completely ignores all context except for the word to the left of the cursor (i.e. it may generate code that does not compile).</para>
 
       <formalpara>
  <title>Clipboard History</title>
  <para>Any text you copy or cut out of DrJava documents will be placed in the clipboard history, and the last 10 entries are kept (that number is configurable, see <link linkend="configuration">Configuring DrJava</link>). To access one of the entries in the history, use the "Paste from History" command in the Edit menu or press <keycode>Ctrl+Shift+V</keycode>. In the dialog that opens up, you can browse the history and select the entry to paste. In addition to inserting the text at the cursor, the selected entry will also be moved to the top of the clipboard history, and will therefore subsequently be available with the regular paste command.</para></formalpara>
     <para>The clipboard history is a great tool to minimize scrolling and document switching: Instead of going back and forth several times, you can just "copy, copy, copy" several pieces of code in a row, then go to another place in the code and do "paste, paste from history, paste from history".</para>
+
+      <formalpara>
+ <title>Right Margin</title>
+ <para>DrJava can display a line after a specified number of columns, representing the right margin of the document. By default, this line is displayed after 120 columns. You can type past this line, and it has no effect on the saved files or executed programs, but the right margin line can help you format your source code more uniformly.</para></formalpara>
+    <para>You can enable or disable the right margin line in the Display category of the Preferences window. The color of the line can be changed in the Colors category of the Preferences. (See <link linkend="configuration">Configuring DrJava</link>.)</para>
     </section>
 
     <section id="edit-multiple">
@@ -220,9 +230,10 @@ OTHER DEALINGS WITH THE SOFTWARE.
  <para>DrJava has a Find and Replace utility, which is conveniently displayed as one of the tabs at the bottom of the window, rather than as a dialog blocking part of the window.  The tab is first displayed when you Find/Replace from the Edit Menu (or using the keyboard shortcut, <keycode>Ctrl+F</keycode>), and it can be closed by clicking on the "X" button in the upper right corner of the tab (or by hitting the <keycode>Escape</keycode> key).</para></formalpara>
  <para>To search for a term, type it in the Find text field and click "Find Next" or "Find Previous" (or press <keycode>Enter</keycode>).  To replace the term with another, type the new term in the Replace text field, find an occurrence using "Find Next" or "Find Previous", and then click "Replace".  The "Replace/Find Next", "Replace/FindPrevious"  and "Replace All" buttons help to speed up this process.</para>
  <para>The "Find All" button accumulates all occurrences and displays them in a new, separate pane labeled "Find: word", where "word" is replaced with the search string. You can keep as many "Find All" panes open as you like. The panes keep the occurrences sorted by document and line number and allow you to jump to the source location with the "Go to" button, bookmark an occurrence using the "Bookmark" button, or to remove an occurrence from the list with the "Remove" button. Occurrences can also be underlined with different colors to make them easier to find in the Definitions pane.</para>
- <para>There are also four checkboxes to customize each search: "Match Case","Search All Documents", "Whole Word", and "No Comments/Strings".  Unchecking the first box will return case-insensitive results, checking the second box will tell DrJava to search through all of the open documents in sequence, checking the third box will ignore partial matches (i.e. it will ignore "hello" if the search text is "lo"), and checking the last box ignores instances found within comments and strings.</para>
+ <para>There are also four checkboxes to customize each search: "Match Case","Search All Documents", "Whole Word", "No Comments/Strings", and "No Test Cases".  Unchecking the first box will return case-insensitive results, checking the second box will tell DrJava to search through all of the open documents in sequence, checking the third box will ignore partial matches (i.e. it will ignore "hello" if the search text is "lo"), and checking the last box ignores instances found within comments and strings. Checking the "No Test Case" box will cause Java to ignore matches in files with test cases. Currently, this is being determined by examining the file name: If the file name ends with "Test.java", it is considered a test case and will be skilled.</para>
  <para>Note that if "Search All Documents" is enabled, the search will not wrap to the beginning of the current document until all other documents have first been searched.
 DrJava can also search across more than one line of text (i.e. the search string can include line breaks). For detailed instructions on its usage, see the "Find and Replace" section in the Quickstart documents under the Help menu.</para>
+ <para>The last checkbox is "Search Selection Only". Checking this checkbox, allows the user only to Find/Replace All and disables the Search All Documents as well as No Test Cases checkboxes. The search will be limited to a highlighted portion of the document. The Find Again option after Find All with Search Selection Only has been checked only searches within the selected region likewise.  </para>
 
       <formalpara>
  <title>Go to Line</title>
@@ -245,7 +256,7 @@ DrJava can also search across more than one line of text (i.e. the search string
   <para>With Fast Switching, you can easily switch between recently active documents. Simple hold down <keycode>Control</keycode>, and press the <keycode>Back Quote</keycode> key to navigate through the filenames of recently active documents. Release the <keycode>Control</keycode> key to switch to the document with that filename. </para>
       </formalpara>
 
-      <formalpara>
+     <formalpara>
  <title>Line Numbering</title>
  <para>DrJava displays the cursor's current line number and column number on the right side of the status bar at the bottom of the window.  The line number is shown on the left and starts at 1, and the column number is shown on the right and starts at 0.</para>
       </formalpara>
@@ -271,6 +282,13 @@ DrJava can also search across more than one line of text (i.e. the search string
       <formalpara><title>RegEx</title>
       <para>This matching strategy allows you to enter Perl-style regular expressions (as implemented by the java.util.regex package), and the list will contain all the items that match the regular expression. As an example, the regular expression ".*" will display all items, while "[a-m].*" will display all that begin with the letters 'A' through 'M'.</para></formalpara>
    </section>
+
+    <section id="detachable-panes">
+      <title>Detachable Tabbed Panes</title>
+      <para>For a long time, the Interactions Pane, the Console Pane, Find/Replace, and the Compiler and JUnit Panes were always attached to the bottom of the DrJava main frame. Users who desire the Definitions Pane to be as large as possible, or users with multi-monitor displays, may wish to use the new "Detach Tabbed Panes" option in the "Edit" menu.</para>
+      <para>When this option is enabled, the tabbed panes will be detached from the bottom of the main frame and displayed freely floating in their own window. The window position is saved, so it's possible to create a nice layout, quit DrJava, and have the same layout restored when DrJava is started again. Another nice side-effect is that all panes can display a lot more items without the need for scrolling. To re-attach the tabbed panes to the DrJava main frame again, simply disable the "Detach Tabbed Panes" option again.</para>
+      <para>The panes in the free-floating window otherwise behave exactly the same as when they are attached. It's just a different screen layout.</para>
+    </section>
 
   </chapter>
   
@@ -307,12 +325,12 @@ DrJava can also search across more than one line of text (i.e. the search string
      <para> To test all project files, including files not open in DrJava, choose "Test Project" in the project menu. This will search the project directory (the directory that the project file is saved in) for source files, and test any and all junit test cases it finds. This will also test all test files in the Auxiliary Files branch of the project tree.</para>
      <formalpara>
       <title>Running a Project</title>
-      <para>To run the main method of a project, select "Run Main Document" under the Project menu. This option is only available if you have specified a file containing the project's main method in the "Project Properties" dialog in the Project menu.</para>
+      <para>To run the main method of a project, select "Run Main Class" under the Project menu. This option is only available if you have specified a file containing the project's main method in the "Project Properties" dialog in the Project menu.</para>
      </formalpara>
      <formalpara>
       <title>Create Jar File from Project</title>
-      <para>You can create a jar file that contains the project's source code, its compiled class files, or both by selecting "Create Jar File from Project" in the Project menu. This will display a dialog that allows you to specify the jar file's location and what gets put into it. If you are placing class files into the jar file, you can make the jar file executable by selecting "Make executable" and entering the main class.</para></formalpara>
-      <para>Note that you can only put class files into the jar file if you have specified a build directory in the <link linkend="project-properties">Project Properties</link> and have recently compiled the project.</para>
+      <para>You can create a jar file that contains the project's source code, its compiled class files, or both by selecting "Create Jar File from Project" in the Project menu. This will display a dialog that allows you to specify the jar file's location and what gets put into it. If you are placing class files into the jar file, you can make the jar file executable by selecting "Make executable" and entering the main class.  For more control over the properties of the jar, you may enter a custom manifest by selecting "Custom Manifest" and pressing the "Edit Manifest" button.  You may opt to include all source files in the jar, embeded in a seperate jar,  by selecting "Jar source files". You can also include all files in the project directory by selecting "Jar All files".</para></formalpara>
+      <para>Note that if you have not specified a build directory in the <link linkend="project-properties">Project Properties</link> all classes found in the same directory contaning the project file will included if you place class files in the jar. For class files to be included successfully you must have recently compiled the project.</para>
     </section>
     <section id="tree-view">
      <title>Tree View</title>
@@ -361,8 +379,8 @@ DrJava can also search across more than one line of text (i.e. the search string
    <title>Working Directory</title>
    <para>The working directory corresponds to "current" directory of the project, i.e. <command>new File(".")</command> or <command>System.getProperty("user.dir")</command>.</para></formalpara>
   <formalpara>
-  <title>Main Document</title>
-  <para>The project facility allows the user to specify a "Main Document" file for your project. When the "Run Project" button is pressed or the "Run Main Document of Project" is then selected in the Project menu, the main method of the "Main Document" file specified will be executed. If no "Main Document" is specified, the "Run Main Document of Project" item will not be available, and the "Run Project" button is replaced by the "Run" button that runs the main method of the current document.</para>
+  <title>Main Class</title>
+  <para>The project facility allows the user to specify a "Main Class" for your project. When the "Run Project" button is pressed or the "Run Main Class of Project" is then selected in the Project menu, the main method of the "Main Class" specified will be executed. If no "Main Class" is specified, the "Run Main Document of Project" item will not be available, and the "Run Project" button is replaced by the "Run" button that runs the main method of the current document.  The "Main Class" may be specified as a file, using the file selection dialog, or as a fully qualified class name entered directly into the field.  Note that to run inner classes, the name must be entered directly.</para>
   </formalpara>
   <formalpara>
    <title>Extra Classpath</title>
@@ -413,7 +431,20 @@ Welcome to DrJava.
     <para>Note that this feature does not support passing special flags or arguments to the JVM itself, as is supported on the command line.</para>
     <para>Another shortcut for this feature is the "Run Document's Main Method" command, which can be found in both the Tools menu and the context menu of the document list.  This command will simply insert the appropriate <literal>"java MyClass"</literal> text into the Interactions Pane to run the current class's main method.</para>
 
-    <para>DrJava also displays either a "Run Project" or a "Run" button in its toolbar, depending on whether you have specified a "Main Document" for the project or not, respectively. "Run Project" will run the main method of the project's "Main Document", while "Run" while execute the main method of the currently open document.</para>
+    <para>DrJava also displays either a "Run Project" or a "Run" button in its toolbar, depending on whether you have specified a "Main Class" for the project or not, respectively. "Run Project" will run the main method of the project's "Main Class", while "Run" while execute the main method of the currently open document.</para>
+
+    <para>If "Smart Run Command" option is enabled, DrJava will also run applets and ACM Java Task Force programs using the "Run" or "Run Project" buttons (see <link linkend="configuration">Configuring DrJava</link>).</para>
+
+    <para>The same smart behavior of running regular Java classes, applets and ACM Java Task Force programs can also be achieved by entering "run" followed by the class name and any arguments in the Interactions Pane.  For example, to run MySomething with args "arg1" and "arg2", type the following into the Interactions Pane:</para>
+
+    <programlisting>run MySomething arg1 arg2</programlisting>
+
+    <formalpara>
+      <title>Running the Document as Applet</title>
+      <para>For users who write Java applets, DrJava has a built-in applet viewer that supports calling the <filename>run()</filename> method of a class in the Interactions Pane by simply entering "applet" followed by the class name. Any arguments will be passed to the constructor as strings.  For example, to create <filename>MyApplet(String a, String b)</filename> with arguments "arg1" and "arg2" and then call the object's <filename>run()</filename> method, type the following into the Interactions Pane:</para>
+    </formalpara>
+    <programlisting>applet MyApplet arg1 arg2</programlisting>
+    <para>Another shortcut for this feature is the "Run Document as Applet" command, which can be found in both the Tools menu and the context menu of the document list.  This command will simply insert the appropriate <literal>"applet MyApplet"</literal> text into the Interactions Pane to run the current document as applet.</para>
 
     <formalpara>
       <title>Keyboard Shortcuts</title>
@@ -449,8 +480,64 @@ Welcome to DrJava.
   <title>Tiger Features</title>
   <para>DrJava provides support for Tiger (JDK 1.5) features in the interactions pane. These include enum types, static import, for each statements, methods with variable arguments, generics, and autoboxing. Note that you must be running Java 2, version 1.5.0 or later to use 1.5 features in the Interactions Pane. Also, DrJava does not currently type check generics, so while they may be used in the interactions pane without a syntax error, we do not yet provide full support for type checking of generics.</para>
       </formalpara>
-  </chapter>
 
+    <section id="interactions-pane-system-in">
+      <title>System.in and Closing the Input Stream</title>
+
+<para>Your program can ask for text input from the user by invoking <filename>System.in</filename>. You can also use the <filename>System.in.read()</filename> method in the Interactions Pane directly.  When the input box appears, type your text and then either press Return.</para>
+	
+<para>You can choose to close the input stream by selecting the menu item "Tools, Interactions &amp; Console, Close System.in", or by pressing the keyboard shortcut for it, which is <filename> Ctrl-D </filename>. The shortcut is labeled <filename>Close System.in</filename> in the Key Bindings section of the preferences.</para>
+
+<para>Here is an example of closing the input stream. The text in square brackets was entered by the user.</para>
+
+    <programlisting>
+Welcome to DrJava.  Working directory is /Users/Shared/drjava
+> System.in.read()
+ [1]
+49
+> System.in.read()
+10
+> System.in.read() // press Ctrl-D now
+ []
+-1
+>
+    </programlisting>
+
+<para>The user first types '1' and then presses Return. This lets DrJava read
+a 49, which is the ASCII code for the character '1', and then 10, which is the
+ASCII code for the new line created by Return. In the second input box, the
+user pressed Ctrl-D immediately to close the input stream. This lets DrJava
+read -1, indicating of the end of the stream.</para>	
+    </section>
+
+    <section id="interactions-pane-import">
+      <title>Imports in the Interactions Pane</title>
+      <formalpara>
+	<title>Auto-Import</title>
+	<para>When you use a class name in the Interactions Pane that is not yet known, probably because the class or its package have not been imported yet, DrJava displays an error:</para></formalpara>
+      <programlisting>Welcome to DrJava.  Working directory is /Users/Shared/drjava
+&gt; File f
+Static Error: Undefined class 'File'</programlisting>
+      <para>At this time, DrJava will open a <link linkend="predictive-input">predictive input dialog</link> populated with all Java API classes. The initial suggestion is a class that matches the unknown class as closely as possible. After choosing the desired class, DrJava will import that class and re-execute the line that caused the error:</para>
+      <programlisting>Welcome to DrJava.  Working directory is /Users/Shared/drjava
+&gt; File f
+Static Error: Undefined class 'File'
+&gt; import java.io.File; // auto-import
+File f
+&gt; </programlisting>
+     <para>In the predictive input dialog, there is also a checkbox that allows you to import the entire package that contains the selected class, e.g. java.io.* instead of just java.io.File:</para>
+      <programlisting>Welcome to DrJava.  Working directory is /Users/Shared/drjava
+&gt; File f
+Static Error: Undefined class 'File'
+&gt; import java.io.*; // auto-import
+File f
+&gt; </programlisting>
+
+      <formalpara>
+	<title>Default Imports</title>
+	<para>In DrJava's preferences under "Miscellaneous", the user can add or remove classes and packages that the user would like to automatically import in the Interactions Pane whenver the pane has been reset. After the Interactions Pane has been reset, these classes and packages are immediately available.</para></formalpara>
+    </section>
+  </chapter>
 
 
   <!-- Chapter: Integrated Compiler -->
@@ -471,7 +558,11 @@ Welcome to DrJava.
 
     <section id="compiling-selecting">
       <title>Selecting a Compiler</title>
-      <para>DrJava supports the use of different Java compilers, such as the traditional "Javac" compiler supplied with the JDK or Sun's JSR-14 experimental compiler (which supports generic types when only running under the 1.4 JDK).  DrJava will attempt to locate the your Java compiler on startup by searching for standard installation directories, but sometimes it is unable to find a compiler.  In this case, it will prompt you to specify the location of a compiler, or allow you to continue using DrJava without any compiler.  Note that the location of the compiler can be specified in the Preferences (see <link linkend="configuration">Configuring DrJava</link>).  If more than one compiler is specified, the active compiler can be selected from a menu on the Compiler Output tab itself.  You may notice that the same compiler may appear multiple times in the menu.  This happens because DrJava looks for compilers in three different places: on the user classpath, the user specified location in Preferences, and in the usual locations that the compiler can be found (the default installation directory, where java is located, etc.).</para>
+      <para>DrJava supports the use of different Java compilers, such as different versions of the "Javac" compiler supplied with the JDK.  DrJava will attempt to locate the your Java compiler on startup by searching for standard installation directories, but sometimes it is unable to find a compiler.  In this case, it will use the included Eclipse compiler instead.  Note that the location of the compiler can be specified in the Preferences (see <link linkend="configuration">Configuring DrJava</link>).  If more than one compiler is specified, the active compiler can be selected from a menu on the Compiler Output tab itself.
+<!-- You may notice that the same compiler may appear multiple times in the menu.  This happens because DrJava looks for compilers in three different places: on the user classpath, the user specified location in Preferences, and in the usual locations that the compiler can be found (the default installation directory, where java is located, etc.). -->
+</para>
+      <para>DrJava will only display one compiler for each major version even though you have more than one update the JDK installed (Example: you have JDK 6 Updates 10 and 14 installed; DrJava will only display JDK 6 Update 14). If you want to display all compiler versions that were found, enable "Show all compiler versions" in the Preferences (see <link linkend="configuration">Configuring DrJava</link>).</para>
+	<para>The preferred compiler can also be selected permanently by setting the <link linkend="config-options-compiler">Compiler Preference</link> in the Compiler Options category of the Preferences. DrJava will then choose the selected compiler at startup.</para>
     </section>
   </chapter>
 
@@ -641,47 +732,112 @@ public class CalculatorTest extends TestCase {
   <!-- Chapter: Language Level Facility -->
   <chapter id="language-levels">
     <title>Language Level Facility</title>
-    <para>The Java Language Level Facility provides a student-friendly introduction to Java.
-There are three levels: <emphasis> Elementary</emphasis>, <emphasis>Intermediate</emphasis>, and <emphasis>Advanced</emphasis>, and
-each level progressively introduces students to more Java features.
-When used with a complementary curriculum, they form a powerful
-learning tool.</para>
+
+    <para>The Java Language Level Facility provides a student-friendly
+    introduction to Java. As of April 2010, there is a single,
+    simplified language level called <emphasis>Functional
+    Java</emphasis>. When used with a complementary curriculum, this
+    language level forms a powerful learning tool.</para>
+
+    <para>In the past, there are three levels: <emphasis>
+Elementary</emphasis>, <emphasis>Intermediate</emphasis>, and
+<emphasis>Advanced</emphasis>, and each level progressively introduces
+students to more Java features. Files written using these three
+language levels can still be compiled, but not be created anymore. The
+new Functional Java language level can compile files written for the
+old Elementary and Intermediate language leves; the old Advanced level
+can be compiled by the regular Java compiler.</para>
 
     <section id="usingLL">
       <title>Using the Java Language Level Facility</title>
-      <para>The Java Language Level Facility is fully integrated into DrJava.  To select the level at which you wish to work, click on the "Language Levels" menu in the menu bar and select a level.  If you do not want to use any Language Level, select "Full Java".</para>
-      <para> Selecting your level affects how new files are saved and which files can be opened by default.  Each file's extension specifies its level. Elementary, Intermediate, and Advanced Level files are given the <emphasis>.dj0</emphasis>, <emphasis>.dj1 </emphasis>, and <emphasis>.dj2</emphasis> extensions respectively.  You can reference classes defined at any language level regardless of the level you are currently using, but you cannot reference full java files unless you have first compiled them seperately. </para>
-	<para>Because each level is a restricted subset of full java, instructors must be careful when allowing their students to use library functions.  For instance, at the Elementary level, "null" is not a valid keyword, so functions that may return null should not be used.  Similar caution must be exercised with arrays.  Arrays are not introduced until the Advanced level, so library functions that rely on arrays should not be used until then.  Also, although we do not allow the mutation of fields or variables at the Elementary and Intermediate levels, we do not prohibit the use of library classes with their own mutation methods such as java.util.LinkedList.  Because of this, the students and their teachers must be careful to not use mutable datatypes. </para>
+
+      <para>The Java Language Level Facility is fully integrated into
+      DrJava.  To select the level at which you wish to work, click on
+      the "Language Levels" menu in the menu bar and select a level.
+      If you do not want to use any Language Level, select "Full
+      Java".</para>
+
+      <para> Selecting your level affects how new files are saved.
+      Each file's extension specifies its level. Functional Java files
+      are given the <emphasis>.dj</emphasis> extension; Full Java
+      files have the usual <emphasis>.java</emphasis>
+      extension.</para>
+
+      <para>In the past, files using the Elementary, Intermediate, and
+      Advanced Levels had the <emphasis>.dj0</emphasis>,
+      <emphasis>.dj1 </emphasis>, and <emphasis>.dj2</emphasis>
+      extensions, respectively.  These files can still be loaded and
+      compiled, but DrJava suggests that you rename .dj0 and .dj1
+      files to .dj files, and .dj2 files to .java files.</para>
+
+      <para>You can reference classes defined at any language level
+      regardless of the level you are currently using, but you cannot
+      reference Full Java files (or old Advanced Level files) unless
+      you have first compiled them seperately.</para>
+
+	<para>Because each level is a restricted subset of Full Java,
+	instructors must be careful when allowing their students to
+	use library functions.  For instance, at the Elementary level,
+	"null" is not a valid keyword, so functions that may return
+	null should not be used.  Similar caution must be exercised
+	with arrays.  Arrays are not introduced until the Advanced
+	level, so library functions that rely on arrays should not be
+	used until then.  Also, although we do not allow the mutation
+	of fields or variables at the Elementary and Intermediate
+	levels, we do not prohibit the use of library classes with
+	their own mutation methods such as
+	<filename>java.util.LinkedList</filename>.  Because of this,
+	the students and their teachers must be careful to not use
+	mutable datatypes. </para>
+
+	<para>Internally, the Language Level Facility translates
+	<emphasis>.dj</emphasis>, <emphasis>.dj0</emphasis>,
+	<emphasis>.dj1</emphasis> and <emphasis>.dj2</emphasis> files
+	to <emphasis>.java</emphasis> files with the same name. For
+	example, the file <filename>Example.dj</filename> creates the
+	hidden file named <filename>Example.java</filename>. Please
+	make sure that you do not have both a Java Language Level file
+	and a <emphasis>.java</emphasis> file with the same name, as
+	this would overwrite your <emphasis>.java</emphasis> file. We
+	also advise against opening the generated
+	<emphasis>.java</emphasis> files. If you do open them, DrJava
+	will warn you when you compile and ask you to close the
+	<emphasis>.java</emphasis> files.</para>
 
     </section>
+
+    <section id="DJBreakdown">
+       <title>What Does the Functional Java Level Provide?</title>
+     <para>The Functional Java language level roughly corresponds to the old <link linkend="intermediateLL">Intermediate Level</link>. More details to follow.</para>
+    </section>
     
-    <section id="LLBreakdown">
-       <title>What Does Each Level Provide?</title>
-     <para> The general presentation of concepts in the Language Levels' Facility corresponds to the book <emphasis> How To Design Programs</emphasis> by Felleisen, Findler, Flatt, and Krishnamurthi.  Basically, the levels provide an incremental introduction to data structures and operations on those structures while helping to simplify syntax for the students. </para>
+    <section id="OldLLBreakdown">
+       <title>What Did the Old Levels Provide?</title>
+     <para> The general presentation of concepts in the old Language Levels Facility corresponds to the book <emphasis> How To Design Programs</emphasis> by Felleisen, Findler, Flatt, and Krishnamurthi.  Basically, the levels provide an incremental introduction to data structures and operations on those structures while helping to simplify syntax for the students. </para>
      <para> The levels are also designed to allow the introduction of <emphasis>design patterns</emphasis>--models for writing code with certain abstract behavior that are essential to teaching elegant object-oriented programming. </para>
 
-     <para> Here is a summary of what is allowed at each level.</para>
+     <para> Here is a summary of what is allowed at each of the three old language levels.</para>
 
      <mediaobject>
        <imageobject>
-       <imagedata fileref="LanguageLevelFeatures.jpg" format="jpg" scale=50 scalefit="1">
+       <imagedata fileref="LanguageLevelFeatures.jpg" format="JPG" width="80%" />
        </imageobject>
      </mediaobject>
 
 	<para>And here is a summary of the code augmentation performed at each level.</para>
 	<mediaobject>
 	  <imageobject>
-	  <imagedata fileref="LanguageLevelAugmentation.jpg" format="jpg" scale=50 scalefit="1">
+	  <imagedata fileref="LanguageLevelAugmentation.jpg" format="JPG" width="80%" />
 	  </imageobject>
 	</mediaobject>
 
-     <para>Read on for a more detailed explaination of each level.</para>
+   <para>Read on for a more detailed explaination of each level.</para>
 </section>
 
     <section id="elementaryLL">
-      <title>The Elementary Level</title>
+      <title>The Old Elementary Level</title>
     
-	<para> The Elementary Level provides support for programming in functional Java, which can be taught with only algebraic data types--types that are inductively defined, such as <emphasis>integers</emphasis>, <emphasis>booleans</emphasis>, <emphasis>lists</emphasis>, and <emphasis>trees</emphasis>. Because of this, only a small subset of the Java language is necessary.  Most importantly, all fields and variables are immutable; in other words, they are automatically made final, so their values cannot  be changed once they are set. </para>
+	<para> The old Elementary Level provides support for programming in functional Java, which can be taught with only algebraic data types--types that are inductively defined, such as <emphasis>integers</emphasis>, <emphasis>booleans</emphasis>, <emphasis>lists</emphasis>, and <emphasis>trees</emphasis>. Because of this, only a small subset of the Java language is necessary.  Most importantly, all fields and variables are immutable; in other words, they are automatically made final, so their values cannot  be changed once they are set. </para>
 
     <para> Because of this immutability of data, <emphasis>for</emphasis>, <emphasis>while</emphasis>, and <emphasis>do</emphasis> loops cannot be used at the Elementary level.  We also do not allow arrays because they are commonly used with a procedural-style approach to programming (loops) rather than an object-oriented one and are inherently mutable.  And since void return methods have few uses without mutable data, they are only allowed in JUnit test cases at this level.  We also simplify the language for the student by not allowing <emphasis>null</emphasis> as a keyword.  This protects beginning students from getting null-pointer exceptions but also means that instructors should not  allow the students to use library functions that return null.  In addition, interfaces are not allowed at the Elementary Level; only classes and abstract classes are allowed.  By waiting to introduce interfaces until after the students are familiar with abstract classes, we hope students will have an easier time differentiating between interfaces and abstract classes. We also disallow the use of explicit access modifiers (<emphasis>final,</emphasis> <emphasis>private,</emphasis> <emphasis>static,</emphasis> etc.), and instead automatically make all fields and local variables private and all methods public.  The one exception to this is that classes and methods can be denoted as <emphasis>abstract</emphasis>.  We also do not allow the use of <emphasis>package</emphasis> or <emphasis>import</emphasis> statements in order to simplify the concepts that beginning students must learn.  Of course, students' classes can still reference other files in the same directory, and they also have access to all classes in the <emphasis>java.lang</emphasis> package, and if students extend "TestCase" we automatically import <emphasis> junit.framework.TestCase </emphasis>for them. </para>
     <para> We automatically generate a <emphasis>constructor</emphasis> for each class that students write at the Elementary Level.  Each class's constructor takes a value for each of its fields, and sets the fields to those values. None of a class's fields can be set outside of the automatically generated constructor. We consider fields to be any field in the class or one of its superclasses that also has a visible accessor (a method of the same name as the field that returns its type). We automatically generate <emphasis>accessors</emphasis> for each field (for example, field my_field would have an accessor my_field()).  We also generate a <emphasis>toString()</emphasis> method that returns a description of the object--its class name and field values, an <emphasis>equals()</emphasis> method that determines if two objects are equal by comparing their class types and the values for each of their fields, and a <emphasis>hashCode()</emphasis> method that follows the Java Language Specification that if two objects are equal, their hash codes are the same.  Students cannot override any augmented methods at this level. </para>         
@@ -689,16 +845,16 @@ learning tool.</para>
 </section>
 
  <section id="intermediateLL">
-    <title>The Intermediate Level</title>
-    <para> At the Intermediate level, the focus is still on functional programming with immutable data.  However, there is an added twist: functions can now be used as data.  Because of this, we introduce anonymous inner classes as a new construct.  These anonymous inner classes can be stored in variables and passed as arguments to methods. </para>
+    <title>The Old Intermediate Level</title>
+    <para> At the old Intermediate level, the focus is still on functional programming with immutable data.  However, there is an added twist: functions can now be used as data.  Because of this, we introduce anonymous inner classes as a new construct.  These anonymous inner classes can be stored in variables and passed as arguments to methods. </para>
         <para> Although we allow anonymous inner classes, students still cannot use nested classes or nested interfaces at this level.  They introduce a level of complexity in naming and referencing that is best deferred to the Advanced Level. </para>
 	<para> In addition to anonymous inner classes, several new concepts are introduced at this level.  We now allow interfaces, which should be intuitive to students since they have been working with abstract classes at the Elementary Level.  In addition, we allow <emphasis>package</emphasis> and <emphasis>import</emphasis> statements to broaden the scope of classes the student has access to (including the Java libraries), and to help them learn how to modularize their own projects.  We allow the <emphasis>null</emphasis> keyword to be used and also allow explicit visibility specifiers such as <emphasis>public</emphasis>, <emphasis>private</emphasis>, and <emphasis>protected</emphasis> for all constructs except fields and variables, and the keyword <emphasis>static</emphasis>.  However, only fields can be static at this level; static methods are still prohibited.  We also introduce casts because they are useful with the <emphasis>Visitor</emphasis> design pattern--frequently the arguments to and return type of visitors is Object, and if a more specific contract for the specific function is known, the data can be cast.  Students can also define their own constructors at this level, though they must make sure that all of a class's non-static fields are given a value in the constructor.  Non-static fields still cannot be assigned outside of a constructor, and static fields must be given a value where they are defined.  All fields are still made final.</para>
 	<para> The code augmentation is the same as that done at the Elementary Level, except that if a student defines a constructor that takes in all the fields of the class, we do not generate a duplicate constructor, and accessors are not generated for static fields, so static field values are not included in the constructor, equals(), toString(), and hashCode() methods. Students cannot override any autogenerated methods besides the constructor.</para>
         <para> Both the <emphasis>Command</emphasis> and <emphasis>Visitor</emphasis> design patterns deal with passing functions as data and should be taught at this level.  The <emphasis>Singleton</emphasis> design pattern can also be taught here. </para>
  </section>
  <section id="advancedLL">
-     <title> The Advanced Level </title>     
-          <para> As students move to the Advanced level, they are introduced to mutable data for the first time.  This change in perspective allows us to make several extensions to the language. </para>
+     <title> The Old Advanced Level </title>     
+          <para> As students move to the old Advanced level, they are introduced to mutable data for the first time.  This change in perspective allows us to make several extensions to the language. </para>
            <para> The introduction of mutable data goes hand in hand with the explicit use of the <emphasis>final</emphasis> keyword--students must now mark the data they do not want to be mutable as "final".  Explicit visibility modifiers may now be used for fields and variables.  <emphasis>For</emphasis>, <emphasis>while</emphasis>, and <emphasis>do</emphasis> loops, as well as <emphasis>switch</emphasis> statements are now allowed, though students cannot make assignments in the conditional expression of the loops and the switch expression of the switch statement.  This should help students avoid a common error of using "=" instead of "==".  Students can get around this restriction by nesting the assignment in parentheses--for instance ((i=5)) rather than (i=5).  <emphasis>Break</emphasis> and <emphasis>continue</emphasis> statements are also allowed because they are useful with loops.  We restrict <emphasis>switch</emphasis> statements further by not allowing fall through in any switch case, including the last one, and by enforcing that if there is a default case, it must be the last case in the block.  A label in a switch statement can only be a character constant, integer constant, or a negative sign followed by an integer constant--not an arbitrary constant expression.  Mutable data also means that arrays are now a useful data type, so we support the use of arrays at this level.  And, mutable data means that <emphasis>void</emphasis> return methods make sense in some cases, so they are also allowed.</para>
            <para> The language is more flexible in other areas at this level as well.  We allow non-static fields to be assigned a value where they are declared, thus giving students more freedom in what arguments need to be passed to the constructor.  In addition, we allow static methods as well as static fields at the Advanced level.  Nested classes and interfaces, both static and dynamic, are also supported at the Advanced level. </para>
            <para> No code augmentation is done at the Advanced Level. </para>
@@ -708,7 +864,7 @@ learning tool.</para>
           </section>
           </chapter>                                                                                                                                                                                                                                                   
                                                                                                                                                                                                                                                    
-  <!-- ---- Chapter: Debugger ---- -->
+  <!-- **** Chapter: Debugger **** -->
   <chapter id="debug">
     <title>Debugger</title>
     <para>DrJava provides advanced tools for debugging your programs in the Interactions Pane.  You can set breakpoints in source files in the Definitions Pane, call methods that stop at the breakpoints in the Interactions Pane, and then interact with programs while they are suspended at breakpoints.  Once a breakpoint is reached, users can interact with any variables, fields, or methods that are in scope in the suspended method.  Users can also resume the method call, or step through it a line at a time.  Finally, the values of local variables and fields can be watched in a table as the method call progresses.</para>
@@ -775,6 +931,11 @@ learning tool.</para>
  <title>Sourcepath and Step Options</title>
  <para>The sourcepath is the set of directories in which to look for source files when stepping.  It can be set in the Debugger section of the Preferences window (which can be opened from the Edit menu).  This section in the Preferences also contains options for controlling which classes will be included as part of stepping.  By default, DrJava will never step into its own source, nor its Java Interpreter (DynamicJava), nor Java itself.  If you are interested, and have downloaded the source files, you can enable these options to see how Java or DrJava works.  You can also specify which classes and packages you want to exclude when stepping.  To exclude specific classes, type in the qualified class name (the package name followed by a period and the class name).  To exclude entire packages (as well as their subpackages), type the package name followed by a period and an asterisk.  Each class or package name must be separated by a comma.</para>
       </formalpara>
+
+      <formalpara>
+ <title>Automatic Trace</title>
+ <para>The Automatic Trace command allows the user to execute periodic "Step Into" commands, by default every 1000 milliseconds. This will cause DrJava to execute the program line by line, entering called methods. After such a periodic step, the user has the option oof disabling the automatic trace by pressing the "Disable Automatic Trace" button. If the automatic trace is not disabled, the program will run its course, and the automatic trace will be turned off at the end of the program. The user can change the delay interval for stepping located in DrJava's preferences.</para>
+      </formalpara>
     </section>
 
     <section id="debug-panel">
@@ -786,15 +947,20 @@ learning tool.</para>
  <para>You can watch the values of class fields and local variables by entering the field or variable name into a row in the Watches table.  Any time a method is suspended (e.g. after a breakpoint or step), the current value of the field or variable (if any) is displayed.  Watches can be removed from the table by deleting the name and pressing Enter.  You cannot enter expressions that need to be evaluated into the watch table.  For example, "s.length" is not a valid watch entry.  Type expressions like these into the Interactions Pane to see their values.</para>
       </formalpara>
     </section>
-  </chapter>
 
+    <section id="detachable-debugger">
+      <title>Detachable Debug Panel</title>
+      <para>When the Debug Panel is visible, it is normally attached to DrJava's main frame and displayed just above the bottom panes, and below the editor pane. To conserve screen space or make better use of dual monitors, the Debug Panel can also be detached.</para>
+      <para>To do this, click on the "Detach Debugger" menu item in the "Debug" menu and make sure that a checkmark appears next to "Detach Debugger". All debugger controls are now displayed in a separate window called "Debugger". To re-attach the "Debugger" window to DrJava's main frame, remove the checkmark next to "Detach Debugger" or close the "Debugger" window.</para>
+    </section>
+  </chapter>
 
   <!-- Chapter: Javadoc Integration -->
   <chapter id="javadoc">
     <title>Documentation with Javadoc</title>
-    <para>Documenting your code is crucial to help others understand it, and even to remind yourself how your own older programs work.  Unfortunately, it is easy for most external documentation to become out of date as a program changes.  For this reason, it is useful to write documentation as comments in the code itself, where they can be easily updated with other changes.  Javadoc is a documentation tool which defines a standard format for such comments, and which can generate HTML files to view the documentation from a web broswer.  (As an example, see Sun's Javadoc documentation for the Java libraries at <ulink url="http://java.sun.com/j2se/1.4/docs/api/index.html">http://java.sun.com/j2se/1.4/docs/api/index.html</ulink>.)</para>
+    <para>Documenting your code is crucial to help others understand it, and even to remind yourself how your own older programs work.  Unfortunately, it is easy for most external documentation to become out of date as a program changes.  For this reason, it is useful to write documentation as comments in the code itself, where they can be easily updated with other changes.  Javadoc is a documentation tool which defines a standard format for such comments, and which can generate HTML files to view the documentation from a web broswer.  (As an example, see Oracle's Javadoc documentation for the Java libraries at <ulink url="http://download.oracle.com/javase/6/docs/api/">http://download.oracle.com/javase/6/docs/api/</ulink>.)</para>
 
-    <para>You can easily run Javadoc over your programs from within DrJava, using the "Javadoc All Documents" and "Preview Javadoc for Current Document" commands in the Tools menu.  These commands will generate Javadoc HTML files from the comments you have written and display them in a browser.  This chapter gives a brief overview of these commands and how to write Javadoc comments.  More detailed information on writing Javadoc comments can be found online at <ulink url="http://java.sun.com/j2se/javadoc/writingdoccomments/">http://java.sun.com/j2se/javadoc/writingdoccomments/</ulink>.</para>
+    <para>You can easily run Javadoc over your programs from within DrJava, using the "Javadoc All Documents" and "Preview Javadoc for Current Document" commands in the Tools menu.  These commands will generate Javadoc HTML files from the comments you have written and display them in a browser.  This chapter gives a brief overview of these commands and how to write Javadoc comments.  More detailed information on writing Javadoc comments can be found online at <ulink url="http://www.oracle.com/technetwork/java/javase/documentation/index-137868.html">http://www.oracle.com/technetwork/java/javase/documentation/index-137868.html</ulink>.</para>
 
 
     <section id="javadoc-writing">
@@ -869,23 +1035,226 @@ public class Student {
 
     <formalpara>
       <title>Configuring Javadoc</title>
-      <para>You can configure many aspects of how Javadoc files are generated.  Most prominent is the ability to hide fields and methods below a particular access level (eg. <literal>public</literal> or <literal>protected</literal>).  By default, no private fields or methods are shown.  Other options include specifying a URL to link to the Java library API (which defaults to Sun's own website), specifying a default destination directory for all Javadoc files, and specifying any custom parameters to pass to the Javadoc tool itself.  Finally, for programs with many nested packages (folders), DrJava provides an option to always generate Javadoc for all packages in the program, rather than just the sub-packages of the open documents.</para>
+      <para>You can configure many aspects of how Javadoc files are generated.  Most prominent is the ability to hide fields and methods below a particular access level (eg. <literal>public</literal> or <literal>protected</literal>).  By default, no private fields or methods are shown.  Other options include specifying a URL to link to the Java library API (which defaults to Oracle's own website), specifying a default destination directory for all Javadoc files, and specifying any custom parameters to pass to the Javadoc tool itself.  Finally, for programs with many nested packages (folders), DrJava provides an option to always generate Javadoc for all packages in the program, rather than just the sub-packages of the open documents.</para>
     </formalpara>    
 
     </section>
 
     <section id="java-api-javadoc">
  <title>Java API Javadoc</title>
- <para>If you have access to the Java API javadoc pages, DrJava allows you to quickly open a javadoc page for a class: With the "Open Java API Javadoc" item in the Tools menu (bound to <keycode>Shift+F6</keycode>), you can open a <link linkend="predictive-input">predictive input dialog</link> populated with all Java API classes. After you have selected a class, DrJava will try to open the corresponding javadoc page in a browser.</para>
- <para>The "Open Java API Javadoc for Word Under Cursor" feature, also in the Tools menu and bound to <keycode>Ctrl+Shift+F6</keycode>, looks at the word the cursor is on and uses it as a starting point for the search. If there is a unique match, then DrJava will open the javadoc page immediately; otherwise this feature works just like "Open Java API Javadoc".</para>
- <para>Note that this feature requires access to the Java API javadoc pages, e.g. on the internet. DrJava will use the version and location set in the "Javadoc" portion of the "Preferences" dialog (see <link linkend="configuration">Configuring DrJava</link>) and access that location the first time this feature is used during a DrJava session. You can use Java API javadoc pages on your local system by entering a URL beginning with "file://" followed by the directory the allclasses-frame.html file is in. You may also have to set the right values for the "Web Browser" and "Web Browser Command" settings in the "Resource Locations" portion of the "Preferences" dialog.</para>
+ <para>If you have access to the Java API Javadoc pages, DrJava allows you to quickly open a Javadoc page for a class: With the "Open Java API Javadoc" item in the Tools menu (bound to <keycode>Shift+F6</keycode>), you can open a <link linkend="predictive-input">predictive input dialog</link> populated with all Java API classes. After you have selected a class, DrJava will try to open the corresponding Javadoc page in a browser.</para>
+ <para>The "Open Java API Javadoc for Word Under Cursor" feature, also in the Tools menu and bound to <keycode>Ctrl+Shift+F6</keycode>, looks at the word the cursor is on and uses it as a starting point for the search. If there is a unique match, then DrJava will open the Javadoc page immediately; otherwise this feature works just like "Open Java API Javadoc".</para>
+ <para>Note that this feature requires access to the Java API Javadoc pages, e.g. on the internet. DrJava will use the version and location set for "Java Version for 'Open Java API Javadoc'" in the "Javadoc" pane of the "Preferences" dialog (see <link linkend="configuration">Configuring DrJava</link>) and access that location the first time this feature is used during a DrJava session. You can use Java API Javadoc pages on your local system by entering a URL beginning with <filename>file://</filename> followed by the directory the <filename>allclasses-frame.html</filename> file is in. You may also have to set the right values for the "Web Browser" and "Web Browser Command" settings in the "Resource Locations" portion of the "Preferences" dialog.</para>
+<para>You can also open the Javadoc pages for JUnit 3.8.2 by entering a URL in the "JUnit 3.8.2 URL" field of the "Javadoc" pane of the "Preferences" dialog. You can open the Javadoc for user-defined libraries by entering the URLs in the "Additional Javadoc URLs" list. Please enter the URL to the directorythat contains the <filename>allclasses-frame.html</filename> file. For example, to open DrJava's Javadoc, enter <ulink url="http://drjava.org/javadoc/drjava"><filename>http://drjava.org/javadoc/drjava</filename></ulink>.</para>
+    </section>
+
+  </chapter>
+
+
+  <!-- Chapter: External Processes -->
+  <chapter id="ext-process">
+    <title>External Process Facility</title>
+    <para>DrJava includes an interface to execute external command line programs and supply them with values from inside the DrJava editor.</para>
+
+    <section id="ext-process-execute">
+      <title>Executing External Processes</title>
+      <para>TODO</para>
+
+      <formalpara>
+        <title>Simple Programs</title>
+        <para>TODO</para>
+      </formalpara>
+    </section>
+
+    <section id="ext-process-follow">
+      <title>Follow File</title>
+      <para>Using the "Follow File" option in the "Tools" menu, the user can
+	open a text file in one of the panes on the bottom of DrJava's main
+	frame and keep an eye on how it changes. DrJava checks every once in
+	a while (by default every 300 milliseconds) if the file has changed
+	and updates the display accordingly. The time between the updates
+	and how many lines are displayed (by default only the last 100) can
+	be controlled on the "Miscellaneous" pane of the "Preferences" frame
+	(see <link linkend="configuration">Configuring DrJava</link>).</para>
+    </section>
+
+  </chapter>
+
+  <!-- Chapter: Other Dialogs -->
+  <chapter id="other-dialogs">
+    <title>Other Dialogs</title>
+    <para>There are several other dialogs in DrJava that you may encounter.</para>
+
+    <section id="other-dialogs-new-version">
+      <title>Check for New Version</title>
+      <para>The DrJava development team works year-around to improve DrJava.
+	To make it easier for users to determine whether there is a newer
+	version available, DrJava now periodically polls the website for
+	the latest version (by default, this is done once a week). If
+	a new version is found, the user can press the "Manual Download" button
+	to be taken directly to the web page with the latest version
+	of DrJava. There is also an "Automatic Update" button that
+	downloads the new version automatically and then restarts DrJava.</para>
+     <para>The "Check for New Version" dialog appears automatically
+	when DrJava is started and a new version is found, but the user can
+	perform a manual check by selecting "Check for New Version" in
+	the "Help" menu.</para>
+
+      <formalpara>
+        <title>Check for (type of new version)</title>
+        <para>The DrJava developers release different kinds of versions:
+	Stable versions, which should not cause major problems; beta versions,
+	which are stable but not yet well tested; and development versions,
+	which contain new features or changes that may be problematic.</para>
+        </formalpara>
+	<para>By default, DrJava will only notify the user of new stable
+	or beta versions, but this setting can be changed by picking a
+	different "Check for" condition -- the user can check for stable versions
+	only, or be interested in all kinds of versions.</para>
+    </section>
+
+
+    <section id="other-dialogs-survey">
+      <title>Send System Information to DrJava Developers</title>
+      <para>It is tremendously helpful for the DrJava developers to
+	know what operating systems and versions of Java are being
+	used. To get a better overview, DrJava now includes a simple
+	and completely anonymous survey.</para>
+      <para>This survey transmits only the version number of DrJava
+	that is being used, the name and version of the operating
+	system, and the version and vendor of Java that is being
+	used. This information can in no way be traced back to
+	anyone's computer.</para>
+      <para>Every few months, DrJava will ask the user if these
+	pieces of information may be sent to the DrJava developers.</para>
+      <para>When DrJava notices that the user's system has changed
+	or that a new version of DrJava is being used, it may also
+	ask the user to participate in the survey. This usually
+	happens automatically when DrJava starts, but the user
+	can also elect to send information by using the "Send System
+	Information" item in the "Help" menu (multiple submissions
+	will be ignored).</para>
+      <formalpara>
+        <title>Never ask me again</title>
+        <para>If you do not want to be bothered again by this
+	question, you can check the "Never ask me again" checkbox
+	on the dialog, and DrJava will not ask you to participate
+	in the survey anymore.</para>
+      </formalpara>
+      <para>Thank you for helping us make DrJava better!</para>
+    </section>
+
+    <section id="other-dialogs-filetypes">
+      <title>Set File Associations</title>
+      <para>DrJava can detect if .java, .drjava and .djapp files
+	have not been associated with DrJava. If this is the case,
+	DrJava may display the "Set File Associations?" dialog at
+	startup. This dialog has four buttons.</para>
+      <formalpara><title>Yes</title>
+	<para>Set file associations so .java, .drjava and .djapp
+	files open in DrJava when double-clicked.</para></formalpara>
+      <formalpara><title>No</title>
+	<para>Do not set file associations.</para></formalpara>
+      <formalpara><title>Always</title>
+	<para>Set file associations, and do this automatically
+	from now on without asking me again.</para></formalpara>
+      <formalpara><title>Never</title>
+	<para>Do not set file associations, and never ask me about it
+again.</para></formalpara>
+      <para>These settings can also be changed within DrJava by
+	opening the Preferences window and selecting the "File Types"
+pane (see <link linkend="configuration">Configuring DrJava</link>).</para>
+    </section>
+
+    <section id="other-dialogs-compiz">
+      <title>Compiz Detected</title>
+      <para>DrJava suffers from an incompatibility between the Linux
+window manager Compiz and Oracle's Swing Java GUI library. We, the
+developers of DrJava, cannot do anything to fix this problem. We hope
+that future versions of Java and Compiz will address the
+incompatibility. In the meantime, we recommend that you disable Compiz
+if you experience problems. We also suggest that you use the latest
+versions of Compiz and Java, so you can benefit from possible bug
+fixes made by Oracle and the Compiz developers. For more information, see
+<ulink
+url="http://drjava.org/compiz/">http://drjava.org/compiz/</ulink>.</para>
+      <para>When DrJava detects that you are using Compiz, it will
+display the "Compiz Detected" dialog at startup and ask if you want to
+start DrJava nonetheless. The dialog has three buttons.</para>
+      <formalpara><title>Yes</title>
+	<para>Start DrJava, even though Compiz is being used.</para></formalpara>
+      <formalpara><title>Yes, and ignore from now on</title>
+	<para>Start DrJava, and never complain about Compiz again.</para></formalpara>
+      <formalpara><title>No</title>
+	<para>Do not start DrJava.</para></formalpara>
+      <para>Whether DrJava should display this warning can be changed by
+	opening the Preferences window and selecting the
+"Notifications" pane (see <link linkend="configuration">Configuring
+DrJava</link>).</para>
+    </section>
+
+    <section id="other-dialogs-generate-custom-drjava">
+      <title>Generate Custom drjava.jar File</title>
+      <para>This dialog can be found in the Tools, Advanced menu. This
+dialog lets you generate a custom drjava.jar file based on the
+currently running version of DrJava, and you can include additional
+jar files, zip files or directories. These additional files are added
+to the drjava.jar and are immediately available in the generated
+DrJava application without having to set up extra classpaths.</para>
+
+	<para>If a file is contained in more than one source, the file
+contained in the first source will be included; conflicting files from
+sources further down the list will be skipped.  Files belonging to
+DrJava always take precedence.</para>
+
+        <para>Note: This implies that DrJava's manifest file will be used.</para>
+
+	<para>Please note that the added files may produce a copy of
+DrJava does not work as intended, and that it will be more difficult
+for us to help you with these problems. YOU ARE USING THE CUSTOM
+DRJAVA.JAR FILE AT YOUR OWN RISK.</para>
+
+	<para>The dialog contains the following components:</para>
+
+      <formalpara>
+        <title>Output Jar File</title>
+        <para>The file that the custom drjava.jar should be written to.</para>
+        </formalpara>
+
+      <formalpara>
+        <title>Additional Sources</title>
+        <para>The list of additional jar or zip files or directories
+that should be added to the custom drjava.jar file. If a file is
+contained in more than one source, the file contained in the first
+source will be included; conflicting files from sources further down
+the list will be skipped. Files belonging to DrJava always take
+precedence.The file that the custom drjava.jar should be written
+to.</para>
+        </formalpara>
+
+      <formalpara>
+        <title>Check Conflicts</title>
+        <para>Pressing this button causes DrJava to scan itself and the additional sources to identify conflicts. If any conflicts are found, they are listed in a dialog.</para>
+        </formalpara>
+
+      <formalpara>
+        <title>Generate</title>
+        <para>Pressing this button lets DrJava generate the specified output file. It first checks for conflicts, though, and if conflicts are found they are displayed;
+	the user then has the option of aborting the generation or generating anyway.</para>
+        </formalpara>
+
+      <formalpara>
+        <title>Close</title>
+        <para>This closes the dialog.</para>
+        </formalpara>
+
     </section>
 
   </chapter>
 
 
 
-  <!-- ---- Appendix: Configuring DrJava ---- -->
+  <!-- **** Appendix: Configuring DrJava **** -->
   <appendix id="configuration">
     <title>Configuring DrJava</title>
     <para>DrJava has many configurable options which can be set using the Preferences command in the Edit menu, allowing the user to change both DrJava's appearance and behavior.  Changes made to the configurable options are saved in a <filename>.drjava</filename> file in the user's home directory.  The Preferences window is the preferred method for setting these options, although more experienced users may also edit the configuration file itself.</para>
@@ -903,18 +1272,17 @@ public class Student {
 
       <para>Note: All parameters are parsed as standard Java strings, so escape characters must be considered.  Notably, to include a Windows-style path in a parameter value, all backslashes must be escaped.  For example:</para>
 
-      <programlisting>javac.location=c:\\jdk1.4\\lib\\tools.jar</programlisting>
+      <programlisting>javac.location=c:\\jdk6\\lib\\tools.jar</programlisting>
     </section>
-
 
     <section id="config-options">
       <title>Available Options</title>
-      <para>All available configuration options are displayed here.  The option keys and default values are also provided for users who wish to edit their configuration file.</para>
+      <para>All available configuration options are displayed in the following sections.  The option keys and default values are also provided for users who wish to edit their configuration file.</para>
       
       <!-- Resource Location -->
-      <formalpara>
- <title>Resource Locations</title>
- <para>These options specify where to find Java resources on your computer, such as compilers or classpath directories.
+    <section id="config-options-resource">
+      <title>Resource Locations</title>
+      <para>These options specify where to find Java resources on your computer, such as compilers or classpath directories.</para>
 
         <variablelist>
 
@@ -990,10 +1358,9 @@ public class Student {
      </varlistentry>
      
      <varlistentry>
-       <term>JSR14 Location (<varname>jsr14.location = ""</varname>)</term>
-       <term>JSR14 Collections Path (<varname>jsr14.collectionspath = ""</varname>)</term>
+       <term>Display All Compiler Versions (<varname>all.compiler.versions = false</varname>)</term>
        <listitem>
-  <para>Specifies the location of the JSR-14 versions of <filename>javac.jar</filename> and <filename>collect.jar</filename>, respectively, for use as an alternative compiler in DrJava.  JSR-14 is an experimental compiler provided by Sun which supports generic types.  The <filename>collect.jar</filename> file contains parameterized collection classes for JSR-14.  (We currently support JSR-14 versions 1.0, 1.2, 1.3, 2.0, and 2.2.  Note that for versions 2.0 and later, <filename>javac.jar</filename> has been renamed <filename>gjc-rt.jar</filename>.)</para>
+  <para>By default, DrJava only displays one compiler per major version, even if multiple updates are found (Example: You have JDK 6 Updates 10 and 14 installed; DrJava will only display JDK 6 Update 14). To display all compiler versions, mark this checkbox. Note: You have to restart DrJava when you change this setting.</para>
        </listitem>
      </varlistentry>
      
@@ -1005,21 +1372,26 @@ public class Student {
      </varlistentry>
      
    </variablelist>
-      </para>
-      </formalpara>
-
+ </section>
 
       <!-- Display -->
-      <formalpara>
- <title>Display Options</title>
- <para>These configurable options affect how DrJava's user interface is displayed.</para>
-      </formalpara>
+    <section id="config-options-display">
+      <title>Display Options</title>
+      <para>These configurable options affect how DrJava's user interface is displayed.</para>
+
       <variablelist>
 
         <varlistentry>
    <term>Look and Feel (<varname>look.and.feel = ""</varname>)</term>
    <listitem>
      <para>Name of the Swing LookAndFeel class which determines the general appearance of DrJava.  If this option is changed while DrJava is running, the changes will not apply until you restart.</para>
+   </listitem>
+ </varlistentry>
+
+        <varlistentry>
+   <term>Plastic Theme (<varname>plastic.theme = "DesertBlue"</varname>)</term>
+   <listitem>
+     <para>If Plastic is selected as Look and Feel, then this setting changes the theme that is used to display DrJava. If Plastic is not selected, changing this setting has no effect. If this option is changed while DrJava is running, the changes will not apply until you restart.</para>
    </listitem>
  </varlistentry>
  
@@ -1031,30 +1403,23 @@ public class Student {
  </varlistentry>
  
  <varlistentry>
-   <term>Show All Line Numbers (<varname>linenum.enabled = false</varname>)</term>
+   <term>Show All Line Numbers (<varname>lineenum.enabled = false</varname>)</term>
    <listitem>
      <para>Whether to display all line numbers along the left margin of the Definitions Pane.</para>
    </listitem>
  </varlistentry>
- 
- <varlistentry>
-   <term>Save Main Window Postion (<varname>window.store.position = true</varname>)</term>
+
+   <varlistentry>
+   <term>Show sample of source code when fast switching (<varname>show.source.for.fast.switch = true</varname>)</term>
    <listitem>
-     <para>Whether to save the position and size of the DrJava window between sessions.</para>
+     <para>Whether a sample of the source code around the current caret position should be shown in the Fast Switch window.</para>
    </listitem>
- </varlistentry>
-  
- <varlistentry>
-   <term>Save "xxx" Dialog Postion (several choices for "xxx": <varname>dialog.clipboardhistory.store.position = true</varname>, <varname>dialog.gotofile.store.position = true</varname>, <varname>dialog.openjavadoc.store.position = true</varname>, <varname>dialog.completeword.store.position = true</varname>, <varname>dialog.jaroptions.store.position = true</varname>)</term>
+ </varlistentry>   
+
+  <varlistentry>
+   <term>Show Code Preview Popups (<varname>show.code.preview.popups = false</varname>)</term>
    <listitem>
-     <para>Whether to save the position and size of the indicated dialog between DrJava sessions.</para>
-   </listitem>
- </varlistentry>
-  
- <varlistentry>
-   <term>Reset "xxx" Dialog Postion and Size (several choices for "xxx")</term>
-   <listitem>
-     <para>By pressing this button, you can reset the position and size of the indicated dialog to its default value. This is useful if the dialog somehow appeared outside the screen and is not accessible, e.g. when switching from a dual-screen computer to a single-screen computer.</para>
+     <para>Whether a sample of the source code around the document location should be shown in the Breakpoints, Bookmarks and Find Results panes.</para>
    </listitem>
  </varlistentry>
 
@@ -1063,8 +1428,14 @@ public class Student {
    <listitem>
      <para>How many entries are saved in the clipboard history.</para>
    </listitem>
- </varlistentry>
+ </varlistentry>   
 
+  <varlistentry>
+   <term>Display Fully-Qualified Class Names in "Go to File" Dialog (<varname>dialog.gotofile.fully.qualified = false</varname>)</term>
+   <listitem>
+     <para>Whether the "Go to File" dialog should also include the fully-qualified class names. Example: There is a file myPackage/MyClass.java (in the myPackage package). With this setting enabled, the "Go to File" dialog will contain both MyClass.java and myPackage.MyClass.java; with the setting disabled, it will only contain MyClass.java.</para>
+   </listitem>
+ </varlistentry>
 
  <varlistentry>
    <term>Scan Class Files For Auto-Completion After Each Compile (<varname>dialog.completeword.scan.class.files = false</varname>)</term>
@@ -1073,14 +1444,35 @@ public class Student {
    </listitem>
  </varlistentry>
 
+ <varlistentry>
+   <term>Consider Java API Classes for Auto Completion (<varname>dialog.completeword.javaapi = false</varname>)</term>
+   <listitem>
+     <para>When this option is enabled, DrJava will include the names of the standard Java API classes in the list of names used for auto-completion.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Display Right Margin (<varname>display.right.margin = true</varname>)</term>
+   <listitem>
+     <para>Enable this option to let DrJava display a vertical line representing the right margin of the document.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Right Margin Position (<varname>right.margin.columns = 120</varname>)</term>
+   <listitem>
+     <para>This option controls the position of the right margin. By default, the right margin line is displayed after 120 columns, provided the "Display Right Margin" option above is enabled.</para>
+   </listitem>
+ </varlistentry>
+
       </variablelist>
 
+ </section>
 
       <!-- Fonts -->
-      <formalpara>
- <title>Font Options</title>
- <para>Each font option is specified as a string containing the font name, style, and size, separated by dashes.  The style should be in upper-case (ie. PLAIN, BOLD, ITALIC, or BOLDITALIC), while the font name must be a valid font on the system.  (In most cases, using the font chooser in the Preferences window is the simplest approach.)</para>
-      </formalpara>
+    <section id="config-options-fonts">
+      <title>Font Options</title>
+      <para>Each font option is specified as a string containing the font name, style, and size, separated by dashes.  The style should be in upper-case (ie. PLAIN, BOLD, ITALIC, or BOLDITALIC), while the font name must be a valid font on the system.  (In most cases, using the font chooser in the Preferences window is the simplest approach.)</para>
       <variablelist>
  
  <varlistentry>
@@ -1113,12 +1505,12 @@ public class Student {
  
       </variablelist>
 
-      
+ </section>
+
       <!-- Colors -->
-      <formalpara>
- <title>Color Options</title>
- <para>Colors are defined similarly to HTML colors: as six hexadecimal digits preceded by a pound sign.  The first two digits specify a red value, the next two specify a green value, and the next two specify a blue value.  For example, <constant>#00FF00</constant> would be a bright green.  (In most cases, using the color chooser in the Preferences window is the simplest approach.)</para>
-      </formalpara>
+    <section id="config-options-color">
+      <title>Color Options</title>
+      <para>Colors are defined similarly to HTML colors: as six hexadecimal digits preceded by a pound sign.  The first two digits specify a red value, the next two specify a green value, and the next two specify a blue value.  For example, <constant>#00FF00</constant> would be a bright green.  (In most cases, using the color chooser in the Preferences window is the simplest approach.)</para>
       
       <!-- Definitions Colors -->
       <variablelist>
@@ -1276,20 +1668,73 @@ public class Student {
    </listitem>
  </varlistentry>
 
+ <varlistentry>
+   <term>Right Margin Color (<varname>right.margin.color = #CCCCCC</varname>)</term>
+   <listitem>
+     <para>Used as line color for the vertical line representing the right margin of the document, if the line is enabled.</para>
+   </listitem>
+ </varlistentry>
+
       </variablelist>
 
+ </section>
+
+      <!-- Window Positions -->
+    <section id="config-options-windowpos">
+      <title>Window Positions</title>
+      <para>DrJava can save the last position of the main window and its dialogs and restore them the next time DrJava is started.</para>
+
+      <variablelist>
+ <varlistentry>
+   <term>Save Main Window Postion (<varname>window.store.position = true</varname>)</term>
+   <listitem>
+     <para>Whether to save the position and size of the DrJava window between sessions.</para>
+   </listitem>
+ </varlistentry>
+  
+ <varlistentry>
+   <term>Save "xxx" Dialog Postion (several choices for "xxx": <varname>dialog.clipboardhistory.store.position = true</varname>, <varname>dialog.gotofile.store.position = true</varname>, <varname>dialog.openjavadoc.store.position = true</varname>, <varname>dialog.completeword.store.position = true</varname>, <varname>dialog.jaroptions.store.position = true</varname>)</term>
+   <listitem>
+     <para>Whether to save the position and size of the indicated dialog between DrJava sessions.</para>
+   </listitem>
+ </varlistentry>
+  
+ <varlistentry>
+   <term>Reset "xxx" Dialog Postion and Size (several choices for "xxx")</term>
+   <listitem>
+     <para>By pressing this button, you can reset the position and size of the indicated dialog to its default value. This is useful if the dialog somehow appeared outside the screen and is not accessible, e.g. when switching from a dual-screen computer to a single-screen computer.</para>
+   </listitem>
+ </varlistentry>
+ 
+<varlistentry>
+   <term>Detach Tabbed Panes (<varname>tabbedpanes.detach = false</varname>)</term>
+   <listitem>
+     <para>By default, the tabbed panes are attached to the bottom of DrJava's main window. By selecting this option, DrJava displays the tabbed panes in their own separate window.</para>
+   </listitem>
+ </varlistentry>
+
+<varlistentry>
+   <term>Detach Debugger (<varname>debugger.detach = false</varname>)</term>
+   <listitem>
+     <para>By default, the debugger pane is displayed in DrJava's main window. By selecting this option, DrJava displays the debugger in its own separate window.</para>
+   </listitem>
+ </varlistentry>
+
+      </variablelist>
+ </section>
 
       <!-- Key Bindings -->
-      <formalpara>
- <title>Key Bindings</title>
- <para>Most menu items in DrJava have configurable keyboard shortcuts, along with several other navigational commands (such as moving to the beginning or end of a line).  All such options are displayed on the Key Bindings panel in the Preferences window, along with their current value.  Clicking on the value displays a window which allows the user to type a new key, showing any conflict with an existing key if there is one.  (We recommend editing these options in the Preferences window.)</para>
-      </formalpara>
-      
-     <!-- Compiler Options -->
-     <formalpara>
-<title>Compiler Options</title>
-<para>Configurable options relating to compiling source code in DrJava. Note that Compiler Warnings are not shown when compiling any Java Language Level files. Also note that the Compiler Warnings options are all passed using the "-Xlint:" flag, which is a non-standard option and may not work with all implementations of the JDK.</para>
-     </formalpara>
+    <section id="config-options-key">
+      <title>Key Bindings</title>
+      <para>Most menu items in DrJava have configurable keyboard shortcuts, along with several other navigational commands (such as moving to the beginning or end of a line).  All such options are displayed on the Key Bindings panel in the Preferences window, along with their current value.  Clicking on the value displays a window which allows the user to type a new key, showing any conflict with an existing key if there is one.  Users may bind multiple keys to a single action as long as there are no conflicts and may add or remove key bindings as desired.  (We recommend editing these options in the Preferences window.)</para>
+
+ </section>
+
+      <!-- Compiler Options -->
+    <section id="config-options-compiler">
+      <title>Compiler Options</title>
+      <para>Configurable options relating to compiling source code in DrJava. Note that Compiler Warnings are not shown when compiling any Java Language Level files. Also note that the Compiler Warnings options are all passed using the "-Xlint:" flag, which is a non-standard option and may not work with all implementations of the JDK.</para>
+
      <variablelist>
 
 <varlistentry>
@@ -1334,14 +1779,87 @@ public class Student {
   </listitem>
 </varlistentry>
 
-     </variablelist>
+<varlistentry>
+  <term>Compiler Preference (<varname>default.compiler.preference = No Preference</varname>)</term>
+  <listitem>
+   <para>Controls which compiler DrJava should choose when it starts. If no preference is set, DrJava will choose the newest compiler it can find.</para>
+  </listitem>
+</varlistentry>
 
+     </variablelist>
+ </section>
+
+      <!-- Interactions Pane -->
+    <section id="config-options-interactions">
+      <title>Interactions Pane</title>
+      <para>Configurable options relating to interpreting code in the Interactions Pane.</para>
+
+     <variablelist>
+
+ <varlistentry>
+   <term>Size of Interactions History (<varname>history.max.size = 500</varname>)</term>
+   <listitem>
+     <para>Specifies how many commands will be remembered in the history of the Interactions window.  Previous commands can be recalled using the up and down arrow keys.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Enable the "Auto Import" Dialog (<varname>dialog.autoimport.enabled = true</varname>)</term>
+   <listitem>
+     <para>When this option is enabled, DrJava will display a dialog to automatically import classes when a class name is interpreted but not known. After the class has been selected, DrJava will execute the appropriate "import" statement and re-execute the line that caused the dialog to appear.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Classes to Auto-Import (<varname>interactions.auto.import.classes = []</varname>)</term>
+   <listitem>
+     <para>This option allows you to select classes and packages that should be imported automatically whenever the Interactions Pane is reset. List fully-qualified class names (e.g. java.util.ArrayList, or packages ending with a *, e.g. java.util.*).</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Restore last working directory of the Interactions Pane on start up (<varname>sticky.interactions.dir = true</varname>)</term>
+   <listitem>
+     <para>If this option is enabled, DrJava will restore the directory that was last used in the Interactions Pane. If it is disabled, DrJava will always use the value of the "user.home" property.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Smart Run Command (<varname>smart.run.for.applets.and.programs = true</varname>)</term>
+   <listitem>
+     <para>If this option is enabled, DrJava will run applets and ACM Java Task Force Programs using the "Run" and "Run Project" buttons as well. These applets and ACM Java Task Force Programs do not need to have a main method to be run, as long as they are proper applets or ACM Java Task Force Programs.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Enforce access control (<varname>dynamicjava.access.control = disabled</varname>)</term>
+   <listitem>
+     <para>This option controls the access control DrJava performs when class members are accessed. If the option is set to 'private and package only', then access control is used for all class members that are private or package private. If it is set to 'private only', then access control is used only for private members, and the other access levels can always be accessed. If it is set to 'disabled', all class members can be accessed, regardless of their access level. (Note: Currently, access control in DrJava's Interactions Pane has not been fully implemented; at most, access is checked for private and package private members; protected members can always be accessed.)</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Require semicolon (<varname>dynamicjava.require.semicolon = false</varname>)</term>
+   <listitem>
+     <para>If this option is enabled, then DrJava will require a semicolon at the end of statements in the Interactions Pane.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Require variable type (<varname>dynamicjava.require.variable.type = true</varname>)</term>
+   <listitem>
+		<para>If this option is enabled, then DrJava will a variable type for variable declarations in the Interactions Pane (e.g. <filename>int i = 5</filename>). If it is disabled, DrJava will attempt to assign a variable type automatically (e.g. <filename>i = 5</filename> to declare an <filename>int i</filename>).</para>
+   </listitem>
+ </varlistentry>
+
+     </variablelist>
+ </section>
 
       <!-- Debugger -->
-      <formalpara>
- <title>Debugger</title>
- <para>All configurable options relating to the debugger.</para>
-      </formalpara>
+    <section id="config-options-debugger">
+      <title>Debugger</title>
+      <para>All configurable options relating to the debugger.</para>
+ 
       <variablelist>
 
  <varlistentry>
@@ -1375,18 +1893,33 @@ public class Student {
  <varlistentry>
    <term>Classes/Packages To Exclude (<varname>debug.step.exclude = ""</varname>)</term>
    <listitem>
-     <para>Classes and packages that you do not wish DrJava to step into.  These must be fully qualified class names or package names ending in ".*" (e.g. "java.util.*") separated by commas.</para>
+	<para> Allows you to  specify other classes/packages to step over.  This should be a list with fully qualified names.  To exclude a whole package, add <filename>packagename.*</filename> to the list.  You might use this box to exclude instructor provided libraries, for example <filename>java.util.*</filename> .</para>
    </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Auto-Import after Breakpoint/Step (<varname>debug.auto.import = true</varname>)</term>
+	<listitem>
+		<para>Automatically imports all classes and packages again that had been imported when the program was last suspended, i.e. before the breakpoint was hit or before the last step was taken.</para>
+	</listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Auto-Step Rate in ms (<varname>auto.step.rate = 1000</varname>)</term>
+	<listitem>
+		<para>The delay interval at which Automatic Trace steps into every single line of code of the program. </para>
+	</listitem>
  </varlistentry>
 
       </variablelist>
 
+ </section>
 
       <!-- Javadoc -->
-      <formalpara>
- <title>Javadoc</title>
- <para>All configurable options relating to generating Javadoc.</para>
-      </formalpara>
+    <section id="config-options-javadoc">
+      <title>Javadoc</title>
+      <para>All configurable options relating to generating Javadoc.</para>
+ 
       <variablelist>
 
  <varlistentry>
@@ -1407,21 +1940,42 @@ public class Student {
  <varlistentry>
    <term>Javadoc 1.3 URL (<varname>javadoc.1.3.link = "http://java.sun.com/j2se/1.3/docs/api"</varname>)</term>
    <listitem>
-     <para>The URL to use when generating links to JDK 1.3 library classes.</para>
+     <para>The URL to use when generating links to JDK 1.3 library classes or opening the Javadoc pages for the Java API.</para>
    </listitem>
  </varlistentry>
 
         <varlistentry>
    <term>Javadoc 1.4 URL (<varname>javadoc.1.4.link = "http://java.sun.com/j2se/1.4/docs/api"</varname>)</term>
    <listitem>
-     <para>The URL to use when generating links to JDK 1.4 library classes.</para>
+     <para>The URL to use when generating links to JDK 1.4 library classes or opening the Javadoc pages for the Java API.</para>
    </listitem>
  </varlistentry>
 
  <varlistentry>
    <term>Javadoc 1.5 URL (<varname>javadoc.1.5.link = "http:/java.sun.com/j2se/1.5/docs/api"</varname>)</term>
    <listitem>
-     <para>The URL to use when generating links to JDK 1.5 library classes.</para>
+     <para>The URL to use when generating links to JDK 1.5 library classes or opening the Javadoc pages for the Java API.</para>
+   </listitem>
+</varlistentry>
+
+ <varlistentry>
+   <term>Javadoc 1.6 URL (<varname>javadoc.1.6.link = "http://java.sun.com/javase/6/docs/api"</varname>)</term>
+   <listitem>
+     <para>The URL to use when generating links to JDK 1.6 library classes or opening the Javadoc pages for the Java API.</para>
+   </listitem>
+</varlistentry>
+
+ <varlistentry>
+   <term>JUnit 3.8.2 URL (<varname>junit.3.8.2.link = "http://www.cs.rice.edu/~javaplt/javadoc/junit3.8.2"</varname>)</term>
+   <listitem>
+     <para>The URL to use when generating links to JUnit 3.8.2 library classes or opening the Javadoc pages for the Java API.</para>
+   </listitem>
+</varlistentry>
+
+ <varlistentry>
+   <term>Additional Javadoc URLs (<varname>javadoc.additional.link = []</varname>)</term>
+   <listitem>
+     <para>A list of URLs used to open Javadoc pages for user-specified libraries. Please enter the URL to the directory that contains the <filename>allclasses-frame.html</filename> file. For example, to open DrJava's Javadoc, enter <ulink url="http://drjava.org/javadoc/drjava"><filename>http://drjava.org/javadoc/drjava</filename></ulink>.</para>
    </listitem>
 </varlistentry>
 
@@ -1447,13 +2001,13 @@ public class Student {
  </varlistentry>
 
       </variablelist>
-
+ </section>
 
       <!-- Notifications -->
-      <formalpara>
- <title>Notifications</title>
- <para>Configures how often DrJava notifies you for certain events.  The notifications in this section can all be suppressed by clicking on a "Do not show this message again" checkbox (or similar) on the notification itself.</para>
-      </formalpara>
+    <section id="config-options-notifications">
+      <title>Notifications</title>
+      <para>Configures how often DrJava notifies you for certain events.  The notifications in this section can all be suppressed by clicking on a "Do not show this message again" checkbox (or similar) on the notification itself.</para>
+
       <variablelist>
 
  <varlistentry>
@@ -1546,14 +2100,53 @@ public class Student {
      <para>Whether to show a popup dialog when the first internal DrJava error occurs. If this option is not selected, DrJava will try to continue quietly and only display the "DrJava Errors" button (See <link linkend="drjava-errors">DrJava Errors</link>).</para>
    </listitem>
  </varlistentry>
-      </variablelist>
 
-      
+        <varlistentry>
+   <term>Warn if Compiz Detected (<varname>warn.if.compiz = true</varname>)</term>
+   <listitem>
+     <para>Whether DrJava should warn the user if Compiz is
+detected (see <link linkend="other-dialogs-compiz">Compiz Detected</link> dialog). DrJava suffers from an incompatibility between the Linux
+window manager Compiz and Oracle's Swing Java GUI library. We, the
+developers of DrJava, cannot do anything to fix this problem. We hope
+that future versions of Java and Compiz will address the
+incompatibility. In the meantime, we recommend that you disable Compiz
+if you experience problems. We also suggest that you use the latest
+versions of Compiz and Java, so you can benefit from possible bug
+fixes made by Oracle and the Compiz developers. For more information, see
+<ulink
+url="http://drjava.org/compiz/">http://drjava.org/compiz/</ulink>.</para>
+   </listitem>
+ </varlistentry>
+
+        <varlistentry>
+   <term>Delete language level class files (<varname>delete.ll.class.files = always</varname>)</term>
+   <listitem>
+     <para>Whether Drjava should delete class files generated from Language Level source files (.dj0, .dj1, and .dj2) before compilation. This may be necessary to avoid problems with the Language Level facility. Selecting "always" will do this automatically without involving the user. Selecting "ask me" will display a notification window and let the user decide. Selecting "never" will not delete class files nor ask the user to do so.</para>
+   </listitem>
+ </varlistentry>
+
+        <varlistentry>
+   <term>Check for new versions (<varname>new.version.notification = stable and beta versions only</varname>)</term>
+   <listitem>
+     <para>Whether Drjava should check if a newer version of DrJava exists. Setting this to "none (disabled)" will not check for newer versions. The other setting select what kind of versions will be considered, ranging from "stable versions only" to "weekly experimental builds".</para>
+   </listitem>
+ </varlistentry>
+
+        <varlistentry>
+   <term>Days between new version check (<varname>new.version.notification.days = 7</varname>)</term>
+   <listitem>
+     <para>How many days have to pass before DrJava will look for a new version again. By default, DrJava will check every seven days..</para>
+   </listitem>
+ </varlistentry>
+
+      </variablelist>
+ </section>
+
       <!-- Miscellaneous -->
-      <formalpara>
- <title>Miscellaneous</title>
- <para>These are the remaining configurable options in DrJava.</para>
-      </formalpara>
+    <section id="config-options-misc">
+      <title>Miscellaneous</title>
+      <para>These are the remaining configurable options in DrJava.</para>
+
       <variablelist>
  
  <varlistentry>
@@ -1564,16 +2157,16 @@ public class Student {
  </varlistentry>
  
  <varlistentry>
-   <term>Size of Interactions History (<varname>history.max.size = 500</varname>)</term>
+   <term>Recent Files List Size (<varname>recent.files.max.size = 5</varname>)</term>
    <listitem>
-     <para>Specifies how many commands will be remembered in the history of the Interactions window.  Previous commands can be recalled using the up and down arrow keys.</para>
+     <para>Specifies how many recently used files to display in the File menu.</para>
    </listitem>
  </varlistentry>
 
  <varlistentry>
-   <term>Recent Files List Size (<varname>recent.files.max.size = 5</varname>)</term>
+   <term>Size of Browser History (<varname>browser.history.max.size = 50</varname>)</term>
    <listitem>
-     <para>Specifies how many recently used files to display in the File menu.</para>
+     <para>Specifies how many source code locations are stored in the browser history.</para>
    </listitem>
  </varlistentry>
 
@@ -1605,7 +2198,8 @@ public class Student {
      <para>Whether DrJava should clear the contents of the Console Tab each time the Interactions Pane is reset.</para>
    </listitem>
  </varlistentry>
-   
+
+<!--    
   <varlistentry>
    <term>Allow Access of Private Members in the Interactions Pane (<varname>allow.private.access = false</varname>)</term>
    <listitem>
@@ -1613,13 +2207,8 @@ public class Student {
    </listitem>
  </varlistentry>
    
-  <varlistentry>
-   <term>Show sample of source code when fast switching (<varname>show.source.for.fast.switch = true</varname>)</term>
-   <listitem>
-     <para>Whether a sample of the source code around the current caret position should be shown in the Fast Switch window.</para>
-   </listitem>
- </varlistentry>
-   
+-->
+
   <varlistentry>
    <term>Require test classes in projects to end in "Test" (<varname>force.test.suffix = false</varname>)</term>
    <listitem>
@@ -1628,29 +2217,143 @@ public class Student {
  </varlistentry>
 
   <varlistentry>
-   <term>JVM Args (<varname>jvm.args = ""</varname>)</term>
-   <listitem>
-     <para>Command line arguments used when creating the InterpreterJVM.  This is an advanced option because if you use invalid arguments, the InterpreterJVM may not start up successfully.  If this happens, remove the value stored in Preferences.</para>
-   </listitem>
-  </varlistentry>
-
-  <varlistentry>
    <term>Put the focus in the definitions pane after find/replace (<varname>find.replace.focus.in.defpane = false</varname>)</term>
    <listitem>
      <para>Whether to put the focus in the Definitions pane after using find/replace. If this option is not enabled, the focus will remain in the Find/Replace pane.</para>
    </listitem>
  </varlistentry>
 
+  <varlistentry>
+   <term>Forcefully Quit DrJava (<varname>drjava.use.force.quit = false</varname>)</term>
+   <listitem>
+     <para>On some systems (namely tablet PCs), DrJava does not shut down properly when quit. Select this option to remedy this problem.</para>
+   </listitem>
+ </varlistentry>
+
+  <varlistentry>
+   <term>Enable Remote Control (<varname>remote.control.enabled = true</varname>)</term>
+   <listitem>
+     <para>Java's "remote control" allows other applications to control certain aspects of DrJava, for example what file is displayed. This feature is also necessary if you want to double-click on a .java file to open the file in an existing instance of DrJava.</para>
+   </listitem>
+ </varlistentry>
+
+  <varlistentry>
+   <term>Remote Control Port (<varname>remote.control.port = 4444</varname>)</term>
+   <listitem>
+     <para>Selects the port that Drjava uses for its remote control.</para>
+   </listitem>
+ </varlistentry>
+
+  <varlistentry>
+   <term>Follow File Delay (<varname>follow.file.delay = 300</varname>)</term>
+   <listitem>
+     <para>Specifies the number of milliseconds that have to pass before DrJava will update a "Follow File" window again.</para>
+   </listitem>
+ </varlistentry>
+
+  <varlistentry>
+   <term>Maximum Lines in "Follow File" Window (<varname>follow.file.lines = 1000</varname>)</term>
+   <listitem>
+     <para>Specifies the number of of lines that a "Follow File" window may contain. If a file has more than this many lines, only the end of the file will be displayed.</para>
+   </listitem>
+ </varlistentry>
+
       </variablelist>
-      
+ </section>
+
+      <!-- File Types -->
+    <section id="config-options-filetypes">
+      <title>File Types</title>
+      <para>Configurable options for file types. Note that the options here are only available on Windows, and only if the .exe file is used.</para>
+      <para>.drjava files are DrJava project files. .djapp files are DrJava add-ons. .java files are Java source files.</para>
+
+     <variablelist>
+
+ <varlistentry>
+   <term>Associate .drjava and .djapp Files with DrJava</term>
+   <listitem>
+     <para>Set the file type associations so that double-clicking on .drjava and .djapp files in the Windows Explorer will open them in DrJava.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Remove .drjava and .djapp File Associations</term>
+   <listitem>
+     <para>Remove the association of .drjava and .djapp files with DrJava.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Associate .java Files with DrJava</term>
+   <listitem>
+     <para>Set the file type associations so that double-clicking on .java files in the Windows Explorer will open them in DrJava.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Remove .java File Associations</term>
+   <listitem>
+     <para>Remove the association of .java files with DrJava.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Automatically assign .java, .drjava and .djapp Files to DrJava (<varname>file.ext.registration = ask me at startup</varname>)</term>
+   <listitem>
+     <para>Specifies whether Drjava should automatically associate .java, .drjava and .djapp files with DrJava so those files are opened with DrJava when double-clicked. When set to the default, "ask me at startup", DrJava will check at startup if those associations exist, and if not, present a dialog allowing the user to set the file associations (see <link linkend="other-dialogs-filetypes">Set File Associations</link> dialog). Setting this option to "always" will set the file associations automatically at startup without user interaction. Setting it to "never" will not change file associations nor ask the user.</para>
+   </listitem>
+ </varlistentry>
+     </variablelist>
+     
     </section>      
-    
+
+      <!-- JVMs -->
+    <section id="config-options-jvms">
+      <title>JVMs</title>
+      <para>Configurable options for the two Java Virtual Machines (JVMs) that DrJava uses.</para>
+
+     <variablelist>
+
+ <varlistentry>
+   <term>Maximum Heap Size for Main JVM in MB (<varname>master.jvm.xmx = default</varname>)</term>
+   <listitem>
+     <para>Specifies how many megabytes of memory Java should use for the Main JVM (the main part of DrJava including the editor and compiler). The "default" setting leaves this up to Java. If you experience "Out of memory" errors, set this to a value that is larger than 64 MB (default in Java 5) but smaller than the amount of physical memory you have. If it is still too small, choose the next bigger setting. Note: You have to restart DrJava for changes to become effective.</para>
+   </listitem>
+ </varlistentry>
+ 
+ <varlistentry>
+   <term>JVM Args for Main JVM (<varname>master.jvm.args = ""</varname>)</term>
+   <listitem>
+     <para>Specifies the JVM arguments that should be used for DrJava's Main JVM, other than the maximum heap size (-Xmx), which is controlled using the option above. Note: You have to restart DrJava for changes to become effective.</para>
+   </listitem>
+ </varlistentry>
+
+ <varlistentry>
+   <term>Maximum Heap Size for Interactions JVM in MB (<varname>slave.jvm.xmx = default</varname>)</term>
+   <listitem>
+     <para>Specifies how many megabytes of memory Java should use for the Interactions JVM (used to interpret code in the Interactions Pane and to run programs developed in DrJava). The "default" setting leaves this up to Java. If you experience "Out of memory" errors, set this to a value that is larger than 64 MB (default in Java 5) but smaller than the amount of physical memory you have. If it is still too small, choose the next bigger setting. Note: You have to reset the Interactions Pane for changes to become effective.</para>
+   </listitem>
+ </varlistentry>
+ 
+ <varlistentry>
+   <term>JVM Args for Interactions JVM (<varname>slave.jvm.args = ""</varname>)</term>
+   <listitem>
+     <para>Specifies the JVM arguments that should be used for DrJava's Interactions JVM, other than the maximum heap size (-Xmx), which is controlled using the option above. Note: You have to reset the Interactions Pane for changes to become effective.</para>
+   </listitem>
+ </varlistentry>
+     </variablelist>
+     
+    </section>      
+
+</section>
+
   </appendix>
 
-  <!-- ---- Appendix: Setting up DrJava ---- -->
+  <!-- **** Appendix: Setting up DrJava **** -->
+<!--
   <appendix id="platform-setup">
     <title>Setting up DrJava on your Platform</title>
-    <para>DrJava can be set up to handle files similarly to other applications on your platform.  For example, Windows <!--and Mac OS X--> allows you to associate types of files with particular applications.  <!-- In addition, some platforms even allow you to drop files onto an application's icon to open them.--></para>
+    <para>DrJava can be set up to handle files similarly to other applications on your platform.  For example, Windows and Mac OS X allow you to associate types of files with particular applications. In addition, some platforms even allow you to drop files onto an application's icon to open them.</para>
 
     <section id="setup-win32-associations">
       <title>Associating Java files to DrJava, on Windows</title>
@@ -1735,9 +2438,9 @@ public class Student {
       </orderedlist>
     </section>
   </appendix>
+-->
 
-
-  <!-- ---- Appendix: DrJava Errors ---- -->
+  <!-- **** Appendix: DrJava Errors **** -->
   <appendix id="drjava-errors">
     <title>DrJava Errors</title>
     <para>Even though we try hard, it is an unfortunate reality that DrJava contains errors. This appendix describes how DrJava will most likely react in case of an error, and how you can help improve DrJava if you encounter an error.</para>
@@ -1761,7 +2464,7 @@ public class Student {
      <listitem><para>Please enter a short description in the "Summary" field, and a more detailed description that includes the information from the "DrJava Errors" window in the "Detailed Description" field. Try to be as specific as you can. Here's a list of questions you might want to consider in your description:</para>
        <itemizedlist>
          <listitem><para>What operating system are you using?</para></listitem>
-         <listitem><para>What version of the Java JDK are you using (1.4.2, 1.5.0, etc.)? Do you have multiple versions of the JDK (or maybe the JRE) installed? </para></listitem>
+         <listitem><para>What version of the Java JDK are you using (1.5, 6, etc.)? Do you have multiple versions of the JDK (or maybe the JRE) installed? </para></listitem>
          <listitem><para>Did you have a project open, or where you using just a bunch of files not part of a project?</para></listitem>
          <listitem><para>What were you doing just before the error occurred? Were you compiling, saving a file, debugging, using find/replace, etc.?</para></listitem>
          <listitem><para>What happened after the error occurred? Could you continue with your work, or was it so bad that you had to quit DrJava?</para></listitem>
@@ -1774,7 +2477,7 @@ public class Student {
 
   </appendix>
 
-  <!-- ---- Appendix: Indenting Files from the Command Line ---- -->
+  <!-- **** Appendix: Indenting Files from the Command Line **** -->
   <appendix id="indent-files">
     <title>Indenting Files from the Command Line</title>
     <para>DrJava has a very useful indenting algorithm, but indenting several large files can be a time consuming process.  Because of this, DrJava provides a command line interface to its indenter that can be run on a series of files.</para>

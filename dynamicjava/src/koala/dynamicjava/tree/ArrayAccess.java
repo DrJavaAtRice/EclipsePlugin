@@ -39,15 +39,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class ArrayAccess extends PrimaryExpression implements LeftHandSide,
   ExpressionContainer {
-  /**
-   * The expression property name
-   */
-  public final static String EXPRESSION = "expression";
-  
-  /**
-   * The cellNumber property name
-   */
-  public final static String CELL_NUMBER = "cellNumber";
   
   /**
    * The expression on which this array access applies
@@ -66,23 +57,18 @@ public class ArrayAccess extends PrimaryExpression implements LeftHandSide,
    * @exception IllegalArgumentException if exp is null or cell is null
    */
   public ArrayAccess(Expression exp, Expression cell) {
-    this(exp, cell, null, 0, 0, 0, 0);
+    this(exp, cell, SourceInfo.NONE);
   }
   
   /**
    * Creates a new array access node
    * @param exp   the expression on which this array access applies
    * @param cell  the cell number
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if exp is null or cell is null
    */
   public ArrayAccess(Expression exp, Expression cell,
-                     String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                     SourceInfo si) {
+    super(si);
     
     if (exp == null)  throw new IllegalArgumentException("exp == null");
     if (cell == null) throw new IllegalArgumentException("cell == null");
@@ -104,8 +90,7 @@ public class ArrayAccess extends PrimaryExpression implements LeftHandSide,
    */
   public void setExpression(Expression e) {
     if (e == null)  throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(EXPRESSION, expression, expression = e);
+    expression = e;
   }
   
   /**
@@ -121,8 +106,7 @@ public class ArrayAccess extends PrimaryExpression implements LeftHandSide,
    */
   public void setCellNumber(Expression e) {
     if (e == null)  throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(CELL_NUMBER, cellNumber, cellNumber = e);
+    cellNumber = e;
   }
   
   /**

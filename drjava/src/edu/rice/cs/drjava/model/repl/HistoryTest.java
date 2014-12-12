@@ -1,44 +1,49 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.repl;
 
 import edu.rice.cs.drjava.DrJava;
 import edu.rice.cs.drjava.DrJavaTestCase;
+import edu.rice.cs.drjava.config.FileConfiguration;
 import edu.rice.cs.drjava.config.OptionConstants;
 import edu.rice.cs.drjava.model.GlobalModelTestCase.OverwriteException;
 import edu.rice.cs.drjava.model.GlobalModelTestCase.WarningFileSelector;
-import edu.rice.cs.util.FileOps;
+import edu.rice.cs.plt.io.IOUtil;
+import edu.rice.cs.util.StringOps;
 import edu.rice.cs.util.swing.Utilities;
 
 import java.io.File;
@@ -51,30 +56,25 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
   private History _history;
   private File _tempDir;
 
-  /**
-   * Initialize fields for each test.
-   */
+  /** Initialize fields for each test. */
   public void setUp() throws Exception {
     super.setUp();
     DrJava.getConfig().resetToDefaults();
     String user = System.getProperty("user.name");
-    _tempDir = FileOps.createTempDirectory("DrJava-test-" + user);
+    _tempDir = IOUtil.createAndMarkTempDirectory("DrJava-test-" + user, "");
     _history = new History();
   }
 
-  /**
-   * Cleans up temporary files and tries to free used variables after each test.
-   */
+  /** Cleans up temporary files and tries to free used variables after each test. */
   public void tearDown() throws Exception {
-    boolean ret = FileOps.deleteDirectory(_tempDir);
+    boolean ret = IOUtil.deleteRecursively(_tempDir);
     assertTrue("delete temp directory " + _tempDir, ret);
     _tempDir = null;
     _history = null;
     super.tearDown();
   }
 
-  /**
-   * Tests that the history doesn't overwrite files without prompting.
+  /** Tests that the history doesn't overwrite files without prompting.
    */
   public void testSaveAsExistsForOverwrite() throws IOException {
     _history.add("some text");
@@ -100,9 +100,7 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
     _history.add(entry);
 
     _history.movePrevious("");
-    assertEquals("Prev did not move to correct item",
-                 entry,
-                 _history.getCurrent());
+    assertEquals("Prev did not move to correct item", entry, _history.getCurrent());
 
     _history.moveNext(entry);
     assertEquals("Can't move to blank line at end",
@@ -110,13 +108,14 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
                  _history.getCurrent());
   }
 
-  /**
-   * Ensures that Histories are bound to 500 entries.
-   */
+  /** Ensures that Histories are bound to 500 entries. */
   public void testHistoryIsBounded() {
-    int maxLength = 500;
-    DrJava.getConfig().setSetting(HISTORY_MAX_SIZE, new Integer(maxLength));
-
+    final int maxLength = 500;
+    Utilities.invokeAndWait(new Runnable() { 
+      public void run() { DrJava.getConfig().setSetting(HISTORY_MAX_SIZE, Integer.valueOf(maxLength)); }
+    });
+//    Utilities.clearEventQueue();
+    
     int i;
     for (i = 0; i < maxLength + 100; i++) {
       _history.add("testing " + i);
@@ -132,20 +131,24 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
   /** Tests that the history size can be updated, both through the config framework and the setMaxSize method.
    */
   public void testLiveUpdateOfHistoryMaxSize() {
-    int maxLength = 20;
-    DrJava.getConfig().setSetting(HISTORY_MAX_SIZE, new Integer(20));
-    
-    Utilities.clearEventQueue();
+    final int maxLength = 20;
+    final FileConfiguration config = DrJava.getConfig();
+    Utilities.invokeAndWait(new Runnable() { 
+      public void run() { config.setSetting(HISTORY_MAX_SIZE, Integer.valueOf(20)); }
+    });
+//    Utilities.clearEventQueue();
 
     for (int i = 0; i < maxLength; i++) {
       _history.add("testing " + i);
     }
 
     assertEquals("History size should be 20", 20, _history.size());
+    
+//    System.err.println("Setting HISTORY_MAX_SIZE to 10");
 
-    DrJava.getConfig().setSetting(HISTORY_MAX_SIZE, new Integer(10));
-   
-    Utilities.clearEventQueue();
+    Utilities.invokeAndWait(new Runnable() { public void run() { config.setSetting(HISTORY_MAX_SIZE, 10); } });
+//    Utilities.clearEventQueue();
+    
     assertEquals("History size should be 10", 10, _history.size());
     _history.setMaxSize(100);
 
@@ -154,22 +157,24 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
     _history.setMaxSize(0);
     assertEquals("History size should be 0", 0, _history.size());
 
-    DrJava.getConfig().setSetting(HISTORY_MAX_SIZE, new Integer(-1));
+    Utilities.invokeAndWait(new Runnable() { 
+      public void run() { config.setSetting(HISTORY_MAX_SIZE, Integer.valueOf(-1)); }
+    });
 
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("History size should still be 0", 0, _history.size());
   }
 
-  /**
-   * Tests the getHistoryAsString() method
-   */
+  /** Tests the getHistoryAsString() method. */
   public void testGetHistoryAsString() {
-    DrJava.getConfig().setSetting(HISTORY_MAX_SIZE, new Integer(20));
+    final FileConfiguration config = DrJava.getConfig();
+    
+    Utilities.invokeAndWait(new Runnable() { public void run() { config.setSetting(HISTORY_MAX_SIZE, 10); } });
+//    Utilities.clearEventQueue();
 
-    Utilities.clearEventQueue();
     assertEquals("testGetHistoryAsString:", "", _history.getHistoryAsString());
 
-    String newLine = System.getProperty("line.separator");
+    String newLine = StringOps.EOL;
 
     _history.add("some text");
     assertEquals("testGetHistoryAsString:", "some text" + newLine, _history.getHistoryAsString());
@@ -191,7 +196,7 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
     _history.moveNext(newEntry);
     _history.movePrevious("");
 
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not remember the edited entry correctly.", newEntry, _history.getCurrent());
   }
 
@@ -207,12 +212,12 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
     _history.movePrevious(newEntry1);
     _history.moveNext(newEntry2);
 
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not remember the edited entry correctly.", newEntry1, _history.getCurrent());
 
     _history.movePrevious(newEntry1);
     
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not remember the edited entry correctly.", newEntry2, _history.getCurrent());
   }
 
@@ -229,12 +234,12 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
 
     _history.movePrevious("");
     
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not add edited entry to end of history.", newEntry, _history.getCurrent());
 
     _history.movePrevious(newEntry);
     
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not keep a copy of the original entry.", entry, _history.getCurrent());
   }
 
@@ -248,12 +253,12 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
 
     _history.reverseSearch("s");
     
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not find the correct entry in history.", entry1, _history.getCurrent());
 
     _history.forwardSearch("b");
     
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not find the correct entry in history.", entry2, _history.getCurrent());
   }
 
@@ -267,7 +272,7 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
 
     _history.reverseSearch("a");
 
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not reset cursor correctly.", "a", _history.getCurrent());
   }
 
@@ -281,12 +286,66 @@ public final class HistoryTest extends DrJavaTestCase implements OptionConstants
 
     _history.reverseSearch("s");
     
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not reset cursor correctly.", entry2, _history.getCurrent());
 
     _history.reverseSearch(_history.getCurrent());
     
-    Utilities.clearEventQueue();
+//    Utilities.clearEventQueue();
     assertEquals("Did not reset cursor correctly.", entry1, _history.getCurrent());
+  }
+  
+  public void testSanityCheckConstructor() {
+   
+    History his =  new History(-1);
+    his.add("Test String");
+    assertEquals("History size is not 0", 0, his.size());
+  }
+  
+  public void testOptionListenerToString() {
+   
+    History his = new History(10);
+    String toS = his.historyOptionListener.toString();
+    assertTrue("Did not return correct string representation",toS.startsWith("HISTORY_MAX_SIZE OptionListener #"));
+  }
+  
+  public void testRemoveLast() {
+   
+    History his = new History(5);
+    
+    assertEquals("Didn't return null for an empty history",null, his.removeLast());
+    
+    his.add("test string 1");
+    his.add("test string 2");
+    his.add("test string 3");
+    his.add("test string 4");
+    his.add("test string 5");
+    
+    assertEquals("Did not return expected last value","test string 5",his.removeLast());
+    
+    his.moveEnd();
+    
+    assertEquals("Did not return expected last value","test string 4",his.removeLast());
+    
+    assertEquals("Did not return expected last value","test string 2",his.lastEntry());
+  }
+  
+  public void testMoveMethods() {
+    
+    History his = new History(0);
+    
+    try {
+      his.movePrevious("3");
+      fail("Should not have moved previous, empty history");
+    }
+    catch(ArrayIndexOutOfBoundsException e) { 
+    }
+    
+    try{ 
+      his.moveNext("3");
+      fail("Should not have moved next, empty history");
+    }
+    catch(ArrayIndexOutOfBoundsException e){
+    }
   }
 }

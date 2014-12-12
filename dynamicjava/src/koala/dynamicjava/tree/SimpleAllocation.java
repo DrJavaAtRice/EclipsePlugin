@@ -30,24 +30,21 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
 import koala.dynamicjava.tree.visitor.*;
 
 /**
- * This class represents the regular allocation nodes of the syntax tree
+ * This class represents the regular allocation nodes of the syntax tree.
+ * Nodes are derived from syntax like "new Foo(x, y+3, z.method())"
  *
  * @author  Stephane Hillion
  * @version 1.0 - 1999/04/25
  */
 
-public class SimpleAllocation extends Allocation implements ExpressionStatement {
-  /**
-   * The arguments property name
-   */
-  public final static String ARGUMENTS = "arguments";
-  
-  /**
-   * The arguments to pass to the constructor
-   */
+public class SimpleAllocation extends PrimaryExpression implements StatementExpression {
+  private Option<List<TypeName>> typeArgs;
+  private ReferenceTypeName creationType;
   private List<Expression> arguments;
   
   /**
@@ -56,27 +53,68 @@ public class SimpleAllocation extends Allocation implements ExpressionStatement 
    * @param args  the arguments of the constructor
    * @exception IllegalArgumentException if tp is null
    */
-  public SimpleAllocation(TypeName tp, List<Expression> args) {
-    this(tp, args, null, 0, 0, 0, 0);
+  public SimpleAllocation(Option<List<TypeName>> targs, ReferenceTypeName tp, List<? extends Expression> args) {
+    this(targs, tp, args, SourceInfo.NONE);
   }
   
   /**
    * Initializes the expression
    * @param tp    the type prefix
    * @param args  the arguments of the constructor
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if tp is null
    */
-  public SimpleAllocation(TypeName tp, List<Expression> args,
-                          String fn, int bl, int bc, int el, int ec) {
-    super(tp, fn, bl, bc, el, ec);
-    arguments = args;
+  public SimpleAllocation(ReferenceTypeName tp, List<? extends Expression> args) {
+    this(Option.<List<TypeName>>none(), tp, args, SourceInfo.NONE);
   }
   
+  /**
+   * Initializes the expression
+   * @param tp    the type prefix
+   * @param args  the arguments of the constructor
+   * @exception IllegalArgumentException if tp is null
+   */
+  public SimpleAllocation(ReferenceTypeName tp, List<? extends Expression> args, SourceInfo si) {
+    this(Option.<List<TypeName>>none(), tp, args, si);
+  }
+  
+  /**
+   * Initializes the expression
+   * @param tp    the type prefix
+   * @param args  the arguments of the constructor
+   * @exception IllegalArgumentException if tp is null
+   */
+  public SimpleAllocation(Option<List<TypeName>> targs, ReferenceTypeName tp, List<? extends Expression> args,
+                           SourceInfo si) {
+    super(si);
+    if (tp == null || targs == null) throw new IllegalArgumentException();
+    typeArgs = targs;
+    creationType = tp;
+    arguments = (args == null) ? new ArrayList<Expression>(0) : new ArrayList<Expression>(args);
+  }
+  
+  public Option<List<TypeName>> getTypeArgs() { return typeArgs; }
+  public void setTypeArgs(List<TypeName> targs) { typeArgs = Option.wrap(targs); }
+  public void setTypeArgs(Option<List<TypeName>> targs) {
+    if (targs == null) throw new IllegalArgumentException();
+    typeArgs = targs;
+  }
+  
+  /**
+   * Returns the creation type
+   */
+  public ReferenceTypeName getCreationType() {
+    return creationType;
+  }
+  
+  /**
+   * Sets the creation type
+   * @exception IllegalArgumentException if t is null
+   */
+  public void setCreationType(ReferenceTypeName t) {
+    if (t == null) throw new IllegalArgumentException("t == null");
+    creationType = t;
+  }
+
   /**
    * Returns the constructor arguments
    */
@@ -87,8 +125,8 @@ public class SimpleAllocation extends Allocation implements ExpressionStatement 
   /**
    * Sets the constructor arguments.
    */
-  public void setArguments(List<Expression> l) {
-    firePropertyChange(ARGUMENTS, arguments, arguments = l);
+  public void setArguments(List<? extends Expression> l) {
+    arguments = (l == null) ? new ArrayList<Expression>(0) : new ArrayList<Expression>(l);
   }
   
   /**
@@ -102,6 +140,6 @@ public class SimpleAllocation extends Allocation implements ExpressionStatement 
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+getCreationType()+" "+getArguments()+")";
+    return "("+getTypeArgs()+" "+getClass().getName()+": "+getCreationType()+" "+getArguments()+")";
   }
 }

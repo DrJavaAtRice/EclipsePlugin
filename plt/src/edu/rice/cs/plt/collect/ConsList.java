@@ -1,5 +1,40 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.collect;
 
+import java.io.Serializable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import edu.rice.cs.plt.iter.AbstractIterable;
@@ -8,6 +43,7 @@ import edu.rice.cs.plt.iter.EmptyIterator;
 import edu.rice.cs.plt.iter.ReadOnlyIterator;
 import edu.rice.cs.plt.lambda.Predicate;
 import edu.rice.cs.plt.lambda.Lambda;
+import edu.rice.cs.plt.object.Composite;
 
 /**
  * <p>A Lisp- or Scheme-style immutable list.  A {@code ConsList} is either an {@link Empty}
@@ -22,34 +58,54 @@ import edu.rice.cs.plt.lambda.Lambda;
  * client code.  A static import ({@code import static edu.rice.cs.plt.collect.ConsList.*})
  * will eliminate the need for explicit name qualifiers when using these methods.</p>
  */
-public abstract class ConsList<T> extends AbstractIterable<T> implements SizedIterable<T> {
+public abstract class ConsList<T> extends AbstractIterable<T> implements SizedIterable<T>, Composite, Serializable {
   
   public abstract <Ret> Ret apply(ConsVisitor<? super T, ? extends Ret> visitor);
   
   public abstract Iterator<T> iterator();
   
-  /** Compute the size of the list.  Note this is a linear -- not constant-time -- operation. */
+  /** Whether this is an empty ConsList. */
+  public abstract boolean isEmpty();
+  
+  /** Compute the size of the list.  Note that this is a linear &mdash; not constant-time &mdash; operation. */
   public abstract int size();
   
-  /** @return  {@code true}: cons lists have a fixed size */
-  public boolean isFixed() { return true; }
+  /**
+   * Compute the size of the list, up to a given bound.  Note that this is a linear &mdash; not 
+   * constant-time &mdash; operation.
+   */
+  public abstract int size(int bound);
   
+  /** Return {@code false}: cons lists are not infinite. */
+  public boolean isInfinite() { return false; }
+  
+  /** Return {@code true}: cons lists have a fixed size. */
+  public boolean hasFixedSize() { return true; }
+  
+  /** Return {@code true}: cons lists are immutable. */
+  public boolean isStatic() { return true; }
+  
+  public int compositeHeight() { return size(); }
+  public int compositeSize() { return size() + 1; /* add 1 for empty */ }
   
   /** Create an empty list (via {@link Empty#make}) */
   public static <T> Empty<T> empty() { return Empty.<T>make(); }
     
-  /** Create a nonempty list (via {@link ConsList#ConsList}) */
+  /** Create a nonempty list (via {@link ConsList#ConsList()}) */
   public static <T> Nonempty<T> cons(T first, ConsList<? extends T> rest) {
     return new Nonempty<T>(first, rest);
   }
   
-  /** Create a singleton nonempty list (via {@link ConsList#ConsList}) */
+  /** Create a singleton nonempty list (via {@link ConsList#ConsList()}) */
   public static <T> Nonempty<T> singleton(T value) {
     return new Nonempty<T>(value, Empty.<T>make());
   }
   
-  /** Determine if the given list is empty */
-  public static boolean isEmpty(ConsList<?> list) { return list.apply(ConsVisitor.IS_EMPTY); }
+  /** Attempt to access the first of the given list (throws an exception in the empty case). */
+  public static <T> T first(ConsList<? extends T> list) { return list.apply(ConsVisitor.<T>first()); }
+  
+  /** Attempt to access the rest of the given list (throws an exception in the empty case). */
+  public static <T> ConsList<? extends T> rest(ConsList<? extends T> list) { return list.apply(ConsVisitor.<T>rest()); }
   
   /** Reverse the given list */
   public static <T> ConsList<? extends T> reverse(ConsList<? extends T> list) {
@@ -81,7 +137,7 @@ public abstract class ConsList<T> extends AbstractIterable<T> implements SizedIt
     /** Force use of {@link #make} */
     private Empty() {}
     
-    private static final Empty<?> INSTANCE = new Empty<Object>();
+    private static final Empty<Void> INSTANCE = new Empty<Void>();
     
     /**
      * Creates an empty list.  The result is a singleton, cast (unsafe formally, but safe in 
@@ -92,14 +148,20 @@ public abstract class ConsList<T> extends AbstractIterable<T> implements SizedIt
     
     /** Invoke the {@code forEmpty} case of a visitor */
     public <Ret> Ret apply(ConsVisitor<? super T, ? extends Ret> visitor) {
-      return visitor.forEmpty(this);
+      return visitor.forEmpty();
     }
     
     /** Return an empty iterator */
-    public EmptyIterator<T> iterator() { return EmptyIterator.make(); }
+    public Iterator<T> iterator() { return EmptyIterator.make(); }
     
-    /** @return {@code 0} */
+    /** Return {@code true}. */
+    public boolean isEmpty() { return true; }
+    
+    /** Return {@code 0} */
     public int size() { return 0; }
+    
+    /** Return {@code 0} */
+    public int size(int bound) { return 0; }
     
   }
   
@@ -110,8 +172,8 @@ public abstract class ConsList<T> extends AbstractIterable<T> implements SizedIt
    */
   public static class Nonempty<T> extends ConsList<T> {
     
-    private T _first;
-    private ConsList<? extends T> _rest;
+    private final T _first;
+    private final ConsList<? extends T> _rest;
     
     public Nonempty(T first, ConsList<? extends T> rest) {
       _first = first;
@@ -124,7 +186,7 @@ public abstract class ConsList<T> extends AbstractIterable<T> implements SizedIt
     
     /** Invoke the {@code forNonempty} case of a visitor */
     public <Ret> Ret apply(ConsVisitor<? super T, ? extends Ret> visitor) {
-      return visitor.forNonempty(this);
+      return visitor.forNonempty(_first, _rest);
     }
     
     /** Create an iterator to traverse the list */
@@ -132,22 +194,31 @@ public abstract class ConsList<T> extends AbstractIterable<T> implements SizedIt
       return new ReadOnlyIterator<T>() {
         private ConsList<? extends T> _current = Nonempty.this;
 
-        public boolean hasNext() { return !_current.apply(ConsVisitor.IS_EMPTY); }
+        public boolean hasNext() { return !_current.isEmpty(); }
 
         public T next() {
           return _current.apply(new ConsVisitor<T, T>() {
-            public T forEmpty(Empty<? extends T> list) { throw new NoSuchElementException(); }
-            public T forNonempty(Nonempty<? extends T> list) { 
-              _current = list.rest();
-              return list.first();
+            public T forEmpty() { throw new NoSuchElementException(); }
+            public T forNonempty(T first, ConsList<? extends T> rest) { 
+              _current = rest;
+              return first;
             }
           });
         }
       };
     }
     
-    /** @return {code 1 + rest.size()} */
+    /** Return {@code false}. */
+    public boolean isEmpty() { return false; }
+    
+    /** Return {@code 1 + rest.size()}. */
     public int size() { return 1 + _rest.size(); }
+    
+    /** Return {@code 1 + rest.size(bound - 1)}, or {@code 0} if {@code bound == 0}. */
+    public int size(int bound) {
+      if (bound == 0) { return 0; }
+      else { return 1 + _rest.size(bound - 1); }
+    }
     
   }
 

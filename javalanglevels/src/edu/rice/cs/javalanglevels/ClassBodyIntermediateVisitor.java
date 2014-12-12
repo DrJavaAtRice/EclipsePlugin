@@ -1,52 +1,45 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project:
- * http://sourceforge.net/projects/drjava/ or http://www.drjava.org/
- *
- * DrJava Open Source License
- * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu)
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
  * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Developed by:   Java Programming Languages Team
- *                 Rice University
- *                 http://www.cs.rice.edu/~javaplt/
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"),
- * to deal with the Software without restriction, including without 
- * limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to 
- * whom the Software is furnished to do so, subject to the following 
- * conditions:
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- *     - Redistributions of source code must retain the above copyright 
- *       notice, this list of conditions and the following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright 
- *       notice, this list of conditions and the following disclaimers in the
- *       documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor
- *       use the term "DrJava" as part of their names without prior written
- *       permission from the JavaPLT group.  For permission, write to
- *       javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
- * OTHER DEALINGS WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.javalanglevels;
 
 import edu.rice.cs.javalanglevels.tree.*;
 import edu.rice.cs.javalanglevels.parser.*;
+import edu.rice.cs.javalanglevels.util.*;
+
 import java.util.*;
 import java.io.*;
 
@@ -60,341 +53,372 @@ import junit.framework.TestCase;
  */
 public class ClassBodyIntermediateVisitor extends IntermediateVisitor {
   
-  /**The SymbolData corresponding to this class. */
-  private SymbolData _symbolData;
+  /** The SymbolData corresponding to this class. */
+  private SymbolData _enclosing;
   
-   /*
-   * Constructor for ClassBodyAdvancedVisitor.
-   * @param sd  The SymbolData that encloses the context we are visiting.
-   * @param file  The source file this came from.
-   * @param packageName  The package the source file is in
-   * @importedFiles  A list of classes that were specifically imported
-   * @param importedPackages  A list of package names that were specifically imported
-   * @param classDefsInThisFile  A list of the classes that are defined in the source file
-   * @param continuations  A hashtable corresponding to the continuations (unresolved Symbol Datas) that will need to be resolved
-   */
-  public ClassBodyIntermediateVisitor(SymbolData sd, File file, String packageName, LinkedList<String> importedFiles, 
-                                  LinkedList<String> importedPackages, LinkedList<String> classDefsInThisFile, Hashtable<String, Pair<SourceInfo, LanguageLevelVisitor>> continuations) {
-    super(file, packageName, importedFiles, importedPackages, classDefsInThisFile, continuations);    
-    _symbolData = sd;
+  /** Constructor for ClassBodyAdvancedVisitor.
+    * @param sd  The SymbolData that encloses the context we are visiting.
+    * @param file  The source file this came from.
+    * @param packageName  The package the source file is in
+    * @importedFiles  A list of classes that were specifically imported
+    * @param importedPackages  A list of package names that were specifically imported
+    * @param classesInThisFile  A list of the classes that are yet to be defined in this source file
+    * @param continuations  A hashtable corresponding to the continuations (unresolved Symbol Datas) that will need to 
+    *                       be resolved
+    * @param fixUps  A list of commands to be performed after this pass to fixup the symbolTable
+    */
+  public ClassBodyIntermediateVisitor(SymbolData sd,
+                                      String className,
+                                      File file, 
+                                      String packageName, 
+                                      LinkedList<String> importedFiles, 
+                                      LinkedList<String> importedPackages, 
+                                      HashSet<String> classesInThisFile, 
+                                      Hashtable<String, Triple<SourceInfo, LanguageLevelVisitor, SymbolData>> continuations,
+                                      LinkedList<Command> fixUps) {
+    super(file,  packageName, className, importedFiles, importedPackages, classesInThisFile, continuations, fixUps);    
+    _enclosing = sd;
   }
   
   /*Add an appropriate error*/
-  public void forStatementDoFirst(Statement that) {
+  public Void forStatementDoFirst(Statement that) {
     _addError("Statements cannot appear outside of method bodies", that);
+    return null;
   }
   
-  
-  /*Make sure that this concrete method def is not declared to be abstract or static*/
-  public void forConcreteMethodDefDoFirst(ConcreteMethodDef that) {
-    ModifiersAndVisibility mav = that.getMav();
-    String[] modifiers = mav.getModifiers();
-    // Concrete methods can now be public, private, protected at the Intermediate level.  They still cannot be static.
-    for (int i = 0; i < modifiers.length; i++) {
-      if (modifiers[i].equals("abstract")) {
-        _addError("Methods that have a braced body cannot be declared \"abstract\"", that);
-        break;
-      }
-      else if (modifiers[i].equals("static")) {
-        _addError("Static methods cannot be used at the Intermediate level", that);
-        break;
-      }
-    }
-    super.forConcreteMethodDefDoFirst(that);
-  }
-  
-  /*Make sure that this abstract method def is declared to be abstract*/
-  public void forAbstractMethodDefDoFirst(AbstractMethodDef that) {
-    if (!_symbolData.hasModifier("abstract")) {
+  /** Ignore AbstractMake sure that this abstract method def is declared to be abstract. */
+  public Void forAbstractMethodDefDoFirst(AbstractMethodDef that) {
+
+//    ModifiersAndVisibility mav = that.getMav();
+//    String[] modifiers = mav.getModifiers();
+    if (! _enclosing.isInterface() && ! _enclosing.hasModifier("abstract")) { // interfaces not yet marked abstract
       _addError("Abstract methods can only be declared in abstract classes", that);
     }
-    ModifiersAndVisibility mav = that.getMav();
-    String[] modifiers = mav.getModifiers();
-    // Concrete methods can now be public, private, protected at the Intermediate level.  They still cannot be static.
-    for (int i = 0; i < modifiers.length; i++) {
-      if (modifiers[i].equals("static")) {
-        _addError("Static methods cannot be used at the Intermediate level", that);
-        break;
-      }
-    }
-    super.forAbstractMethodDefDoFirst(that);
+    return super.forAbstractMethodDefDoFirst(that);
   }
 
   /**Add an appropriate error*/
-  public void forInstanceInitializerDoFirst(InstanceInitializer that) {
+  public Void forInstanceInitializerDoFirst(InstanceInitializer that) {
     _addError("This open brace must mark the beginning of a method or class body", that);
+    return null;
   }
     
-  
-  /* Convert the Variable declartaion to variable datas.  Then, make sure that all
-   * static fields are initialized and that no fields are declared to be abstract.
-   * Finally, add the variable datas to the symbol data, and give an error if
-   * two fields have the same names */
-  public void forVariableDeclarationOnly(VariableDeclaration that) {
-    VariableData[] vds = _variableDeclaration2VariableData(that, _symbolData);
-    //make sure that none of the static fields are uninitialized:
-    LinkedList<VariableData> vdsList = new LinkedList<VariableData>();
-    for (int i = 0; i<vds.length; i++) {
-      if (vds[i].hasModifier("static") && (that.getDeclarators()[i] instanceof UninitializedVariableDeclarator)) {
+  /** Processes a field declaration. Converts VariableDeclaration to VariableData[].  Ensures that no fields are 
+    * declared to be abstract. Finally, adds the variable datas to the symbol data, and emits an 
+    * error if two fields have the same names. */
+  public Void forVariableDeclarationOnly(VariableDeclaration that) {
+//    System.err.println("Calling _variableDeclaration2VariableData on " + that);
+    VariableData[] vds = _variableDeclaration2VariableData(that, _enclosing);
+//    System.err.println("Constructed vds array = " + Arrays.toString(vds));
+    // make sure that every non-static field is private and no static field are uninitialized:
+//    LinkedList<VariableData> vdsList = new LinkedList<VariableData>();
+    for (int i = 0; i < vds.length; i++) {
+      if (! vds[i].isStatic()) vds[i].setPrivate();
+      else if (that.getDeclarators()[i] instanceof UninitializedVariableDeclarator) {  
         _addAndIgnoreError("All static fields must be initialized", that);
       }
-      else if (!vds[i].hasModifier("static") && (that.getDeclarators()[i] instanceof InitializedVariableDeclarator)) {
-        _addAndIgnoreError("Only static fields may be initialized outside of a constructor at the Intermediate level", that);
-      }
-      
-      else {
-        vdsList.addLast(vds[i]);
-      }
+// TODO: where is abstract check?     
     }
-    if(!_symbolData.addFinalVars(vdsList.toArray(new VariableData[vdsList.size()]))) {
-      _addAndIgnoreError("You cannot have two fields with the same name.  Either you already have a field by that name in this class, or one of your superclasses or interfaces has a field by that name", that);
+//    System.err.println("Processed vds array = " + Arrays.toString(vds));
+    if (! _enclosing.addFinalVars(vds /* vdsList.toArray(new VariableData[vdsList.size()]) */)) {
+//      System.err.println("Duplicate variable declaration found");
+      _addAndIgnoreError("You cannot have two fields with the same name.  Either you already have a field by that "
+                           + "name in this class, or one of your superclasses or interfaces has a field by that name", 
+                         that);
     }
+    return null;
   }
 
-  /* Create a method data corresponding to this method declaration, and then visit the
-   * concrete method def with a new bodybody visitor, passing it the enclosing method data.
-   * Methods are still public by default, but this can be overridden by the user.
-   * Make sure the method name is different from the class name.
-   */
-  public void forConcreteMethodDef(ConcreteMethodDef that) {
+  // TODO: lift the following two methods to LLV since they are identical in ClassBodyFullJavaVisitor. 
+  
+  /** Call the method in FullJavaVisitor since it's common to this and FullJavaBodyFullJavaVisitor. */
+  public Void forInnerInterfaceDef(InnerInterfaceDef that) {
+    String relName = that.getName().getText();
+    String innerClassName = getQualifiedClassName(_enclosing.getName()) + '.' + relName; 
+    handleInnerInterfaceDef(that, _enclosing, relName, innerClassName);
+    return null;
+  }
+  /** Process a local inner class definition */
+  public Void forInnerClassDef(InnerClassDef that) {
+//    System.err.println("CBIV.forInnerClassDef called on " + that.getName());
+    String relName = that.getName().getText();
+    String innerClassName = getQualifiedClassName(_enclosing.getName()) + '.' + relName;
+    handleInnerClassDef(that, _enclosing, relName, innerClassName);
+    return null;
+  }
+  
+  /** Creates a method data corresponding to this method declaration, and then visit the concrete method def with a new 
+    * bodybody visitor, passing it the enclosing method data. Methods are still public by default, but this can be 
+    * overridden by the user. Make sure the method name is different from the class name.
+    */
+  public Void forConcreteMethodDef(ConcreteMethodDef that) {
     forConcreteMethodDefDoFirst(that);
-    if (prune(that)) { return; }
-    MethodData md = createMethodData(that, _symbolData);
+    if (prune(that)) return null;
+    MethodData md = createMethodData(that, _enclosing);
     
-    //At Intermediate Level, methods are still public by default.
-    if (!md.hasModifier("public") && !md.hasModifier("private") && !md.hasModifier("protected")) {
+    // At Intermediate Level, methods are still public by default.
+    if (! md.hasModifier("public") && ! md.hasModifier("private") && ! md.hasModifier("protected")) {
       md.addModifier("public");
     }
 
-    String className = getUnqualifiedClassName(_symbolData.getName());
+    String className = getUnqualifiedClassName(_enclosing.getName());
     if (className.equals(md.getName())) {
-      _addAndIgnoreError("Only constructors can have the same name as the class they appear in, and constructors do not have an explicit return type",
+      _addAndIgnoreError("Only constructors can have the same name as the class they appear in, and constructors do "
+                           + "not have an explicit return type",
                          that);
     }
-    else {
-      _symbolData.addMethod(md);
-    }
-    that.getBody().visit(new BodyBodyIntermediateVisitor(md, _file, _package, _importedFiles, _importedPackages, _classNamesInThisFile, continuations));
-    forConcreteMethodDefOnly(that);
-  }
+    else _enclosing.addMethod(md);
 
-  /*Create a method data corresponding to this method declaration, and then visit the
-   * abstract method def with a new bodybody visitor, passing it the enclosing method data.
-   * Make sure the method name is different from the class name.
-   * At the Intermediate Level, methods are public by default, but this can be overridden by the user.
-   */
-  public void forAbstractMethodDef(AbstractMethodDef that) {
+    that.getBody().visit(new BodyBodyIntermediateVisitor(md, _file, _package, _enclosingClassName, _importedFiles, 
+                                                         _importedPackages, _classesInThisFile, continuations, 
+                                                         fixUps, new HashSet<String>()));
+    return forConcreteMethodDefOnly(that);
+  }
+  
+  /** Create a method data corresponding to this method declaration.
+    * Make sure the method name is different from the class name.
+    * At the Intermediate Level, methods are public by default, but this can be overridden by the user.
+    */
+  public Void forAbstractMethodDef(AbstractMethodDef that) {
     forAbstractMethodDefDoFirst(that);
-    if (prune(that)) { return; }
-    MethodData md = createMethodData(that, _symbolData);
-
-    //At Intermediate Level, methods are still public by default.
-    if (!md.hasModifier("public") && !md.hasModifier("private") && !md.hasModifier("protected")) {
+    if (prune(that)) return null;
+    MethodData md = createMethodData(that, _enclosing);
+    
+    // At Intermediate Level, methods are still public by default.
+    if (! md.hasModifier("public") && ! md.hasModifier("private") && ! md.hasModifier("protected")) {
       md.addModifier("public");
     }
-    
-    String className = getUnqualifiedClassName(_symbolData.getName());
+
+    String className = getUnqualifiedClassName(_enclosing.getName());
     if (className.equals(md.getName())) {
-      _addAndIgnoreError("Only constructors can have the same name as the class they appear in, and constructors do not have an explicit return type",
+      _addAndIgnoreError("Only constructors can have the same name as the class they appear in, and constructors do "
+                           + "not have an explicit return type",
                          that);
     }
-    else {
-      _symbolData.addMethod(md);
-    }
+    else _enclosing.addMethod(md);
+
+    return forAbstractMethodDefOnly(that);
   }
   
- 
-  
-
-  /**
-   * Create a constructor corresponding to the specifications in the ConstructorDef
-   */
-  public void forConstructorDef(ConstructorDef that) {
+  /** Create a constructor corresponding to the specifications in the ConstructorDef.  */
+  public Void forConstructorDef(ConstructorDef that) {
     forConstructorDefDoFirst(that);
-    if (prune(that)) { return; }
+    if (prune(that)) return null;
 
     that.getMav().visit(this);
     String name = getUnqualifiedClassName(that.getName().getText());
-    if (!name.equals(getUnqualifiedClassName(_symbolData.getName()))) {
+    if (! name.equals(getUnqualifiedClassName(_enclosing.getName()))) {
       _addAndIgnoreError("The constructor return type and class name must match", that);
     }
 
     // Turn the thrown exceptions from a ReferenceType[] to a String[]
     String[] throwStrings = referenceType2String(that.getThrows());
     
-    SymbolData returnType = _symbolData;
+    SymbolData returnType = _enclosing;
     MethodData md = new MethodData(name, that.getMav(), new TypeParameter[0], returnType, 
-                                   new VariableData[0], throwStrings, _symbolData, that);
+                                   new VariableData[0], throwStrings, _enclosing, that);  // VariableData is dummy
     
-    //At Intermediate Level, constructors are still public by default.
-    if (!md.hasModifier("public") && !md.hasModifier("private") && !md.hasModifier("protected")) {
+    // At Intermediate Level, constructors are still public by default.
+    if (! md.hasModifier("public") && ! md.hasModifier("private") && ! md.hasModifier("protected")) {
       md.addModifier("public");
     }
     
     _checkError(); // reset check flag
+    
     // Turn the parameters from a FormalParameterList to a VariableData[]
-    VariableData[] vds = formalParameters2VariableData(that.getParameters(), md);
-    if (! _checkError()) {  //if there was an error converting the formalParameters, don't use them.
+    VariableData[] vds = formalParameters2VariableData(that.getParameters(), _enclosing);
+    if (! _checkError()) {  // if there was an error converting the formalParameters, don't use them.
       md.setParams(vds);
-      if (!md.addFinalVars(vds)) {
+      if (! md.addFinalVars(vds)) {
         _addAndIgnoreError("You cannot have two method parameters with the same name", that);
       }
     }
     
-    _symbolData.addMethod(md);
-    that.getStatements().visit(new BodyBodyIntermediateVisitor(md, _file, _package, _importedFiles, _importedPackages, _classNamesInThisFile, continuations));
+    _enclosing.addMethod(md);
+    that.getStatements().visit(new BodyBodyIntermediateVisitor(md, _file, _package, _enclosingClassName, _importedFiles,
+                                                               _importedPackages, _classesInThisFile, continuations, 
+                                                               fixUps, new HashSet<String>()));
     //note that we have seen a constructor.
-    _symbolData.incrementConstructorCount();
-    forConstructorDefOnly(that);
+    _enclosing.incrementConstructorCount();
+    return forConstructorDefOnly(that);
   }
   
-  /**
-   * Delegate to method in LLV
-   */
-  public void forComplexAnonymousClassInstantiation(ComplexAnonymousClassInstantiation that) {
-    complexAnonymousClassInstantiationHelper(that, _symbolData);
+  /** Delegate to method in LLV. */
+  public Void forComplexAnonymousClassInstantiation(ComplexAnonymousClassInstantiation that) {
+    complexAnonymousClassInstantiationHelper(that, _enclosing);   // TODO: the wrong enclosing context?
+    return null;
   }
 
-  /**
-   * Delegate to method in LLV
-   */
-  public void forSimpleAnonymousClassInstantiation(SimpleAnonymousClassInstantiation that) {
-    simpleAnonymousClassInstantiationHelper(that, _symbolData);
+  /** Delegate to method in LLV. */
+  public Void forSimpleAnonymousClassInstantiation(SimpleAnonymousClassInstantiation that) {
+    simpleAnonymousClassInstantiationHelper(that, _enclosing);
+    return null;
   }
+    
+//  /** Check for problems with modifiers that are specific to method definitions. */
+//  public Void forModifiersAndVisibilityDoFirst(ModifiersAndVisibility that) {
+//    String[] modifiers = that.getModifiers();
+//    if (Utilities.isAbstract(modifiers) && Utilities.isStatic(modifiers)) _badModifiers("static", "abstract", that);
+//    return super.forModifiersAndVisibilityDoFirst(that);
+//  }
   
-   /**
-    * Test the methods in the above (enclosing) class.
-    */
+  /** Test the methods in the above (enclosing) class. */
   public static class ClassBodyIntermediateVisitorTest extends TestCase {
     
     private ClassBodyIntermediateVisitor _cbiv;
     
     private SymbolData _sd1;
-    private ModifiersAndVisibility _publicMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"public"});
-    private ModifiersAndVisibility _publicFinalMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"public", "final"});
-    private ModifiersAndVisibility _protectedMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"protected"});
-    private ModifiersAndVisibility _privateMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"private"});
-    private ModifiersAndVisibility _packageMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[0]);
-    private ModifiersAndVisibility _abstractMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"abstract"});
-    private ModifiersAndVisibility _finalMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"final"});
-    private ModifiersAndVisibility _staticMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"static"});
-    private ModifiersAndVisibility _abstractStaticMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"abstract", "static"});
-    private ModifiersAndVisibility _privateAbstractMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"private", "abstract"});
-    private ModifiersAndVisibility _finalStaticMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"static", "final"});
-    private ModifiersAndVisibility _finalPrivateMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"final", "private"});
+    private ModifiersAndVisibility _publicMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"public"});
+    private ModifiersAndVisibility _publicFinalMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"public", "final"});
+    private ModifiersAndVisibility _protectedMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"protected"});
+    private ModifiersAndVisibility _privateMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"private"});
+    private ModifiersAndVisibility _packageMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[0]);
+    private ModifiersAndVisibility _abstractMav =
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"abstract"});
+    private ModifiersAndVisibility _finalMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"final"});
+    private ModifiersAndVisibility _staticMav = new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"static"});
+    private ModifiersAndVisibility _abstractStaticMav =
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"abstract", "static"});
+    private ModifiersAndVisibility _privateAbstractMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"private", "abstract"});
+    private ModifiersAndVisibility _staticFinalMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"static", "final"});
+     private ModifiersAndVisibility _finalStaticMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"final", "static"});
+    private ModifiersAndVisibility _finalPrivateMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"final", "private"});
+    private ModifiersAndVisibility _privateFinalMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] {"private", "final"});
     
     
-    public ClassBodyIntermediateVisitorTest() {
-      this("");
-    }
-    public ClassBodyIntermediateVisitorTest(String name) {
-      super(name);
-    }
+    public ClassBodyIntermediateVisitorTest() { this(""); }
+    public ClassBodyIntermediateVisitorTest(String name) { super(name); }
     
     public void setUp() {
       _sd1 = new SymbolData("i.like.monkey");
 
       errors = new LinkedList<Pair<String, JExpressionIF>>();
-      symbolTable = new Symboltable();
+      LanguageLevelConverter.symbolTable.clear();
+      LanguageLevelConverter._newSDs.clear();
+      LanguageLevelConverter.symbolTable.put("i.like.monkey", _sd1);
       visitedFiles = new LinkedList<Pair<LanguageLevelVisitor, edu.rice.cs.javalanglevels.tree.SourceFile>>();      
-      _hierarchy = new Hashtable<String, TypeDefBase>();
-      _classesToBeParsed = new Hashtable<String, Pair<TypeDefBase, LanguageLevelVisitor>>();
-      _cbiv = new ClassBodyIntermediateVisitor(_sd1, new File(""), "", new LinkedList<String>(), new LinkedList<String>(), new LinkedList<String>(), new Hashtable<String, Pair<SourceInfo, LanguageLevelVisitor>>());
-      _cbiv.continuations = new Hashtable<String, Pair<SourceInfo, LanguageLevelVisitor>>();
-      _cbiv._resetNonStaticFields();
+//      _hierarchy = new Hashtable<String, TypeDefBase>();
+      _cbiv = new ClassBodyIntermediateVisitor(_sd1,
+                                               _sd1.getName(),
+                                               new File(""), 
+                                               "", 
+                                               new LinkedList<String>(), 
+                                               new LinkedList<String>(), 
+                                               new HashSet<String>(), 
+                                               new Hashtable<String, Triple<SourceInfo, LanguageLevelVisitor, SymbolData>>(),
+                                               new LinkedList<Command>());
+      _cbiv.continuations = new Hashtable<String, Triple<SourceInfo, LanguageLevelVisitor, SymbolData>>(); // no _sd1
+      _cbiv._classesInThisFile = new HashSet<String>();
+//      _cbiv._resetNonStaticFields();
       _cbiv._importedPackages.addFirst("java.lang");
       _errorAdded = false;
     }
     
     public void testForConcreteMethodDefDoFirst() {
       // Check one that works
-      ConcreteMethodDef cmd = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO, 
+      ConcreteMethodDef cmd = new ConcreteMethodDef(SourceInfo.NONE, 
                                                     _privateMav, 
                                                     new TypeParameter[0], 
-                                                    new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                                    new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                                    new PrimitiveType(SourceInfo.NONE, "int"), 
+                                                    new Word(SourceInfo.NONE, "methodName"),
                                                     new FormalParameter[0],
                                                     new ReferenceType[0], 
-                                                    new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+                                                    new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       cmd.visit(_cbiv);
       assertEquals("There should not be any errors", 0, errors.size());
       
       
       
       // Check one that doesn't work because it is declared abstract but is actually a concrete method
-      ConcreteMethodDef cmd2 = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO, 
+      ConcreteMethodDef cmd2 = new ConcreteMethodDef(SourceInfo.NONE, 
                                                      _abstractMav, 
                                                      new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                     new Word(SourceInfo.NONE, "methodName"),
                                                      new FormalParameter[0],
                                                      new ReferenceType[0], 
-                                                     new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+                                                     new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       cmd2.visit(_cbiv);
       assertEquals("There should be one error", 1, errors.size());
-      assertEquals("The error message should be correct", "Methods that have a braced body cannot be declared \"abstract\"", errors.get(0).getFirst());
+      assertEquals("The error message should be correct", 
+                   "Methods that have a braced body cannot be declared \"abstract\"", 
+                   errors.get(0).getFirst());
       
-      // Check one that doesn't work because it is static
-      ConcreteMethodDef cmd3 = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO, 
-                                                     _staticMav, 
-                                                     new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
-                                                     new FormalParameter[0],
-                                                     new ReferenceType[0], 
-                                                     new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
-      cmd3.visit(_cbiv);
-      assertEquals("There should be two errors", 2, errors.size());
-      assertEquals("The error message should be correct", "Static methods cannot be used at the Intermediate level", errors.get(1).getFirst());
-      
+//      // Check one that doesn't work because it is static
+//      ConcreteMethodDef cmd3 = new ConcreteMethodDef(SourceInfo.NONE, 
+//                                                     _staticMav, 
+//                                                     new TypeParameter[0], 
+//                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+//                                                     new Word(SourceInfo.NONE, "methodName"),
+//                                                     new FormalParameter[0],
+//                                                     new ReferenceType[0], 
+//                                                     new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
+//      cmd3.visit(_cbiv);
+//      assertEquals("There should be two errors", 2, errors.size());
+//      assertEquals("The error message should be correct", 
+//                   "Static methods cannot be used at the Intermediate level", 
+//                   errors.get(1).getFirst());
+//      
       
     }
     
     public void testForAbstractMethodDefDoFirst() {
       // Check one that doesn't work
-      AbstractMethodDef amd = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      AbstractMethodDef amd = new AbstractMethodDef(SourceInfo.NONE, 
                                                     _abstractMav, 
                                                     new TypeParameter[0], 
-                                                    new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                                    new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                                    new PrimitiveType(SourceInfo.NONE, "int"), 
+                                                    new Word(SourceInfo.NONE, "methodName"),
                                                     new FormalParameter[0],
                                                     new ReferenceType[0]);
       amd.visit(_cbiv);
       assertEquals("There should be one error.", 1, errors.size());
-      assertEquals("The error message should be correct.", "Abstract methods can only be declared in abstract classes", errors.get(0).getFirst());
+      assertEquals("The error message should be correct.", "Abstract methods can only be declared in abstract classes", 
+                   errors.get(0).getFirst());
       
       // Check one that works
-      _cbiv._symbolData.setMav(_abstractMav);
-      AbstractMethodDef amd2 = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      _cbiv._enclosing.setMav(_abstractMav);
+      AbstractMethodDef amd2 = new AbstractMethodDef(SourceInfo.NONE, 
                                                      _abstractMav, 
                                                      new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                     new Word(SourceInfo.NONE, "methodName"),
                                                      new FormalParameter[0],
                                                      new ReferenceType[0]);
       amd2.visit(_cbiv);
       assertEquals("There should still be one error", 1, errors.size());
       
-      // Check one that doesn't work because it is static
-      AbstractMethodDef amd3 = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
-                                                     _abstractStaticMav, 
-                                                     new TypeParameter[0], 
-                                                     new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                     new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
-                                                     new FormalParameter[0],
-                                                     new ReferenceType[0]);
-      amd3.visit(_cbiv);
-      assertEquals("There should be two errors", 2, errors.size());
-      assertEquals("The error message should be correct", "Static methods cannot be used at the Intermediate level", errors.get(1).getFirst());
+//      // Check one that doesn't work because it is static
+//      AbstractMethodDef amd3 = new AbstractMethodDef(SourceInfo.NONE, 
+//                                                     _abstractStaticMav, 
+//                                                     new TypeParameter[0], 
+//                                                     new PrimitiveType(SourceInfo.NONE, "double"), 
+//                                                     new Word(SourceInfo.NONE, "methodName"),
+//                                                     new FormalParameter[0],
+//                                                     new ReferenceType[0]);
+//      amd3.visit(_cbiv);
+//      assertEquals("There should be two errors", 2, errors.size());
+//      assertEquals("The error message should be correct", "Static methods cannot be used at the Intermediate level", 
+//                   errors.get(1).getFirst());
     }
 
     public void testForInstanceInitializerDoFirst() {
-      InstanceInitializer ii = new InstanceInitializer(JExprParser.NO_SOURCE_INFO, 
-                                                       new Block(JExprParser.NO_SOURCE_INFO, 
-                                                                 new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0])));
+      InstanceInitializer ii = new InstanceInitializer(SourceInfo.NONE, 
+                                                       new Block(SourceInfo.NONE, 
+                                                                 new BracedBody(SourceInfo.NONE, new BodyItemI[0])));
       ii.visit(_cbiv);
       assertEquals("There should be one error.", 1, errors.size());
-      assertEquals("The error message should be correct.", "This open brace must mark the beginning of a method or class body", errors.get(0).getFirst());
+      assertEquals("The error message should be correct.", 
+                   "This open brace must mark the beginning of a method or class body", 
+                   errors.get(0).getFirst());
     }
     
     /* These test is shared with BodyIntermediateVisitor,
@@ -402,103 +426,157 @@ public class ClassBodyIntermediateVisitor extends IntermediateVisitor {
     
     public void testForVariableDeclarationOnly() {
       // Check one that works
-      VariableDeclaration vdecl = new VariableDeclaration(JExprParser.NO_SOURCE_INFO,
-                                                       _packageMav,
-                                                       new VariableDeclarator[] {
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                               new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                               new Word (JExprParser.NO_SOURCE_INFO, "field1")),
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                               new PrimitiveType(JExprParser.NO_SOURCE_INFO, "boolean"), 
-                               new Word (JExprParser.NO_SOURCE_INFO, "field2"))});
-      VariableData vd1 = new VariableData("field1", _finalPrivateMav, SymbolData.DOUBLE_TYPE, false, _cbiv._symbolData);
-      VariableData vd2 = new VariableData("field2", _finalPrivateMav, SymbolData.BOOLEAN_TYPE, false, _cbiv._symbolData);
+      VariableDeclaration vdecl = new VariableDeclaration(SourceInfo.NONE,
+                                                          _packageMav,
+                                                          new VariableDeclarator[] {
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                            new PrimitiveType(SourceInfo.NONE, "double"), 
+                                            new Word (SourceInfo.NONE, "field1")),
+          new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                              new PrimitiveType(SourceInfo.NONE, "boolean"), 
+                                              new Word (SourceInfo.NONE, "field2"))});
+      VariableData vd1 = 
+        new VariableData("field1", _privateFinalMav, SymbolData.DOUBLE_TYPE, false, _cbiv._enclosing);
+      VariableData vd2 = 
+        new VariableData("field2", _privateFinalMav, SymbolData.BOOLEAN_TYPE, false, _cbiv._enclosing);
       vdecl.visit(_cbiv);
       
+//      VariableData vd0 = _sd1.getVars().get(0);
+//      System.err.println("Errors were: " + errors);
       assertEquals("There should not be any errors.", 0, errors.size());
+//      System.err.println("_sd1.getVars() = " + _sd1.getVars());
+//      
+//      System.err.println("vd1 = " + vd1);
+//      System.err.println("vd1.getMav() = " + vd1.getMav());
+//      System.err.println("vd1.getType() = " + vd1.getType());
+//      System.err.println("vd1.getMav().getModifiers() = " + vd1.getMav().getModifiers());
+//      assertEquals("enclosingData are equal", vd1.getEnclosingData(), vd0.getEnclosingData());
+//      assertEquals("mavs are equal", vd1.getMav(), vd0.getMav());
+//      assertEquals("vd1.equals(vd0)", vd1, vd0);
+
+//      System.err.println("_sd1 vars =  " + _sd1.getVars());
+//      System.err.println("vd1 = " + vd1 + "; vd2 = " + vd2);
       assertTrue("field1 was added.", _sd1.getVars().contains(vd1));
       assertTrue("field2 was added.", _sd1.getVars().contains(vd2));
       
       //TODO: Test that static fields are made public
       
       // Check one that doesn't work
-      VariableDeclaration vdecl2 = new VariableDeclaration(JExprParser.NO_SOURCE_INFO,
+      VariableDeclaration vdecl2 = new VariableDeclaration(SourceInfo.NONE,
                                                         _packageMav,
                                                         new VariableDeclarator[] {
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                            new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                            new Word (JExprParser.NO_SOURCE_INFO, "field3")),
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                            new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                            new Word (JExprParser.NO_SOURCE_INFO, "field3"))});
-      VariableData vd3 = new VariableData("field3", _finalPrivateMav, SymbolData.DOUBLE_TYPE, false, _cbiv._symbolData);
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                            new PrimitiveType(SourceInfo.NONE, "double"), 
+                                            new Word (SourceInfo.NONE, "field3")),
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                            new PrimitiveType(SourceInfo.NONE, "int"), 
+                                            new Word (SourceInfo.NONE, "field3"))});
+      VariableData vd3 = 
+        new VariableData("field3", _privateFinalMav, SymbolData.DOUBLE_TYPE, false, _cbiv._enclosing);
       vdecl2.visit(_cbiv);
       assertEquals("There should be one error.", 1, errors.size());
-      assertEquals("The error message should be correct", "You cannot have two fields with the same name.  Either you already have a field by that name in this class, or one of your superclasses or interfaces has a field by that name", errors.get(0).getFirst());
+      assertEquals("The error message should be correct", 
+                   "You cannot have two fields with the same name.  Either you already have a field by that name in "
+                     + "this class, or one of your superclasses or interfaces has a field by that name", 
+                   errors.get(0).getFirst());
+//      System.err.println("_sd1 vars =  " + _sd1.getVars());
+//      System.err.println("vd3 = " + vd3);
       assertTrue("field3 was added.", _sd1.getVars().contains(vd3));
       
-      //Check a static field that has not been assigned (won't work)
-      VariableDeclaration vdecl3 = new VariableDeclaration(JExprParser.NO_SOURCE_INFO,
-                                                        _staticMav,
-                                                        new VariableDeclarator[] {
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                            new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                            new Word (JExprParser.NO_SOURCE_INFO, "field4"))});
-      VariableData vd4 = new VariableData("field4", _finalStaticMav, SymbolData.DOUBLE_TYPE, false, _cbiv._symbolData);
-          vdecl3.visit(_cbiv);
-        assertEquals("There should be two errors", 2, errors.size());
-        assertEquals("The error message should be correct", "All static fields must be initialized", errors.get(1).getFirst());
-        assertFalse("field4 was not added.", _sd1.getVars().contains(vd4));
-        
+      //Check a static field that has not been assigned is an error
+      VariableDeclaration vdecl3 = new VariableDeclaration(SourceInfo.NONE,
+                                                           _staticMav,
+                                                           new VariableDeclarator[] {
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                            new PrimitiveType(SourceInfo.NONE, "double"), 
+                                            new Word (SourceInfo.NONE, "field4"))});
+      VariableData vd4 = 
+        new VariableData("field4", _staticFinalMav, SymbolData.DOUBLE_TYPE, false, _cbiv._enclosing);  
       
-      //Check a non-static field that has been assigned.  (won't work);
-      VariableDeclaration vdecl5 = new VariableDeclaration(JExprParser.NO_SOURCE_INFO,
+      vdecl3.visit(_cbiv);
+//      System.err.println("vd4 = " + vd4);;
+//      assertEquals("There should still be one error", 1, errors.size());
+      assertEquals("The error message should be correct", "All static fields must be initialized", 
+                   errors.get(1).getFirst());
+//      System.err.println("_sd1 vars =  " + _sd1.getVars());
+      assertTrue("field4 was added.", _sd1.getVars().contains(vd4));   
+      
+      // Check a non-static field that has been assigned.
+      VariableDeclaration vdecl5 = new VariableDeclaration(SourceInfo.NONE,
                                                         _packageMav,
                                                         new VariableDeclarator[] {
-        new InitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                            new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                            new Word (JExprParser.NO_SOURCE_INFO, "field5"), new DoubleLiteral(JExprParser.NO_SOURCE_INFO, 2.4))});
+        new InitializedVariableDeclarator(SourceInfo.NONE, 
+                                            new PrimitiveType(SourceInfo.NONE, "double"), 
+                                            new Word (SourceInfo.NONE, "field5"), 
+                                          new DoubleLiteral(SourceInfo.NONE, 2.4))});
       vdecl5.visit(_cbiv);
-      VariableData vd5 = new VariableData("field5", _publicFinalMav, SymbolData.DOUBLE_TYPE, true, _cbiv._symbolData);
-      assertEquals("There should be three errors", 3, errors.size());
-      assertEquals("The new error message should be correct", "Only static fields may be initialized outside of a constructor at the Intermediate level", errors.get(2).getFirst());
-      assertFalse("Field 5 was not added.", _sd1.getVars().contains(vd5));
+      VariableData vd5 = 
+        new VariableData("field5", _privateFinalMav, SymbolData.DOUBLE_TYPE, true, _cbiv._enclosing);
+      vd5.setHasInitializer(true);
+//      VariableData vd0 = _sd1.getVars().get(4);
+//      System.err.println("vd5 = " + vd5);
+//      System.err.println("vd0 = " + vd0);
+//      System.err.println("vd5.getMav() = " + vd5.getMav());
+//      System.err.println("vd5.getType() = " + vd5.getType());
+//      System.err.println("vd0.getMav() = " + vd0.getMav());
+//      System.err.println("vd0.getType() = " + vd0.getType());
+//      assertEquals("mavs are equal", vd5.getMav(), vd0.getMav());
+//      assertEquals("enclosingData are equal", vd5.getEnclosingData(), vd0.getEnclosingData());
+//      assertEquals("vd5.equals(vd0)", vd5, vd0);
+      assertTrue("Field 5 was added.", _sd1.getVars().contains(vd5));
       
-      //check one that overrides the super class's field
-      VariableDeclaration vdecl6 = new VariableDeclaration(JExprParser.NO_SOURCE_INFO,
+      // Check one that overrides the super class's field
+      VariableDeclaration vdecl6 = new VariableDeclaration(SourceInfo.NONE,
                                                        _packageMav,
                                                            new VariableDeclarator[] {
-        new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                            new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                            new Word (JExprParser.NO_SOURCE_INFO, "field6"))});
+        new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                            new PrimitiveType(SourceInfo.NONE, "double"), 
+                                            new Word (SourceInfo.NONE, "field6"))});
       
       
-      VariableData vd6 = new VariableData("field6", _finalPrivateMav, SymbolData.DOUBLE_TYPE, false, _cbiv._symbolData);
+      VariableData vd6 = 
+        new VariableData("field6", _finalPrivateMav, SymbolData.DOUBLE_TYPE, false, _cbiv._enclosing);
       SymbolData myData = new SymbolData("myData");
       myData.addVar(vd6);
-      _cbiv._symbolData.setSuperClass(myData);
+      _cbiv._enclosing.setSuperClass(myData);
       vdecl6.visit(_cbiv);
-      assertEquals("There should be four errors.", 4, errors.size());
-      assertEquals("The error message should be correct", "You cannot have two fields with the same name.  Either you already have a field by that name in this class, or one of your superclasses or interfaces has a field by that name", errors.get(3).getFirst());
+      assertEquals("There should be three errors.", 3, errors.size());
+      assertEquals("The error message should be correct", "You cannot have two fields with the same name.  Either you" +
+                   " already have a field by that name in this class, or one of your superclasses or interfaces has a" +
+                   " field by that name", 
+                   errors.getLast().getFirst());
 
     }
     
     public void testFormalParameters2VariableData() {
       FormalParameter[] fps = new FormalParameter[] {
-        new FormalParameter(JExprParser.NO_SOURCE_INFO, 
-                            new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                                              new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), 
-                                                              new Word (JExprParser.NO_SOURCE_INFO, "field1")),
+        new FormalParameter(SourceInfo.NONE, 
+                            new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                                              new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                              new Word (SourceInfo.NONE, "field1")),
                             false),
-        new FormalParameter(JExprParser.NO_SOURCE_INFO, 
-                            new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, 
-                                                              new PrimitiveType(JExprParser.NO_SOURCE_INFO, "boolean"), 
-                                                              new Word (JExprParser.NO_SOURCE_INFO, "field2")),
+        new FormalParameter(SourceInfo.NONE, 
+                            new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                                              new PrimitiveType(SourceInfo.NONE, "boolean"), 
+                                                              new Word (SourceInfo.NONE, "field2")),
                             false)};
-      VariableData vd1 = new VariableData("field1", _finalMav, SymbolData.DOUBLE_TYPE, true, _cbiv._symbolData);
-      VariableData vd2 = new VariableData("field2", _finalMav, SymbolData.BOOLEAN_TYPE, true, _cbiv._symbolData);
-      VariableData[] vds = _cbiv.formalParameters2VariableData(fps, _cbiv._symbolData);
+
+      MethodData md = new MethodData("methodName", 
+                                     _packageMav, 
+                                     new TypeParameter[0], 
+                                     SymbolData.INT_TYPE, 
+                                     new VariableData[0],  // a dummy value
+                                     new String[0],
+                                     _sd1,  // enclosing class
+                                     null); // no SourceInfo
+      VariableData vd1 = new VariableData("field1", _finalMav, SymbolData.DOUBLE_TYPE, true, _sd1);
+      VariableData vd2 = new VariableData("field2", _finalMav, SymbolData.BOOLEAN_TYPE, true, _sd1);
+//      System.err.println("vd1 = " + vd1);
+//      System.err.println("vd2 = " + vd2);
+      VariableData[] vds = _cbiv.formalParameters2VariableData(fps, _sd1);
       assertEquals("There should not be any errors.", 0, errors.size());
+//      System.err.println("vds[0] = " + vds[0]);
+//      System.err.println("vds[1] = " + vds[1]);
       assertEquals("vd1 should be the first entry in vds.", vd1, vds[0]);
       assertEquals("vd2 should be the second entry in vds.", vd2, vds[1]);
     }
@@ -509,82 +587,84 @@ public class ClassBodyIntermediateVisitor extends IntermediateVisitor {
     
     public void testForConcreteMethodDef() {
       // Test one that works.
-      MethodDef mdef = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO, 
+      MethodDef mdef = new ConcreteMethodDef(SourceInfo.NONE, 
                                              _privateMav, 
                                              new TypeParameter[0], 
-                                             new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                             new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                             new PrimitiveType(SourceInfo.NONE, "int"), 
+                                             new Word(SourceInfo.NONE, "methodName"),
                                              new FormalParameter[0],
                                              new ReferenceType[0], 
-                                             new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+                                             new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       mdef.visit(_cbiv);
       assertEquals("There should not be any errors.", 0, errors.size());
 
       
       //Check one that works but needs to be augmented with public
-      ConcreteMethodDef cmd1 = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO,
+      ConcreteMethodDef cmd1 = new ConcreteMethodDef(SourceInfo.NONE,
                                                     _packageMav,
                                                     new TypeParameter[0],
-                                                    new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"),
-                                                    new Word(JExprParser.NO_SOURCE_INFO, "noMavMethod"),
+                                                    new PrimitiveType(SourceInfo.NONE, "int"),
+                                                    new Word(SourceInfo.NONE, "noMavMethod"),
                                                     new FormalParameter[0],
                                                     new ReferenceType[0],
-                                                    new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+                                                    new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       
       cmd1.visit(_cbiv);
       assertEquals("There should not be any errors", 0, errors.size());
       assertEquals("_sd1 should contain 2 methods", 2, _sd1.getMethods().size());
-      assertTrue("The second method should be public", _sd1.getMethods().get(1).hasModifier("public"));
+      assertTrue("The second method should be default public", _sd1.getMethods().get(1).hasModifier("public"));
 
       
       
       // Test one that doesn't work.
-      mdef = new ConcreteMethodDef(JExprParser.NO_SOURCE_INFO, 
+      mdef = new ConcreteMethodDef(SourceInfo.NONE, 
                                              _packageMav, 
                                              new TypeParameter[0], 
-                                             new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                             new Word(JExprParser.NO_SOURCE_INFO, "monkey"),
+                                             new PrimitiveType(SourceInfo.NONE, "int"), 
+                                             new Word(SourceInfo.NONE, "monkey"),
                                              new FormalParameter[0],
                                              new ReferenceType[0], 
-                                             new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+                                             new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       mdef.visit(_cbiv);
       assertEquals("There should be one error.", 1, errors.size());
       assertEquals("The error message should be correct.", 
-                   "Only constructors can have the same name as the class they appear in, and constructors do not have an explicit return type",
+                   "Only constructors can have the same name as the class they appear in, and constructors do not "
+                     + "have an explicit return type",
                    errors.get(0).getFirst());
     }
     
     public void testForAbstractMethodDef() {
       // Test one that works but needs to be augmented with public.
-      MethodDef mdef = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      MethodDef mdef = new AbstractMethodDef(SourceInfo.NONE, 
                                              _abstractMav, 
                                              new TypeParameter[0], 
-                                             new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                             new Word(JExprParser.NO_SOURCE_INFO, "methodName"),
+                                             new PrimitiveType(SourceInfo.NONE, "int"), 
+                                             new Word(SourceInfo.NONE, "methodName"),
                                              new FormalParameter[0],
                                              new ReferenceType[0]);
-      _cbiv._symbolData.setMav(_abstractMav);
+      _cbiv._enclosing.setMav(_abstractMav);
 
       mdef.visit(_cbiv);
       assertEquals("There should not be any errors", 0, errors.size());
       assertEquals("_sd1 should contain 1 methods", 1, _sd1.getMethods().size());
-      assertTrue("The method should be public", _sd1.getMethods().getFirst().hasModifier("public"));
+      assertTrue("The method should be default public", _sd1.getMethods().getFirst().hasModifier("public"));
 
       
       
       
       // Test one that doesn't work.
-      mdef = new AbstractMethodDef(JExprParser.NO_SOURCE_INFO, 
+      mdef = new AbstractMethodDef(SourceInfo.NONE, 
                                              _abstractMav, 
                                              new TypeParameter[0], 
-                                             new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), 
-                                             new Word(JExprParser.NO_SOURCE_INFO, "monkey"),
+                                             new PrimitiveType(SourceInfo.NONE, "int"), 
+                                             new Word(SourceInfo.NONE, "monkey"),
                                              new FormalParameter[0],
                                              new ReferenceType[0]);
       mdef.visit(_cbiv);
       assertEquals("There should be one error.", 1, errors.size());
       assertEquals("The error message should be correct.", 
-                   "Only constructors can have the same name as the class they appear in, and constructors do not have an explicit return type",
+                   "Only constructors can have the same name as the class they appear in, " +
+                   "and constructors do not have an explicit return type",
                    errors.get(0).getFirst());
     }
     
@@ -594,77 +674,84 @@ public class ClassBodyIntermediateVisitor extends IntermediateVisitor {
 //    public void testForOtherExpressionOnly() {
 //      // Test that if the OtherExpression contains a Word, that the Word is resolved.
 //      assertFalse("java.lang.System should not be in the symbolTable.", symbolTable.containsKey("java.lang.System"));
-//      Expression ex = new Expression( JExprParser.NO_SOURCE_INFO,
-//                                     new ExpressionPiece[] { new OtherExpression(JExprParser.NO_SOURCE_INFO, 
-//                                                                                 new Word(JExprParser.NO_SOURCE_INFO,
-//                                                                                                              "System"))});
+//      Expression ex = new Expression( SourceInfo.NONE,
+//                                     new ExpressionPiece[] { new OtherExpression(SourceInfo.NONE, 
+//                                                                                 new Word(SourceInfo.NONE,
+//                                                                                          "System"))});
 //      ex.visit(_cbiv);
 //      assertEquals("There should not be any errors.", 0, errors.size());
 //      assertTrue("java.lang.System should be in the symbolTable.", symbolTable.containsKey("java.lang.System"));
 //    }
     
     public void testForInitializedVariableDeclaratorDoFirst() {
-      InitializedVariableDeclarator ivd = new InitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO,
-                                                                            new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"),
-                                                                            new Word(JExprParser.NO_SOURCE_INFO, "i"),
-                                                                            new IntegerLiteral(JExprParser.NO_SOURCE_INFO, 5));
+      InitializedVariableDeclarator ivd = 
+        new InitializedVariableDeclarator(SourceInfo.NONE,
+                                          new PrimitiveType(SourceInfo.NONE, "int"),
+                                          new Word(SourceInfo.NONE, "i"),
+                                          new IntegerLiteral(SourceInfo.NONE, 5));
       
       ivd.visit(_cbiv);
       
       assertEquals("There should be no errors now", 0, errors.size());
 //      assertEquals("Error message should be correct",
-//                   "Cannot initialize a class's fields at the Intermediate level.  To set the value of a field, when you instantiate the class, assign the desired value using the class's constructor", 
+//                   "Cannot initialize a class's fields at the Intermediate level.  To set the value of a field, when" +
+//                   "you instantiate the class, assign the desired value using the class's constructor",
 //                   errors.get(0).getFirst());
     }
 
 
     public void testForInnerInterfaceDef() {
-      SymbolData obj = new SymbolData("java.lang.Object");
-      symbolTable.put("java.lang.Object", obj);
-      InnerInterfaceDef cd1 = new InnerInterfaceDef(JExprParser.NO_SOURCE_INFO, _packageMav, new Word(JExprParser.NO_SOURCE_INFO, "Bart"),
+      InnerInterfaceDef cd1 = new InnerInterfaceDef(SourceInfo.NONE, _packageMav, 
+                                                    new Word(SourceInfo.NONE, "Bart"),
                                        new TypeParameter[0], new ReferenceType[0], 
-                                       new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+                                       new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       
-      InnerInterfaceDef cd0 = new InnerInterfaceDef(JExprParser.NO_SOURCE_INFO, _packageMav, new Word(JExprParser.NO_SOURCE_INFO, "Lisa"),
+      InnerInterfaceDef cd0 = new InnerInterfaceDef(SourceInfo.NONE, _packageMav, 
+                                                    new Word(SourceInfo.NONE, "Lisa"),
                                        new TypeParameter[0], new ReferenceType[0], 
-                                            new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[] {cd1}));
+                                            new BracedBody(SourceInfo.NONE, new BodyItemI[] {cd1}));
       
-      SymbolData sd0 = new SymbolData(_cbiv._symbolData.getName() + "$Lisa", _packageMav, new TypeParameter[0], new LinkedList<SymbolData>(), null); 
-      SymbolData sd1 = new SymbolData(_cbiv._symbolData.getName() + "$Lisa$Bart", _packageMav, new TypeParameter[0], new LinkedList<SymbolData>(), null);
+      SymbolData sd0 = new SymbolData(_cbiv._enclosing.getName() + "$Lisa", _packageMav, new TypeParameter[0], 
+                                      new ArrayList<SymbolData>(), null); 
+      SymbolData sd1 = new SymbolData(_cbiv._enclosing.getName() + "$Lisa$Bart", _packageMav, new TypeParameter[0], 
+                                      new ArrayList<SymbolData>(), null);
       sd0.addInnerInterface(sd1);
       sd0.setIsContinuation(true);
       sd1.setIsContinuation(true);
       
-      symbolTable.put(_cbiv._symbolData.getName() + "$Lisa", sd0);
-      symbolTable.put(_cbiv._symbolData.getName() + "$Lisa$Bart", sd1);
+      LanguageLevelConverter.symbolTable.put(_cbiv._enclosing.getName() + "$Lisa", sd0);
+      LanguageLevelConverter.symbolTable.put(_cbiv._enclosing.getName() + "$Lisa$Bart", sd1);
 
       cd0.visit(_cbiv);
 
-      SymbolData sd = _cbiv._symbolData.getInnerClassOrInterface("Lisa");
+      SymbolData sd = _cbiv._enclosing.getInnerClassOrInterface("Lisa");
 
       // NOTE: No longer allowing inner interfaces at the intermediate level
-      assertEquals("There should be one error", 1, errors.size());
-      assertEquals("The error message should be correct", "Nested interfaces cannot be used at the Intermediate level", errors.get(0).getFirst());
+      assertEquals("There should be no errors", 0, errors.size());
+      // Nested interfaces now work
     }
     
     public void testForConstructorDef() {
       //this is a ConstructorDef with no formal parameters and no throws
-      ConstructorDef cd = new ConstructorDef(JExprParser.NO_SOURCE_INFO, new Word(JExprParser.NO_SOURCE_INFO, "MyClass"), _publicMav, new FormalParameter[0], new ReferenceType[0], 
-                                             new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+      ConstructorDef cd = new ConstructorDef(SourceInfo.NONE, 
+                                             new Word(SourceInfo.NONE, "MyClass"), _publicMav, 
+                                             new FormalParameter[0], new ReferenceType[0], 
+                                             new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       
       //What if constructor name and SymbolData name don't match?  Should throw an error.
-      _cbiv._symbolData = new SymbolData("NotRightName");
+      _cbiv._enclosing = new SymbolData("NotRightName");
       cd.visit(_cbiv);
       assertEquals("Should be 1 error", 1, errors.size());
-      assertEquals("Error message should be correct", "The constructor return type and class name must match", errors.getLast().getFirst());
+      assertEquals("Error message should be correct", 
+                   "The constructor return type and class name must match", errors.getLast().getFirst());
       
       //If they are the same, it should work just fine.
-      _cbiv._symbolData = new SymbolData("MyClass");
+      _cbiv._enclosing = new SymbolData("MyClass");
       
-      MethodData constructor = new MethodData("MyClass", _publicMav, new TypeParameter[0], _cbiv._symbolData, 
+      MethodData constructor = new MethodData("MyClass", _publicMav, new TypeParameter[0], _cbiv._enclosing, 
                                               new VariableData[0], 
                                               new String[0], 
-                                              _cbiv._symbolData,
+                                              _cbiv._enclosing,
                                               null);
       
       
@@ -672,41 +759,59 @@ public class ClassBodyIntermediateVisitor extends IntermediateVisitor {
       
       
       assertEquals("Should still be 1 error", 1, errors.size());
-      assertEquals("SymbolData should have 1 method", 1, _cbiv._symbolData.getMethods().size());
-      assertTrue("SymbolData's constructor should be correct", _cbiv._symbolData.getMethods().contains(constructor));
+      assertEquals("SymbolData should have 1 method", 1, _cbiv._enclosing.getMethods().size());
+      assertTrue("SymbolData's constructor should be correct", _cbiv._enclosing.getMethods().contains(constructor));
       
       //With a ConstructorDef with more throws and variables, should work okay.
-      FormalParameter fp = new FormalParameter(JExprParser.NO_SOURCE_INFO, new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, new PrimitiveType(JExprParser.NO_SOURCE_INFO, "int"), new Word(JExprParser.NO_SOURCE_INFO, "i")), false);
-      ReferenceType rt = new TypeVariable(JExprParser.NO_SOURCE_INFO, "MyMadeUpException");
-      ConstructorDef cd2 = new ConstructorDef(JExprParser.NO_SOURCE_INFO, new Word(JExprParser.NO_SOURCE_INFO, "MyClass"), _publicMav, new FormalParameter[] {fp}, new ReferenceType[] {rt}, 
-                                             new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+      FormalParameter fp = 
+        new FormalParameter(SourceInfo.NONE, 
+                            new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                                                new PrimitiveType(SourceInfo.NONE, "int"), 
+                                                                new Word(SourceInfo.NONE, "i")), false);
+      ReferenceType rt = new TypeVariable(SourceInfo.NONE, "MyMadeUpException");
+      ConstructorDef cd2 = new ConstructorDef(SourceInfo.NONE, 
+                                              new Word(SourceInfo.NONE, "MyClass"), 
+                                              _publicMav, 
+                                              new FormalParameter[] {fp}, 
+                                              new ReferenceType[] {rt}, 
+                                              new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       
-      VariableData vd = new VariableData("i", _finalMav, SymbolData.INT_TYPE, true, null);
-      MethodData constructor2 = new MethodData("MyClass", _publicMav, new TypeParameter[0], _cbiv._symbolData, 
+      VariableData vd = new VariableData("i", _finalMav, SymbolData.INT_TYPE, true, _cbiv._enclosing);
+      MethodData constructor2 = new MethodData("MyClass", 
+                                               _publicMav, 
+                                               new TypeParameter[0], 
+                                               _cbiv._enclosing, 
                                                new VariableData[] {vd}, 
                                                new String[] {"MyMadeUpException"}, 
-                                              _cbiv._symbolData,
-                                              null);
+                                               _cbiv._enclosing,
+                                               null);
 
                                            
       constructor2.addVar(vd);
       cd2.visit(_cbiv);
-      vd.setEnclosingData(_cbiv._symbolData.getMethods().getLast());
+//      vd.setEnclosingData(_cbiv._enclosing.getMethods().getLast());
       assertEquals("Should still be 1 error", 1, errors.size());
-      assertEquals("SymbolData should have 2 methods", 2, _cbiv._symbolData.getMethods().size());
+      assertEquals("SymbolData should have 2 methods", 2, _cbiv._enclosing.getMethods().size());
       
-      assertTrue("SymbolData should have new constructor", _cbiv._symbolData.getMethods().contains(constructor2));
+      assertTrue("SymbolData should have new constructor", _cbiv._enclosing.getMethods().contains(constructor2));
       
                                               
       //If two variable names are duplicated, should throw an error.
-      FormalParameter fp2 = new FormalParameter(JExprParser.NO_SOURCE_INFO, new UninitializedVariableDeclarator(JExprParser.NO_SOURCE_INFO, new PrimitiveType(JExprParser.NO_SOURCE_INFO, "double"), new Word(JExprParser.NO_SOURCE_INFO, "i")), false);
+      FormalParameter fp2 = 
+        new FormalParameter(SourceInfo.NONE, 
+                            new UninitializedVariableDeclarator(SourceInfo.NONE, 
+                                                                new PrimitiveType(SourceInfo.NONE, "double"), 
+                                                                new Word(SourceInfo.NONE, "i")), false);
       
-      ConstructorDef cd3 = new ConstructorDef(JExprParser.NO_SOURCE_INFO, new Word(JExprParser.NO_SOURCE_INFO, "MyClass"), _publicMav, new FormalParameter[] {fp, fp2}, new ReferenceType[] {rt}, 
-                                             new BracedBody(JExprParser.NO_SOURCE_INFO, new BodyItemI[0]));
+      ConstructorDef cd3 = new ConstructorDef(SourceInfo.NONE, 
+                                              new Word(SourceInfo.NONE, "MyClass"), _publicMav, 
+                                              new FormalParameter[] {fp, fp2}, new ReferenceType[] {rt}, 
+                                             new BracedBody(SourceInfo.NONE, new BodyItemI[0]));
       cd3.visit(_cbiv);
       
       assertEquals("Should now be 2 errors", 2, errors.size());
-      assertEquals("Error message should be correct","You cannot have two method parameters with the same name" , errors.getLast().getFirst());
+      assertEquals("Error message should be correct", "You cannot have two method parameters with the same name", 
+                   errors.getLast().getFirst());
     }    
   }
 }

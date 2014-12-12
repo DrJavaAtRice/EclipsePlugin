@@ -30,10 +30,13 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
 import koala.dynamicjava.tree.visitor.*;
 
 /**
- * This class represents the 'this' expression nodes of the syntax tree
+ * This class represents the 'this' expression nodes of the syntax tree.  It may
+ * be unqualified (just "this") or qualified ("foo.bar.this").
  *
  * @author  Stephane Hillion
  * @version 1.0 - 1999/04/24
@@ -41,49 +44,32 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class ThisExpression extends PrimaryExpression {
   /**
-   * The className property name
-   */
-  public final static String CLASS_NAME = "className";
-  
-  /**
    * The class that qualify that object
    */
-  private String className;
+  private Option<String> className;
   
-  /**
-   * Initializes the expression
-   * @param ids   the identifiers (tokens) that qualify this 'this'.
-   *              Can be null.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
-   * @exception IllegalArgumentException if ids is null or body is null
-   */
-  public ThisExpression(List<IdentifierToken> ids, String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
-    
-    if (ids == null) throw new IllegalArgumentException("ids == null");
-    
-    className = TreeUtilities.listToName(ids);
+  public ThisExpression(Option<String> cn, SourceInfo si) {
+    super(si);
+    if (cn == null) throw new IllegalArgumentException("cn == null");
+    className = cn;
   }
+  
+  public ThisExpression(Option<String> cn) { this(cn, SourceInfo.NONE); }
   
   /**
    * Returns the name of the class that qualify that object
    */
-  public String getClassName() {
+  public Option<String> getClassName() {
     return className;
   }
   
   /**
-   * Sets the name of the class that qualify that object
+   * Sets the name of the class that qualifies that object
    * @exception IllegalArgumentException if s is null or body is null
    */
-  public void setClassName(String s) {
-    if (s == null) throw new IllegalArgumentException("s == null");
-    
-    firePropertyChange(CLASS_NAME, className, className = s);
+  public void setClassName(Option<String> cn) {
+    if (cn == null) throw new IllegalArgumentException("cn == null");
+    className = cn;
   }
   
   /**

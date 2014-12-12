@@ -28,6 +28,8 @@
 
 package koala.dynamicjava.tree;
 
+import edu.rice.cs.plt.tuple.Option;
+
 import koala.dynamicjava.tree.visitor.*;
 
 /**
@@ -39,26 +41,32 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class SuperFieldAccess extends FieldAccess {
   /**
-   * Creates a new field access node
-   * @param fln   the field name
-   * @exception IllegalArgumentException if fln is null
+   * The class that qualify that object
    */
-  public SuperFieldAccess(String fln) {
-    this(fln, null, 0, 0, 0, 0);
+  private Option<String> className;
+  
+  public SuperFieldAccess(Option<String> cn, String fln, SourceInfo si) {
+    super(fln, si);
+    if (cn == null) throw new IllegalArgumentException("cn == null");
+    className = cn;
+  }
+  
+  public SuperFieldAccess(Option<String> cn, String fln) { this(cn, fln, SourceInfo.NONE); }
+  
+  /**
+   * Returns the name of the class that qualify that object
+   */
+  public Option<String> getClassName() {
+    return className;
   }
   
   /**
-   * Creates a new field access node
-   * @param fln   the field name
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
-   * @exception IllegalArgumentException if fln is null
+   * Sets the name of the class that qualifies that object
+   * @exception IllegalArgumentException if s is null or body is null
    */
-  public SuperFieldAccess(String fln, String fn, int bl, int bc, int el, int ec) {
-    super(fln, fn, bl, bc, el, ec);
+  public void setClassName(Option<String> cn) {
+    if (cn == null) throw new IllegalArgumentException("cn == null");
+    className = cn;
   }
   
   /**
@@ -72,6 +80,6 @@ public class SuperFieldAccess extends FieldAccess {
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+getFieldName()+")";
+    return "("+getClass().getName()+": "+getClassName()+" "+getFieldName()+")";
   }
 }

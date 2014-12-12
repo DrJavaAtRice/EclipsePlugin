@@ -1,138 +1,161 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.repl.newjvm;
 
-import java.net.URL;
+import java.io.File;
 import java.util.LinkedList;
-import java.util.List;
 import java.lang.ClassLoader;
-import edu.rice.cs.drjava.model.ClassPathEntry;
-import edu.rice.cs.drjava.model.DeadClassLoader;
-import edu.rice.cs.drjava.model.BrainClassLoader;
+import edu.rice.cs.plt.io.IOUtil;
+import edu.rice.cs.plt.iter.IterUtil;
+import edu.rice.cs.plt.lambda.Lambda;
+import edu.rice.cs.plt.reflect.PathClassLoader;
 
-import edu.rice.cs.util.ClassPathVector;
+import static edu.rice.cs.plt.debug.DebugUtil.error;
+import static edu.rice.cs.plt.debug.DebugUtil.debug;
 
-/* This class runs in the Main JVM, but it accessed from the Slave JVM via RMI.  All public methods are synchronzed. */
-public class ClassPathManager{
+/**
+ * Maintains a dynamic class path, allowing entries to be incrementally added in the appropriate
+ * place in the list.  This class is used in the interpreter JVM, and may be accessed concurrently.
+ */
+public class ClassPathManager implements Lambda<ClassLoader, ClassLoader> {
   
-  private LinkedList<ClassPathEntry> projectCP;              /* The custom project classpath. */
-  private LinkedList<ClassPathEntry> buildCP;                /* The build directory. */
-  private LinkedList<ClassPathEntry> projectFilesCP;         /* The open project files. */
-  private LinkedList<ClassPathEntry> externalFilesCP;        /* The open external files. */
-  private LinkedList<ClassPathEntry> extraCP;                /* The extra preferences classpath. */ 
+  // For thread safety, all accesses to these lists are synchronized on this, and when they are made available
+  // to others (via getters or in the class loader), a snapshot is used.
   
-//  private volatile LinkedList<ClassPathEntry> systemCP;               /* The system classpath. */
-//  private List<ClasspathEntry> openFilesCP;                           /* Open files classpath (for nonproject mode) */
+  private final LinkedList<File> _projectCP;       /* The custom project class path. */
+  private final LinkedList<File> _buildCP;         /* The build directory. */
+  private final LinkedList<File> _projectFilesCP;  /* The open project files. */
+  private final LinkedList<File> _externalFilesCP; /* The open external files. */
+  private final LinkedList<File> _extraCP;         /* The extra preferences class path. */
+  // these can be accessed concurrently:
   
-  public ClassPathManager() {
-    projectCP = new LinkedList<ClassPathEntry>();
-    buildCP = new LinkedList<ClassPathEntry>();
-    projectFilesCP = new LinkedList<ClassPathEntry>();
-    externalFilesCP = new LinkedList<ClassPathEntry>();
-    extraCP = new LinkedList<ClassPathEntry>();
-//    systemCP = new LinkedList<ClassPathEntry>();
-//    openFilesCP = new LinkedList<ClasspathEntry>();
+  private final Iterable<File> _fullPath;
+  
+  public ClassPathManager(Iterable<File> builtInCP) {
+    _projectCP = new LinkedList<File>();
+    _buildCP = new LinkedList<File>();
+    _projectFilesCP = new LinkedList<File>();
+    _externalFilesCP = new LinkedList<File>();
+    _extraCP = new LinkedList<File>();
+    // conversions to SizedIterables are necessary to support 1.4 compatibility
+    Iterable<Iterable<File>> allPaths =
+      IterUtil.<Iterable<File>>make(IterUtil.asSizedIterable(_projectCP),
+                                    IterUtil.asSizedIterable(_buildCP),
+                                    IterUtil.asSizedIterable(_projectFilesCP),
+                                    IterUtil.asSizedIterable(_externalFilesCP),
+                                    IterUtil.asSizedIterable(_extraCP),
+                                    IterUtil.snapshot(builtInCP));
+    // lazily map the lists to their snapshots -- the snapshot code executes every time
+    // _fullPath is traversed
+    _fullPath = IterUtil.collapse(IterUtil.map(allPaths, _makeSafeSnapshot));
+    updateProperty();
   }
+  
+  public static final String INTERACTIONS_CLASS_PATH_PROPERTY = "edu.rice.cs.drjava.interactions.class.path";
+  
+  protected void updateProperty() {
+    System.setProperty(INTERACTIONS_CLASS_PATH_PROPERTY,IOUtil.pathToString(_fullPath));
+  }
+  
+  private final Lambda<Iterable<File>, Iterable<File>> _makeSafeSnapshot =
+    new Lambda<Iterable<File>, Iterable<File>>() {
+    public Iterable<File> value(Iterable<File> arg) {
+      synchronized(ClassPathManager.this) { return IterUtil.snapshot(arg); }
+    }
+  };
   
   /** Adds the entry to the front of the project classpath
-   *  (this is the classpath specified in project properties)
-   */
-  public synchronized void addProjectCP(URL f) { projectCP.add(0, new ClassPathEntry(f)); }
+    * (this is the classpath specified in project properties)
+    */
+  public synchronized void addProjectCP(File f) { _projectCP.addFirst(f); updateProperty(); }
   
-  public synchronized ClassPathEntry[] getProjectCP() { 
-    return projectCP.toArray(new ClassPathEntry[projectCP.size()]); 
-  }
+  public synchronized Iterable<File> getProjectCP() { return IterUtil.snapshot(_projectCP); }
   
   /** Adds the entry to the front of the build classpath. */
-  public synchronized void addBuildDirectoryCP(URL f) {
-    buildCP.addFirst(new ClassPathEntry(f));
+  public synchronized void addBuildDirectoryCP(File f) {
+    _buildCP.remove(f); // eliminate duplicates
+    _buildCP.addFirst(f);
+    updateProperty();
   }
-
-  public synchronized ClassPathEntry[] getBuildDirectoryCP() { 
-    return buildCP.toArray(new ClassPathEntry[buildCP.size()]); 
-  }
+  
+  public synchronized Iterable<File> getBuildDirectoryCP() { return IterUtil.snapshot(_buildCP); }
   
   /** Adds the entry to the front of the project files classpath (this is the classpath for all open project files). */
-  public synchronized void addProjectFilesCP(URL f) { projectFilesCP.addFirst(new ClassPathEntry(f)); }
-  
-  public synchronized ClassPathEntry[] getProjectFilesCP() { 
-    return projectFilesCP.toArray(new ClassPathEntry[projectFilesCP.size()]); 
+  public synchronized void addProjectFilesCP(File f) {
+    _projectFilesCP.remove(f); // eliminate duplicates
+    _projectFilesCP.addFirst(f);
+    updateProperty();
   }
+  
+  public synchronized Iterable<File> getProjectFilesCP() { return IterUtil.snapshot(_projectFilesCP); }
   
   /** Adds new entry containing f to the front of the external classpath. */
-  public void addExternalFilesCP(URL f) { externalFilesCP.add(0, new ClassPathEntry(f)); }
-  
-  public ClassPathEntry[] getExternalFilesCP() { 
-    return externalFilesCP.toArray(new ClassPathEntry[externalFilesCP.size()]); 
+  public synchronized void addExternalFilesCP(File f) {
+    _externalFilesCP.remove(f); // eliminate duplicates
+    _externalFilesCP.addFirst(f);
+    updateProperty();
   }
+  
+  public synchronized Iterable<File> getExternalFilesCP() { return IterUtil.snapshot(_externalFilesCP); }
   
   /** Adds the entry to the front of the extra classpath. */
-  public synchronized void addExtraCP(URL f) { extraCP.addFirst(new ClassPathEntry(f)); }
-  
-  public ClassPathEntry[] getExtraCP() { return extraCP.toArray(new ClassPathEntry[extraCP.size()]); }
-  
-  /** Returns a new classloader that represents the custom classpath. */
-  public synchronized ClassLoader getClassLoader() {
-    return new BrainClassLoader(buildClassLoader(projectCP), 
-                                buildClassLoader(buildCP), 
-                                buildClassLoader(projectFilesCP), 
-                                buildClassLoader(externalFilesCP), 
-                                buildClassLoader(extraCP));
+  public synchronized void addExtraCP(File f) {
+    _extraCP.remove(f); // eliminate duplicates
+    _extraCP.addFirst(f);
+    updateProperty();
   }
   
-  /** Builds a new classloader for the list of classpath entries. */
-  private ClassLoader buildClassLoader(List<ClassPathEntry>locpe) {
-    ClassLoader c = new DeadClassLoader();
-    for(ClassPathEntry cpe: locpe) { c = cpe.getClassLoader(c); }
-    return c;
-  }
-
-  /** Returns a copy of the list of unique entries on the classpath. */
-  public synchronized ClassPathVector getAugmentedClassPath() {
-    ClassPathVector ret = new ClassPathVector();
+  public Iterable<File> getExtraCP() { return IterUtil.snapshot(_extraCP); }
   
-    for (ClassPathEntry e: getProjectCP()) { ret.add(e.getEntry()); }
-
-    for (ClassPathEntry e: getBuildDirectoryCP()) { ret.add(e.getEntry()); }
-
-    for (ClassPathEntry e: getProjectFilesCP()) { ret.add(e.getEntry()); }
-
-    for (ClassPathEntry e: getExternalFilesCP()) { ret.add(e.getEntry()); }
-
-    for (ClassPathEntry e: getExtraCP()) { ret.add(e.getEntry()); }
-    return ret;
+  /** Create a new class loader based on the given path.  The loader's path is dynamically updated
+    * as changes are made in the ClassPathManager.  Each loader returned by this method will
+    * have its own set of loaded classes, and will only share those classes that are loaded
+    * by a common parent.
+    * @param parent  The parent class loader.  May be {@code null}, signifying the bootstrap
+    *                class loader.
+    */
+  public synchronized ClassLoader makeClassLoader(ClassLoader parent) {
+    updateProperty();
+    return new PathClassLoader(parent, _fullPath);
   }
-
+  
+  /** Lambda value method */
+  public ClassLoader value(ClassLoader parent) { return makeClassLoader(parent); }
+  
+  /** Get a dynamic view of the full class path. */
+  public synchronized Iterable<File> getClassPath() { updateProperty(); return _fullPath; }
 }
-

@@ -1,11 +1,45 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.recur;
 
 import java.util.LinkedList;
 import edu.rice.cs.plt.collect.Multiset;
 import edu.rice.cs.plt.collect.HashMultiset;
+import edu.rice.cs.plt.tuple.Wrapper;
 import edu.rice.cs.plt.tuple.IdentityWrapper;
-import edu.rice.cs.plt.lambda.Command;
-import edu.rice.cs.plt.lambda.Command1;
+import edu.rice.cs.plt.lambda.Runnable1;
 import edu.rice.cs.plt.lambda.Thunk;
 import edu.rice.cs.plt.lambda.Lambda;
 
@@ -30,32 +64,42 @@ import edu.rice.cs.plt.lambda.Lambda;
  */
 public class RecursionStack<T> {
   
-  private Multiset<IdentityWrapper<T>> _previous;
-  private LinkedList<IdentityWrapper<T>> _stack;
+  private final Lambda<? super T, ? extends Wrapper<T>> _wrapperFactory;
+  private final Multiset<Wrapper<T>> _previous;
+  private final LinkedList<Wrapper<T>> _stack;
   
-  /** Create an empty recursion stack */
-  public RecursionStack() {
-    _previous = new HashMultiset<IdentityWrapper<T>>();
-    _stack = new LinkedList<IdentityWrapper<T>>();
+  /** Create an empty recursion stack with an {@link IdentityWrapper} factory */
+  public RecursionStack() { this(IdentityWrapper.<T>factory()); }
+  
+  /**
+   * Create an empty recursion stack with the given {@code Wrapper} factory
+   * @param wrapperFactory  A lambda used to produce a wrapper for values placed on the
+   *                        stack.  This provides clients with control over the method used
+   *                        to determine if a value has been seen previously.
+   */
+  public RecursionStack(Lambda<? super T, ? extends Wrapper<T>> wrapperFactory) {
+    _wrapperFactory = wrapperFactory;
+    _previous = new HashMultiset<Wrapper<T>>();
+    _stack = new LinkedList<Wrapper<T>>();
   }
   
   /** 
    * @return  {@code true} iff a value identical (according to {@code ==}) to {@code arg}
    *          is currently on the stack
    */
-  public boolean contains(T arg) { return _previous.contains(new IdentityWrapper<T>(arg)); }
+  public boolean contains(T arg) { return _previous.contains(_wrapperFactory.value(arg)); }
   
   /** 
    * @return  {@code true} iff at least {@code threshold} values identical (according to 
    *          {@code ==}) to {@code arg} are currently on the stack
    */
   public boolean contains(T arg, int threshold) {
-    return _previous.count(new IdentityWrapper<T>(arg)) >= threshold;
+    return _previous.count(_wrapperFactory.value(arg)) >= threshold;
   }
   
   /** Add {@code arg} to the top of the stack */
   public void push(T arg) {
-    IdentityWrapper<T> wrapped = new IdentityWrapper<T>(arg);
+    Wrapper<T> wrapped = _wrapperFactory.value(arg);
     _stack.addLast(wrapped);
     _previous.add(wrapped);
   }
@@ -65,7 +109,7 @@ public class RecursionStack<T> {
    * @throws IllegalArgumentException  If {@code arg} is not at the top of the stack
    */
   public void pop(T arg) {
-    IdentityWrapper<T> wrapped = new IdentityWrapper<T>(arg);
+    Wrapper<T> wrapped = _wrapperFactory.value(arg);
     if (_stack.isEmpty() || !_stack.getLast().equals(wrapped)) {
       throw new IllegalArgumentException("arg is not on top of the stack");
     }
@@ -80,101 +124,101 @@ public class RecursionStack<T> {
   public boolean isEmpty() { return _stack.isEmpty(); }
   
   /**
-   * Run the given command, unless {@code arg} is already on the stack; push {@code arg}
-   * onto the stack during command execution
+   * Run the given runnable, unless {@code arg} is already on the stack; push {@code arg}
+   * onto the stack during runnable execution
    */
-  public void run(Command c, T arg) {
+  public void run(Runnable r, T arg) {
     if (!contains(arg)) { 
       push(arg);
-      try { c.run(); }
+      try { r.run(); }
       finally { pop(arg); }
     }
   }
   
   /**
-   * Run the given command, unless {@code threshold} instances of {@code arg} are already 
-   * on the stack; push {@code arg} onto the stack during command execution
+   * Run the given runnable, unless {@code threshold} instances of {@code arg} are already 
+   * on the stack; push {@code arg} onto the stack during runnable execution
    */
-  public void run(Command c, T arg, int threshold) {
+  public void run(Runnable r, T arg, int threshold) {
     if (!contains(arg, threshold)) { 
       push(arg);
-      try { c.run(); }
+      try { r.run(); }
       finally { pop(arg); }
     }
   }
   
   /**
-   * If {@code arg} is not on the stack, run {@code c}; otherwise, run {@code infiniteCase}.  
-   * In either case, push {@code arg} onto the stack during command execution.
+   * If {@code arg} is not on the stack, run {@code r}; otherwise, run {@code infiniteCase}.  
+   * In either case, push {@code arg} onto the stack during runnable execution.
    */
-  public void run(Command c, Command infiniteCase, T arg) {
-    Command toRun = (contains(arg) ? infiniteCase : c);
+  public void run(Runnable r, Runnable infiniteCase, T arg) {
+    Runnable toRun = (contains(arg) ? infiniteCase : r);
     push(arg);
     try { toRun.run(); }
     finally { pop(arg); }
   }
   
   /**
-   * If less than {@code threshold} instances of {@code arg} are on the stack, run {@code c}; 
+   * If less than {@code threshold} instances of {@code arg} are on the stack, run {@code r}; 
    * otherwise, run {@code infiniteCase}.  In either case, push {@code arg} onto the stack 
-   * during command execution.
+   * during runnable execution.
    */
-  public void run(Command c, Command infiniteCase, T arg, int threshold) {
-    Command toRun = (contains(arg, threshold) ? infiniteCase : c);
+  public void run(Runnable r, Runnable infiniteCase, T arg, int threshold) {
+    Runnable toRun = (contains(arg, threshold) ? infiniteCase : r);
     push(arg);
     try { toRun.run(); }
     finally { pop(arg); }
   }
   
   /**
-   * Run the given command with argument {@code arg}, unless {@code arg} is already on the 
-   * stack; push {@code arg} onto the stack during command execution
+   * Run the given runnable with argument {@code arg}, unless {@code arg} is already on the 
+   * stack; push {@code arg} onto the stack during runnable execution
    */
-  public <V extends T> void run(Command1<? super V> c, V arg) {
+  public <V extends T> void run(Runnable1<? super V> r, V arg) {
     if (!contains(arg)) { 
       push(arg);
-      try { c.run(arg); }
+      try { r.run(arg); }
       finally { pop(arg); }
     }
   }
   
   /**
-   * Run the given command with argument {@code arg}, unless {@code threshold} instances 
+   * Run the given runnable with argument {@code arg}, unless {@code threshold} instances 
    * of {@code arg} are already on the stack; push {@code arg} onto the stack during 
-   * command execution
+   * runnable execution
    */
-  public <V extends T> void run(Command1<? super V> c, V arg, int threshold) {
+  public <V extends T> void run(Runnable1<? super V> r, V arg, int threshold) {
     if (!contains(arg, threshold)) { 
       push(arg);
-      try { c.run(arg); }
+      try { r.run(arg); }
       finally { pop(arg); }
     }
   }
   
   /**
-   * If {@code arg} is not on the stack, run {@code c} with argument {@code arg}; otherwise, 
+   * If {@code arg} is not on the stack, run {@code r} with argument {@code arg}; otherwise, 
    * run {@code infiniteCase}.  In either case, push {@code arg} onto the stack during 
-   * command execution.
+   * runnable execution.
    */
-  public <V extends T> void run(Command1<? super V> c, Command1<? super V> infiniteCase, V arg) {
+  public <V extends T> void run(Runnable1<? super V> r, Runnable1<? super V> infiniteCase, V arg) {
     // The javac type checker is broken here
-    @SuppressWarnings("unchecked") Command1<? super V> toRun = 
-      (Command1<? super V>) (contains(arg) ? infiniteCase : c);
+    @SuppressWarnings("unchecked") Runnable1<? super V> toRun = 
+      (Runnable1<? super V>) (contains(arg) ? infiniteCase : r);
     push(arg);
     try { toRun.run(arg); }
     finally { pop(arg); }
   }
   
   /**
-   * If less than {@code threshold} instances of {@code arg} are on the stack, run {@code c}
+   * If less than {@code threshold} instances of {@code arg} are on the stack, run {@code r}
    * with argument {@code arg}; otherwise, run {@code infiniteCase}.  In either case, 
-   * push {@code arg} onto the stack during command execution.
+   * push {@code arg} onto the stack during runnable execution.
    */
-  public <V extends T> void run(Command1<? super V> c, Command1<? super V> infiniteCase, V arg, 
+  public <V extends T> void run(Runnable1<? super V> r, Runnable1<? super V> infiniteCase, V arg, 
                                 int threshold) {
     // The javac type checker is broken here
-    @SuppressWarnings("unchecked") Command1<? super V> toRun = 
-      (Command1<? super V>) (contains(arg, threshold) ? infiniteCase : c);
+    @SuppressWarnings("unchecked") Runnable1<? super V> toRun = 
+      (Runnable1<? super V>) (contains(arg, threshold) ? infiniteCase : r);
     push(arg);
     try { toRun.run(arg); }
     finally { pop(arg); }
@@ -308,5 +352,10 @@ public class RecursionStack<T> {
   
   /** Call the constructor (allows {@code T} to be inferred) */
   public static <T> RecursionStack<T> make() { return new RecursionStack<T>(); }
+  
+  /** Call the constructor (allows {@code T} to be inferred) */
+  public static <T> RecursionStack<T> make(Lambda<? super T, ? extends Wrapper<T>> wrapperFactory) {
+    return new RecursionStack<T>(wrapperFactory);
+  }
   
 }

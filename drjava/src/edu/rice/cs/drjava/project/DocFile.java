@@ -1,47 +1,50 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.project;
 
 import java.io.File;
 import java.io.IOException;
+import edu.rice.cs.util.AbsRelFile;
+import edu.rice.cs.plt.tuple.Pair;
 
-import edu.rice.cs.util.Pair;
-
-public class DocFile extends File {
+public class DocFile extends AbsRelFile {
   
-  private Pair<Integer,Integer> _sel;
-  private Pair<Integer,Integer> _scroll;
+  private Pair<Integer, Integer> _sel;
+  private Pair<Integer, Integer> _scroll;
   private boolean _active;
   private String _package;
   private long _mod;
@@ -77,6 +80,8 @@ public class DocFile extends File {
   }
   ///////////////////// Overriden Methods //////////////////////
   
+  /* Relying on equals and hashCode methods inherited from File. */
+  
   
   public DocFile getAbsoluteFile() {
     if (isAbsolute()) return this;
@@ -101,7 +106,7 @@ public class DocFile extends File {
    *  @param end the end of the selection (and the cursor position)
    */
   public void setSelection(int start, int end) {
-    _sel = new Pair<Integer,Integer>(new Integer(start), new Integer(end));
+    _sel = new Pair<Integer,Integer>(Integer.valueOf(start), Integer.valueOf(end));
   }  
   /** @return the selection with the first element being the vertical scroll and the second being the horizontal scroll. */
   public Pair<Integer,Integer> getScroll() { return _scroll; }
@@ -113,20 +118,20 @@ public class DocFile extends File {
    *  @param horiz the horizonal scroll of the scroll pane
    */
   public void setScroll(int vert, int horiz) {
-    _scroll = new Pair<Integer,Integer>(new Integer(vert), new Integer(horiz));
+    _scroll = new Pair<Integer,Integer>(Integer.valueOf(vert), Integer.valueOf(horiz));
   }
   
-  /** @return true if this file is supposed to be the active document when opened. */
+  /** @return  {@code true} if this file is supposed to be the active document when opened. */
   public boolean isActive() { return _active; }
   
-  /** @param active whether this file should be the active document when opened. */
+  /** @param active  Whether this file should be the active document when opened. */
   
   public void setActive(boolean active) { _active = active; }
   /** @return the package of the document stored in this file */
   
   public String getPackage() { return _package; }
   
-  /** @param pack the name of the package defined in the document text. */
+  /** @param pkg  The name of the package defined in the document text. */
   public void setPackage(String pkg) { _package = pkg; }
   
   /** Sets lastModified for this file to the time the including project file was saved. The <code>lastModified</code>
@@ -135,6 +140,6 @@ public class DocFile extends File {
    */
   public void setSavedModDate(long mod) { _mod = mod; }
   
-  /** @return the modification date of this file at the time the project file was generated. */
+  /** @return  The modification date of this file at the time the project file was generated. */
   public long getSavedModDate() { return _mod; }
 }

@@ -31,7 +31,6 @@ package koala.dynamicjava.tree;
 import java.util.*;
 
 import koala.dynamicjava.tree.visitor.*;
-import koala.dynamicjava.util.*;
 
 /**
  * This class represents the import declarations
@@ -41,16 +40,6 @@ import koala.dynamicjava.util.*;
  */
 
 public class ImportDeclaration extends Node {
-  /**
-   * The name property name
-   */
-  public final static String NAME = "name";
-
-  /**
-   * The package property name
-   */
-  public final static String PACKAGE = "package";
-
   /**
    * The name of the imported class or package
    */
@@ -71,7 +60,7 @@ public class ImportDeclaration extends Node {
    * @exception IllegalArgumentException if ident is null
    */
   public ImportDeclaration(List<IdentifierToken> ident, boolean pkg, boolean sttc) {
-    this(ident, pkg, sttc, null, 0, 0, 0, 0);
+    this(ident, pkg, sttc, SourceInfo.NONE);
   }
 
   /**
@@ -79,20 +68,13 @@ public class ImportDeclaration extends Node {
    * @param ident a list of tokens that represents a package or a class name
    * @param pkg   true if this declaration imports a package
    * @param sttc  true if this declaration is a static import
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if ident is null
    */
   public ImportDeclaration(List<IdentifierToken> ident, boolean pkg, boolean sttc,
-                           String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                           SourceInfo si) {
+    super(si);
 
     if (ident == null) throw new IllegalArgumentException("ident == null");
-
-    if (sttc) TigerUtilities.assertTigerEnabled("Static Import is not supported before Java 1.5");
     pckage     = pkg;
     sttic      = sttc;
     name       = TreeUtilities.listToName(ident);
@@ -103,16 +85,11 @@ public class ImportDeclaration extends Node {
    * @param nm    a string that represents a package or a class name
    * @param pkg   true if this declaration imports a package
    * @param sttc  true if this declaration is a static import
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if ident is null
    */
   public ImportDeclaration(String nm, boolean pkg, boolean sttc,
-                           String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                           SourceInfo si) {
+    super(si);
 
     if (nm == null) throw new IllegalArgumentException("name == null");
 
@@ -134,8 +111,7 @@ public class ImportDeclaration extends Node {
    */
   public void setName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-
-    firePropertyChange(NAME, name, name = s);
+    name = s;
   }
 
   /**
@@ -158,7 +134,7 @@ public class ImportDeclaration extends Node {
    * Sets the package property
    */
   public void setPackage(boolean b) {
-    firePropertyChange(PACKAGE, pckage, pckage = b);
+    pckage = b;
   }
 
   /**

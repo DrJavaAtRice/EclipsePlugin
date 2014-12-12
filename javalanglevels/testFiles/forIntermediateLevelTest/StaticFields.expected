@@ -1,3 +1,6 @@
+// Language Level Converter line number map: dj*->java. Entries: 13
+//     1->4         2->5         3->6         4->7         5->8         6->9         7->10        8->36   
+//     9->37       10->38       11->39       12->40       13->41   
 class StaticFields {
   public final static int i=2;
   public final static int j=5;

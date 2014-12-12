@@ -1,43 +1,45 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.definitions;
 
 import javax.swing.text.*;
 import java.awt.*;
 import javax.swing.event.DocumentEvent;
-// TODO: Check synchronization.
-import java.util.Vector;
+import java.util.ArrayList;
 
 import edu.rice.cs.drjava.DrJava;
 import edu.rice.cs.drjava.model.*;
@@ -46,19 +48,18 @@ import edu.rice.cs.drjava.config.OptionConstants;
 import edu.rice.cs.drjava.config.OptionEvent;
 import edu.rice.cs.drjava.config.OptionListener;
 import edu.rice.cs.drjava.model.definitions.reducedmodel.*;
+import edu.rice.cs.util.UnexpectedException;
+import edu.rice.cs.util.text.EditDocumentInterface;
 
-/**
- * This view class renders text on the screen using the reduced model info.
- * By extending WrappedPlainView, we only have to override the parts we want to.
- * Here we only override drawUnselectedText. We may want to override
- * drawSelectedText at some point. As of 2002/06/17, we now extend PlainView because
- * WrappedPlainView was causing bugs related to resizing the viewport of the
- * definitions scroll pane.
- *
- * @version $Id$
- */
+/** This view class renders text on the screen using the reduced model info.  By extending WrappedPlainView, we only
+  * have to override the parts we want to. Here we only override drawUnselectedText. We may want to override
+  * drawSelectedText at some point. As of 2002/06/17, we now extend PlainView because WrappedPlainView was causing 
+  * bugs related to resizing the viewport of the definitions scroll pane.
+  *
+  * @version $Id$
+  */
 public class ColoringView extends PlainView implements OptionConstants {
- 
+  
   public static Color COMMENTED_COLOR = DrJava.getConfig().getSetting(DEFINITIONS_COMMENT_COLOR);
   public static Color DOUBLE_QUOTED_COLOR = DrJava.getConfig().getSetting(DEFINITIONS_DOUBLE_QUOTED_COLOR);
   public static Color SINGLE_QUOTED_COLOR = DrJava.getConfig().getSetting(DEFINITIONS_SINGLE_QUOTED_COLOR);
@@ -77,11 +78,11 @@ public class ColoringView extends PlainView implements OptionConstants {
   public static Color DEBUGGER_COLOR = DrJava.getConfig().getSetting(DEBUG_MESSAGE_COLOR);
   
   /** Constructs a new coloring view.
-   *  @param elem the element
-   */
+    * @param elem the element
+    */
   public ColoringView(Element elem) {
     super(elem);
-
+    
     // Listen for updates to configurable colors
     final ColorOptionListener col = new ColorOptionListener();
     final FontOptionListener fol = new FontOptionListener();
@@ -128,87 +129,73 @@ public class ColoringView extends PlainView implements OptionConstants {
       });
     }
   }
-
-  /** Renders the given range in the model as normal unselected text.
-   *  Note that this is text that's all on one line. The superclass deals
-   *  with breaking lines and such. So all we have to do here is draw the
-   *  text on [p0,p1) in the model. We have to start drawing at (x,y), and
-   *  the function returns the x coordinate when we're done.
-   *
-   *  @param g the graphics context
-   *  @param x the starting X coordinate
-   *  @param y the starting Y coordinate
-   *  @param p0 the beginning position in the model
-   *  @param p1 the ending position in the model
-   *  @return the x coordinate at the end of the range
-   *  @throws BadLocationException if the range is invalid
-   */
-  protected int drawUnselectedText(Graphics g, int x, int y, int p0, int p1) throws BadLocationException {
-        
-    // Might be a PlainDocument (when AbstractDJPane is first constructed).
-    //   See comments for DefinitionsEditorKit.createNewDocument() for details.
-    Document doc = getDocument();
-    AbstractDJDocument _doc = null;
-    if (doc instanceof AbstractDJDocument) _doc = (AbstractDJDocument) doc;
-    else return x; // return if there is no AbstracDJDocument
-    
+  
+  /** Renders the given range in the model as normal unselected text. Note that this text is all on one line.
+    * The superclass deals with breaking lines and such. So all we have to do here is draw the text on [p0,p1) in the
+    * model. We have to start drawing at (x,y), and the function returns the x coordinate when we're done.
+    * @param g  The graphics context
+    * @param x  The starting X coordinate
+    * @param y  The starting Y coordinate
+    * @param start  The beginning position in the model
+    * @param end  The ending position in the model
+    * @return  The x coordinate at the end of the range
+    * @throws BadLocationException  If the range is invalid
+    */
+  protected int drawUnselectedText(Graphics g, int x, int y, int start, int end) throws BadLocationException {
     // If there's nothing to show, don't do anything!
     // For some reason I don't understand we tend to get called sometimes to render a zero-length area.
-    if (p0 == p1) return  x;
-
-    Vector<HighlightStatus> stats = _doc.getHighlightStatus(p0, p1);
-    if (stats.size() < 1) throw  new RuntimeException("GetHighlightStatus returned nothing!");
+    if (start == end) return x;
     
-    for (int i = 0; i < stats.size(); i++) {
-      HighlightStatus stat = stats.get(i);
-      int length = stat.getLength();
+    // doc might be a PlainDocument (when AbstractDJPane is first constructed).
+    // See comments for DefinitionsEditorKit.createNewDocument() for details.
+    Document doc = getDocument();
+    if (! (doc instanceof AbstractDJDocument)) return x; // return if there is no AbstracDJDocument
+    
+    final AbstractDJDocument _doc = (AbstractDJDocument) doc;
+    
+    ArrayList<HighlightStatus> stats = _doc.getHighlightStatus(start, end);
+    if (stats.size() < 1) throw new UnexpectedException("GetHighlightStatus returned nothing!");
+    
+    for (HighlightStatus stat: stats) {
       int location = stat.getLocation();
+      int length = stat.getLength();
+      
       // If this highlight status extends past p1, end at p1
-      if (location + length > p1) length = p1 - stat.getLocation();
+      if (location + length > end) length = end - stat.getLocation();
       
-      Segment text = getLineBuffer();
-      
-      if (!(_doc instanceof InteractionsDJDocument) || !((InteractionsDJDocument)_doc).setColoring((p0+p1)/2,g))      
+      if (! (_doc instanceof InteractionsDJDocument) || ! ((InteractionsDJDocument)_doc).setColoring((start + end)/2, g))      
         setFormattingForState(g, stat.getState());
-      //      else
-      //        DrJava.consoleErr().println("Highlight: p0="+p0+"; p1="+p1+"; location="+location+"; color="+g.getColor()+"; text="+text);
-      
-      //      
-      //       DrJava.consoleErr().println("Highlight: loc=" + location + " length=" +
-      //       length + " state=" + stat.getState() +
-      //       " text=" + text);
-      //       
+      Segment text = getLineBuffer(); 
       _doc.getText(location, length, text);
-      x = Utilities.drawTabbedText(text, x, y, g, this, location);
+      x = Utilities.drawTabbedText(text, x, y, g, this, location);  // updates x on each iteration
     }
-    //DrJava.consoleErr().println("returning x: " + x);
     return  x;
   }
-
+  
   /** Draws the selected text image at the specified location.
-   * @param g the text image
-   * @param x the x coordinate for the drawn text
-   * @param y the y coordinate for the drawn text
-   * @param p0 the beginning position in the model
-   * @param p1 the end position in the model
-   * @return the location of the end of the image (range)
-   * @exception BadLocationException
-   */
-  protected int drawSelectedText(Graphics g, int x, int y, int p0, int p1) throws BadLocationException {
-    /*
-     DrJava.consoleErr().println("drawSelected: " + p0 + "-" + p1 +
-     " doclen=" + _doc.getLength() +" x="+x+" y="+y);
-     */
-    Document doc = getDocument();
-    if (doc instanceof InteractionsDJDocument) ((InteractionsDJDocument)doc).setBoldFonts(p1,g);
-    
-    return  super.drawSelectedText(g, x, y, p0, p1);
-  }
+    * @param g  The text image
+    * @param x  The x coordinate for the drawn text
+    * @param y  The y coordinate for the drawn text
+    * @param start  The beginning position in the model
+    * @param end  The end position in the model
+    * @return  The location of the end of the image (range)
+    * @throws BadLocationException
+    */
+  protected int drawSelectedText(Graphics g, int x, int y, int start, int end) throws BadLocationException {
 
+//    DrJava.consoleErr().
+//      println("drawSelected: " + p0 + "-" + p1 + " doclen=" + _doc.getLength() + " x=" + x + " y=" + y);
+
+    EditDocumentInterface doc = (EditDocumentInterface) getDocument();
+    if (doc instanceof InteractionsDJDocument) ((InteractionsDJDocument)doc).setBoldFonts(end, g);
+    
+    return  super.drawSelectedText(g, x, y, start, end);
+  }
+  
   /** Given a particular state, assign it a color.
-   *  @param g Graphics object
-   *  @param state a given state
-   */
+    * @param g Graphics object
+    * @param state a given state
+    */
   private void setFormattingForState(Graphics g, int state) {
     switch (state) {
       case HighlightStatus.NORMAL:
@@ -237,22 +224,28 @@ public class ColoringView extends PlainView implements OptionConstants {
     }
     g.setFont(MAIN_FONT);
   }
-
-  /** Called when a change occurs.
-   *  @param changes document changes
-   *  @param a a Shape
-   *  @param f a ViewFactory
-   */
-  public void changedUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
-    super.changedUpdate(changes, a, f);
-    // Make sure we redraw since something changed in the formatting
+  
+  
+  /** Repaints the container associated with this view, if such container exists. */
+  private void repaintContainer() {
     Container c = getContainer();
     if (c != null) c.repaint();
   }
-
+    
+  /** Called when a change occurs.
+    * @param changes document changes
+    * @param a a Shape
+    * @param f a ViewFactory
+    */
+  public void changedUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
+    super.changedUpdate(changes, a, f);
+    // Make sure we redraw since something changed in the formatting
+    repaintContainer();
+  }
+  
   /** Called when an OptionListener perceives a change in any of the colors */
   public void updateColors() {
-
+    
     COMMENTED_COLOR = DrJava.getConfig().getSetting(DEFINITIONS_COMMENT_COLOR);
     DOUBLE_QUOTED_COLOR = DrJava.getConfig().getSetting(DEFINITIONS_DOUBLE_QUOTED_COLOR);
     SINGLE_QUOTED_COLOR = DrJava.getConfig().getSetting(DEFINITIONS_SINGLE_QUOTED_COLOR);
@@ -266,11 +259,11 @@ public class ColoringView extends PlainView implements OptionConstants {
     INTERACTIONS_SYSTEM_OUT_COLOR = DrJava.getConfig().getSetting(SYSTEM_OUT_COLOR);
     ERROR_COLOR = DrJava.getConfig().getSetting(INTERACTIONS_ERROR_COLOR);
     DEBUGGER_COLOR = DrJava.getConfig().getSetting(DEBUG_MESSAGE_COLOR);
-
+    
     // Avoid the ColoringView that does not have a container.
-    if ( getContainer() != null) getContainer().repaint();
+    repaintContainer();
   }
-
+  
   /** The OptionListeners for DEFINITIONS COLORs */
   private class ColorOptionListener implements OptionListener<Color> {
     public void optionChanged(OptionEvent<Color> oce) { updateColors(); }

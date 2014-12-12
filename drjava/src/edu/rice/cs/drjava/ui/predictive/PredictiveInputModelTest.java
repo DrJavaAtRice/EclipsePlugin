@@ -1,41 +1,45 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui.predictive;
 
 import edu.rice.cs.drjava.DrJavaTestCase;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Unit tests for PredictiveInputModel class.
@@ -92,10 +96,10 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals(0, pim.getMatchingItems().size());
     assertEquals("", pim.getSharedMaskExtension());
     
-    pim.setList("AboutDialog.java",
-                "FileOps.java",
-                "FileOpsTest.java",
-                "Utilities.java");
+    pim.setItems("AboutDialog.java",
+                 "FileOps.java",
+                 "FileOpsTest.java",
+                 "Utilities.java");
     pim.setMask("F");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("F", pim.getMask());
@@ -184,19 +188,19 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals(2, pim.getMatchingItems().size());
     assertEquals("", pim.getSharedMaskExtension());
 
-    pim.setMask(pim.getMask()+".");
+    pim.setMask(pim.getMask() + ".");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("FileOps.", pim.getMask());
     assertEquals(1, pim.getMatchingItems().size());
     assertEquals("java", pim.getSharedMaskExtension());
 
-    pim.setMask(pim.getMask()+"x");
+    pim.setMask(pim.getMask() + "x");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("FileOps.x", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
     assertEquals("", pim.getSharedMaskExtension());
 
-    pim.setMask(pim.getMask()+"y");
+    pim.setMask(pim.getMask() + "y");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("FileOps.xy", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
@@ -378,19 +382,19 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals(2, pim.getMatchingItems().size());
     assertEquals("", pim.getSharedMaskExtension());
 
-    pim.setMask(pim.getMask()+".");
+    pim.setMask(pim.getMask() + ".");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("fILEOPS.", pim.getMask());
     assertEquals(1, pim.getMatchingItems().size());
     assertEquals("java", pim.getSharedMaskExtension());
 
-    pim.setMask(pim.getMask()+"x");
+    pim.setMask(pim.getMask() + "x");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("fILEOPS.x", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
     assertEquals("", pim.getSharedMaskExtension());
 
-    pim.setMask(pim.getMask()+"y");
+    pim.setMask(pim.getMask() + "y");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("fILEOPS.xy", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
@@ -595,10 +599,10 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals("i .java", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
 
-    pim.setList("AboutDialog.java",
-                "FileOps.java",
-                "FileOpsTest.java",
-                "Utilities.java");
+    pim.setItems("AboutDialog.java",
+                 "FileOps.java",
+                 "FileOpsTest.java",
+                 "Utilities.java");
     pim.setMask("F");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("F", pim.getMask());
@@ -680,17 +684,17 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals("F ileOps", pim.getMask());
     assertEquals(2, pim.getMatchingItems().size());
 
-    pim.setMask(pim.getMask()+".");
+    pim.setMask(pim.getMask() + ".");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("F ileOps.", pim.getMask());
     assertEquals(1, pim.getMatchingItems().size());
 
-    pim.setMask(pim.getMask()+"x");
+    pim.setMask(pim.getMask() + "x");
     assertEquals("AboutDialog.java", pim.getCurrentItem());
     assertEquals("F ileOps.x", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
 
-    pim.setMask(pim.getMask()+"y");
+    pim.setMask(pim.getMask() + "y");
     assertEquals("AboutDialog.java", pim.getCurrentItem());
     assertEquals("F ileOps.xy", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
@@ -832,10 +836,10 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals("I .JAVa", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
 
-    pim.setList("AboutDialog.java",
-                "FileOps.java",
-                "FileOpsTest.java",
-                "Utilities.java");
+    pim.setItems("AboutDialog.java",
+                 "FileOps.java",
+                 "FileOpsTest.java",
+                 "Utilities.java");
     pim.setMask("F");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("F", pim.getMask());
@@ -917,17 +921,17 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals("F IlEOpS", pim.getMask());
     assertEquals(2, pim.getMatchingItems().size());
 
-    pim.setMask(pim.getMask()+".");
+    pim.setMask(pim.getMask() + ".");
     assertEquals("FileOps.java", pim.getCurrentItem());
     assertEquals("F IlEOpS.", pim.getMask());
     assertEquals(1, pim.getMatchingItems().size());
 
-    pim.setMask(pim.getMask()+"x");
+    pim.setMask(pim.getMask() + "x");
     assertEquals("AboutDialog.java", pim.getCurrentItem());
     assertEquals("F IlEOpS.x", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
 
-    pim.setMask(pim.getMask()+"y");
+    pim.setMask(pim.getMask() + "y");
     assertEquals("AboutDialog.java", pim.getCurrentItem());
     assertEquals("F IlEOpS.xy", pim.getMask());
     assertEquals(0, pim.getMatchingItems().size());
@@ -1035,5 +1039,71 @@ public class PredictiveInputModelTest extends DrJavaTestCase {
     assertEquals("FileOpsTest.java", pim.getCurrentItem());
     assertEquals("F", pim.getMask());
     assertEquals(2, pim.getMatchingItems().size());
+  }
+  
+  public void testRegExStrategy() {
+    PredictiveInputModel<String> pim = new PredictiveInputModel<String>(false,
+                                                                        new PredictiveInputModel.RegExStrategy<String>(),
+                                                                        "AboutDialog.java",
+                                                                        "FileOps.java",
+                                                                        "FileOpsTest.java",
+                                                                        "Utilities.java",
+                                                                        "NewFileOps.java");
+    pim.setMask("^F.*");
+    assertEquals("FileOps.java", pim.getCurrentItem());
+    assertEquals("^F.*", pim.getMask());
+    assertEquals(2, pim.getMatchingItems().size());
+
+    pim.setCurrentItem(pim.getCurrentItem());
+    assertEquals("FileOps.java", pim.getCurrentItem());
+    assertEquals("^F.*", pim.getMask());
+    assertEquals(2, pim.getMatchingItems().size());
+
+    List<String> m = pim.getMatchingItems();
+    int i = m.indexOf(pim.getCurrentItem());
+    pim.setCurrentItem(m.get(i+1));
+    assertEquals("FileOpsTest.java", pim.getCurrentItem());
+    assertEquals("^F.*", pim.getMask());
+    assertEquals(2, pim.getMatchingItems().size());
+
+    pim.setMask("[^F].*F.*");
+    assertEquals("NewFileOps.java", pim.getCurrentItem());
+    assertEquals("[^F].*F.*", pim.getMask());
+    assertEquals(1, pim.getMatchingItems().size());
+  }
+
+  public void testFragmentLineNumStrategy() {
+    PredictiveInputModel<String> pim = new PredictiveInputModel<String>(true,
+                                                                        new PredictiveInputModel.FragmentLineNumStrategy<String>(),
+                                                                        "Frame",
+                                                                        "JFrame",
+                                                                        "Window",
+                                                                        "JWindow",
+                                                                        "Test");
+    pim.setMask("");
+    assertEquals(5, pim.getMatchingItems().size());
+    assertTrue(pim.getMatchingItems().contains("Frame"));
+    assertTrue(pim.getMatchingItems().contains("JFrame"));
+    assertTrue(pim.getMatchingItems().contains("Window"));
+    assertTrue(pim.getMatchingItems().contains("JWindow"));
+    assertTrue(pim.getMatchingItems().contains("Test"));
+
+    pim.setMask("f");
+    assertEquals(2, pim.getMatchingItems().size());
+    assertTrue(pim.getMatchingItems().contains("Frame"));
+    assertTrue(pim.getMatchingItems().contains("JFrame"));
+  }
+
+  // What about Java 6, 7, 8?
+  public void testJavaAPIFragmentLineNumStrategy() {
+    final String base = edu.rice.cs.drjava.DrJava.
+      getConfig().getSetting(edu.rice.cs.drjava.config.OptionConstants.JAVADOC_1_5_LINK) + "/";
+    final String stripPrefix = ""; // nothing needs to be stripped, links in 1.4 Javadoc are relative
+    final String suffix = "/allclasses-1.5.html";
+    Set<edu.rice.cs.drjava.ui.MainFrameStatics.JavaAPIListEntry> l = 
+      edu.rice.cs.drjava.ui.MainFrame._generateJavaAPISet(base,
+                                                          stripPrefix,
+                                                          suffix);
+    assertTrue(l.size() > 0);
   }
 }

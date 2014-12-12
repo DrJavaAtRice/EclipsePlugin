@@ -1,7 +1,43 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.collect;
 
 import java.util.*;
-import edu.rice.cs.plt.iter.*;
+import edu.rice.cs.plt.iter.EmptyIterator;
+import edu.rice.cs.plt.iter.ImmutableIterator;
+import edu.rice.cs.plt.iter.IterUtil;
 
 /**
  * Maps from a key to a set of values; a key may be added multiple times 
@@ -24,8 +60,6 @@ public class ExternallySortedMultiMap<K, V, C extends Comparable<? super C>> {
    */
   private int _size;
   
-  private final Iterator<V> _emptyIterator = new EmptyIterator<V>();
-  
   /** Create an empty map. */
   public ExternallySortedMultiMap() {
     _map = new HashMap<K, ExternallySortedSet<V, C>>();
@@ -34,6 +68,9 @@ public class ExternallySortedMultiMap<K, V, C extends Comparable<? super C>> {
   
   /** @return  The current number of (key, value) pairs in the map. */
   public int size() { return _size; }
+  
+  /** @return  The current number of (key, value) pairs in the map, or {@code bound} if it is less. */
+  public int size(int bound) { return _size <= bound ? _size : bound; }
   
   /** @return  {@code true} iff {@code size() == 0}. */
   public boolean isEmpty() { return _size == 0; }
@@ -65,8 +102,8 @@ public class ExternallySortedMultiMap<K, V, C extends Comparable<? super C>> {
     return new Iterable<V>() {
       public Iterator<V> iterator() {
         ExternallySortedSet<V, C> set = _map.get(key);
-        if (set == null) { return _emptyIterator; }
-        else { return new ImmutableIterator<V>(set.iterator()); }
+        if (set == null) { return EmptyIterator.make(); }
+        else { return ImmutableIterator.make(set.iterator()); }
       }
     };
   }
@@ -125,18 +162,11 @@ public class ExternallySortedMultiMap<K, V, C extends Comparable<? super C>> {
       ExternallySortedSet<V, C> set = _map.get(e.getKey());
       if (set == null) { set = new ExternallySortedSet<V, C>(); _map.put(e.getKey(), set); }
       _size -= set.size();
-      // capture: e is Map.Entry<k, s>; getValue() is s
-      K k = e.getKey();
       
-      // The following generates an apparently incorrect type error:
+      // The following generates an incorrect type error (javac 5, fixed in javac 6):
       //result = result | set.addAll(e.getValue()); // "|" instead of "||" to avoid short-circuit
-
-      // So does this:
-      //ExternallySortedSet<? extends V, ? extends C> s = e.getValue();
-      //result = result | set.addAll(s); // "|" instead of "||" to avoid short-circuit
-      
       // The workaround:
-      ExternallySortedSet s = e.getValue();
+      @SuppressWarnings("unchecked") ExternallySortedSet s = e.getValue();
       @SuppressWarnings("unchecked") boolean newResult = set.addAll(s);
       result = result | newResult;
       
@@ -153,23 +183,13 @@ public class ExternallySortedMultiMap<K, V, C extends Comparable<? super C>> {
    *          value in this map.  {@link Iterator#remove()} is not supported.
    */
   public Iterable<K> keys() {
-    return new ImmutableIterable<K>(_map.keySet());
+    return IterUtil.immutable(_map.keySet());
   }
   
   /**
    * @return  A dynamically-updating iterable of all values associated with any key
    *          in this map.  {@link Iterator#remove()} is not supported.
    */
-  public Iterable<V> values() {
-    return new Iterable<V>() {
-      public Iterator<V> iterator() {
-        Iterator<V> result = _emptyIterator;
-        for (ExternallySortedSet<V, C> set : _map.values()) {
-          result = new ComposedIterator<V>(set.iterator(), result);
-        }
-        return new ImmutableIterator<V>(result);
-      }
-    };
-  }
+  public Iterable<V> values() { return IterUtil.immutable(IterUtil.collapse(_map.values())); }
   
-}  
+}

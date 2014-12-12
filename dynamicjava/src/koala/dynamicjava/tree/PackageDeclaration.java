@@ -39,15 +39,7 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/05/13
  */
 
-public class PackageDeclaration extends Node {
-  /**
-   * The name property name
-   */
-  public final static String NAME = "name";
-  
-  /**
-   * The name of the package
-   */
+public class PackageDeclaration extends Declaration {
   private String name;
   
   /**
@@ -55,36 +47,26 @@ public class PackageDeclaration extends Node {
    * @param ident a list of tokens that represents a package name.
    *              The list can be null.
    */
-  public PackageDeclaration(List<IdentifierToken> ident) {
-    this(ident, null, 0, 0, 0, 0);
+  public PackageDeclaration(ModifierSet mods, List<IdentifierToken> ident) {
+    this(mods, ident, SourceInfo.NONE);
   }
   
   /**
    * Creates a new package declaration node
    * @param ident a list of tokens that represents a package name.
    *              The list can be null.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    */
-  public PackageDeclaration(List<IdentifierToken> ident, String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public PackageDeclaration(ModifierSet mods, List<IdentifierToken> ident, SourceInfo si) {
+    super(mods, si);
     name = TreeUtilities.listToName(ident);
   }
   
   /**
    * Creates a new package declaration node
    * @param nm    a string that represents a package name.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    */
-  public PackageDeclaration(String nm, String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public PackageDeclaration(ModifierSet mods, String nm, SourceInfo si) {
+    super(mods, si);
     name = nm;
   }
   
@@ -101,8 +83,7 @@ public class PackageDeclaration extends Node {
    */
   public void setName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-    
-    firePropertyChange(NAME, name, name = s);
+    name = s;
   }
   
   /**

@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui.config;
 
@@ -37,28 +40,26 @@ import javax.swing.*;
 import edu.rice.cs.drjava.config.*;
 import edu.rice.cs.drjava.*;
 import edu.rice.cs.util.swing.FontChooser;
+import edu.rice.cs.util.swing.SwingFrame;
 
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * The Graphical form of a FontOption.
- * @version $Id$
- */ 
-public class FontOptionComponent extends OptionComponent<Font> {
+/** The Graphical form of a FontOption.
+  * @version $Id$
+  */ 
+public class FontOptionComponent extends OptionComponent<Font,JPanel> {
   
-  private JButton _button;
-  private JTextField _fontField;
-  private JPanel _panel;
-  private Font _font;
+  private final JButton _button;
+  private final JTextField _fontField;
+  private final JPanel _panel;
+  private volatile Font _font;
   
-  public FontOptionComponent(FontOption opt, String text, Frame parent) {
+  public FontOptionComponent(FontOption opt, String text, SwingFrame parent) {
     super(opt, text, parent);
     _button = new JButton();
     _button.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        chooseFont();
-      }
+      public void actionPerformed(ActionEvent e) { chooseFont(); }
     });
     _button.setText("...");
     _button.setMaximumSize(new Dimension(10,10));
@@ -74,73 +75,50 @@ public class FontOptionComponent extends OptionComponent<Font> {
 
     _font = DrJava.getConfig().getSetting(_option);
     _updateField(_font);
+    setComponent(_panel);
   }
   
-  /**
-   * Constructor that allows for a tooltip description.
-   */
-  public FontOptionComponent(FontOption opt, String text,
-                             Frame parent, String description) {
+  /** Constructor that allows for a tooltip description. */
+  public FontOptionComponent(FontOption opt, String text, SwingFrame parent, String description) {
     this(opt, text, parent);
     setDescription(description);
   }
 
-  /**
-   * Sets the tooltip description text for this option.
-   * @param description the tooltip text
-   */
+  /** Sets the tooltip description text for this option.
+    * @param description the tooltip text
+    */
   public void setDescription(String description) {
     _panel.setToolTipText(description);
     _fontField.setToolTipText(description);
     _label.setToolTipText(description);
   }
 
-  /**
-   * Updates the font field to display the given font.
-   */
+  /** Updates the font field to display the given font. */
   private void _updateField(Font f) {
     _fontField.setFont(f);
     _fontField.setText(_option.format(f));
   }
-    
-  /**
-   * Return's this OptionComponent's configurable component.
-   */
-  public JComponent getComponent() {
-    return _panel;
-  }
   
-  /**
-   * Shows a custom font chooser dialog to pick a new font.
-   */
+  /** Shows a custom font chooser dialog to pick a new font. */
   public void chooseFont() {
     String oldText = _fontField.getText();
-    Font f = FontChooser.showDialog(_parent, 
-                                    "Choose '" + getLabelText() + "'",
-                                    _font);
+    Font f = FontChooser.showDialog(_parent, "Choose '" + getLabelText() + "'", _font);
     if (f != null) {
       _font = f;
       _updateField(_font);
-      if (!oldText.equals(_fontField.getText())) {
-        notifyChangeListeners();        
-      }
+      if (!oldText.equals(_fontField.getText())) { notifyChangeListeners(); }
     }
   }
   
-  /**
-   * Updates the config object with the new setting.
+  /** Updates the config object with the new setting.
    * @return true if the new value is set successfully
    */
   public boolean updateConfig() {
-    if (!_font.equals(DrJava.getConfig().getSetting(_option))) {
-      DrJava.getConfig().setSetting(_option, _font);
-    }
+    if (! _font.equals(DrJava.getConfig().getSetting(_option))) DrJava.getConfig().setSetting(_option, _font);
     return true;
   }
   
-   /**
-   * Displays the given value.
-   */
+   /** Displays the given value. */
   public void setValue(Font value) {
     _font = value;
     _updateField(value);

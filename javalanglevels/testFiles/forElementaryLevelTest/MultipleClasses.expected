@@ -1,3 +1,6 @@
+// Language Level Converter line number map: dj*->java. Entries: 13
+//     1->4         2->5         3->6         4->7         5->8         6->47        7->48        8->49   
+//     9->50       10->89       11->90       12->91       13->92   
 //This tests that multiple classes can be defined in one file at the Elementary level.
 
 class OneClass {

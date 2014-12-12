@@ -39,21 +39,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public abstract class Literal extends PrimaryExpression {
   /**
-   * The representation property name
-   */
-  public final static String REPRESENTATION = "representation";
-  
-  /**
-   * The value property name
-   */
-  public final static String VALUE = "value";
-  
-  /**
-   * The type property name
-   */
-  public final static String TYPE = "type";
-  
-  /**
    * The representation of the literal
    */
   private String representation;
@@ -73,16 +58,10 @@ public abstract class Literal extends PrimaryExpression {
    * @param rep the representation of the literal
    * @param val the value of this literal
    * @param typ the type of this literal
-   * @param fn  the filename
-   * @param bl  the begin line
-   * @param bc  the begin column
-   * @param el  the end line
-   * @param ec  the end column
    * @exception IllegalArgumentException if rep is null
    */
-  protected Literal(String rep, Object val, Class<?> typ,
-                    String fn, int bl, int bc, int el,int ec) {
-    super(fn, bl, bc, el, ec);
+  protected Literal(String rep, Object val, Class<?> typ, SourceInfo si) {
+    super(si);
     
     if (rep == null) throw new IllegalArgumentException("rep == null");
     
@@ -104,8 +83,7 @@ public abstract class Literal extends PrimaryExpression {
    */
   public void setRepresentation(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-    
-    firePropertyChange(REPRESENTATION, representation, representation = s);
+    representation = s;
   }
   
   /**
@@ -120,7 +98,7 @@ public abstract class Literal extends PrimaryExpression {
    * @exception IllegalArgumentException if o is null
    */
   public void setValue(Object o) {
-    firePropertyChange(VALUE, value, value = o);
+    value = o;
   }
   
   /**
@@ -135,7 +113,7 @@ public abstract class Literal extends PrimaryExpression {
    * Sets the type of this object
    */
   public void setType(Class<?> c) {
-    firePropertyChange(TYPE, type, type = c);
+    type = c;
   }
   
   /**

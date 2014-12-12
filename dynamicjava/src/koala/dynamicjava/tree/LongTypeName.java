@@ -28,6 +28,8 @@
 
 package koala.dynamicjava.tree;
 
+import koala.dynamicjava.tree.visitor.Visitor;
+
 /**
  * This class represents the long type nodes of the syntax tree
  *
@@ -40,19 +42,22 @@ public class LongTypeName extends PrimitiveTypeName {
      * Initializes the type
      */
     public LongTypeName() {
- this(null, 0, 0, 0, 0);
+ this(SourceInfo.NONE);
     }
 
     /**
      * Initializes the type
-     * @param fn    the filename
-     * @param bl    the begin line
-     * @param bc    the begin column
-     * @param el    the end line
-     * @param ec    the end column
      */
-    public LongTypeName(String fn, int bl, int bc, int el, int ec) {
- super(long.class, fn, bl, bc, el, ec);
+    public LongTypeName(SourceInfo si) {
+ super(long.class, si);
     }
+  
+  /**
+   * Allows a visitor to traverse the tree
+   * @param visitor the visitor to accept
+   */
+  public <T> T acceptVisitor(Visitor<T> visitor) {
+    return visitor.visit(this);
+  }
   
 }

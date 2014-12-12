@@ -30,6 +30,9 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
+import koala.dynamicjava.tree.tiger.TypeParameter;
 import koala.dynamicjava.tree.visitor.*;
 
 /**
@@ -40,33 +43,86 @@ import koala.dynamicjava.tree.visitor.*;
  */
 
 public class InterfaceDeclaration extends TypeDeclaration {
+
+  private boolean annotation;
+  
   /**
    * Creates a new interface declaration
-   * @param flags the access flags
-   * @param name  the name of the interface to declare
-   * @param impl  the list of implemented interfaces. Can be null.
-   * @param body  the list of fields declarations
+   * @param mods    the modifiers
+   * @param ann     whether this is an annotation
+   * @param name    the name of the interface to declare
+   * @param tparams type parameters
+   * @param impl    the list of implemented interfaces. Can be null.
+   * @param body    the list of fields declarations
    */
-  public InterfaceDeclaration(int flags, String name, List<? extends ReferenceTypeName> impl, List<Node> body) {
-    this(flags, name, impl, body, null, 0, 0, 0, 0);
+  public InterfaceDeclaration(ModifierSet mods, boolean ann, String name, Option<List<TypeParameter>> tparams,
+                               List<? extends ReferenceTypeName> impl, List<Node> body) {
+    this(mods, ann, name, tparams, impl, body, SourceInfo.NONE);
   }
 
   /**
    * Creates a new interface declaration
-   * @param flags the access flags
+   * @param mods  the modifiers
+   * @param ann     whether this is an annotation
    * @param name  the name of the interface to declare
    * @param impl  the list of implemented interfaces. Can be null.
    * @param body  the list of fields declarations
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    */
-  public InterfaceDeclaration(int flags, String name, List<? extends ReferenceTypeName> impl, List<Node> body,
-                              String fn, int bl, int bc, int el, int ec) {
-    super(flags, name, impl, body, fn, bl, bc, el, ec);
+  public InterfaceDeclaration(ModifierSet mods, boolean ann, String name,
+                               List<? extends ReferenceTypeName> impl, List<Node> body) {
+    this(mods, ann, name, Option.<List<TypeParameter>>none(), impl, body, SourceInfo.NONE);
   }
+
+  /**
+   * Creates a new interface declaration
+   * @param mods    the modifiers
+   * @param ann     whether this is an annotation
+   * @param name    the name of the interface to declare
+   * @param tparams type parameters
+   * @param impl    the list of implemented interfaces. Can be null.
+   * @param body    the list of fields declarations
+   */
+  public InterfaceDeclaration(ModifierSet mods, boolean ann, String name, Option<List<TypeParameter>> tparams,
+                               List<? extends ReferenceTypeName> impl, List<Node> body, SourceInfo si) {
+    super(mods, name, tparams, ann ? addAnnotationType(impl, si) : impl, body, si);
+    annotation = ann;
+  }
+  
+  private static List<ReferenceTypeName> addAnnotationType(List<? extends ReferenceTypeName> impl, SourceInfo si) {
+    List<ReferenceTypeName> result = new ArrayList<ReferenceTypeName>();
+    result.add(new ReferenceTypeName(new String[]{ "java", "lang", "annotation", "Annotation" }, si));
+    if (impl != null) { result.addAll(impl); }
+    return result;
+  }
+
+  /**
+   * Creates a new interface declaration
+   * @param mods  the modifiers
+   * @param ann     whether this is an annotation
+   * @param name  the name of the interface to declare
+   * @param impl  the list of implemented interfaces. Can be null.
+   * @param body  the list of fields declarations
+   */
+  public InterfaceDeclaration(ModifierSet mods, boolean ann, String name,
+                               List<? extends ReferenceTypeName> impl, List<Node> body, SourceInfo si) {
+    this(mods, ann, name, Option.<List<TypeParameter>>none(), impl, body, si);
+  }
+  
+  /**
+   * Whether this is an annotation declaration.
+   */
+  public boolean isAnnotation() {
+    return annotation;
+  }
+
+  /**
+   * Sets whether this is an annotation declaration.
+   * @exception IllegalArgumentException if s is null
+   */
+  public void setIsAnnotation(boolean ann) {
+    annotation = ann;
+  }
+
 
   /**
    * Allows a visitor to traverse the tree
@@ -83,6 +139,6 @@ public class InterfaceDeclaration extends TypeDeclaration {
   }
 
   protected String toStringHelper() {
-    return java.lang.reflect.Modifier.toString(getAccessFlags())+" "+getName()+" "+getInterfaces()+" "+getMembers();
+    return getModifiers()+" "+isAnnotation()+" "+getName()+" "+getTypeParams()+" "+getInterfaces()+" "+getMembers();
   }
 }

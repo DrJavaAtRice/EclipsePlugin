@@ -1,43 +1,48 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui.config;
 
-import javax.swing.*;
-import edu.rice.cs.drjava.config.*;
-import edu.rice.cs.drjava.*;
 import java.awt.*;
 import java.awt.event.*;
+import javax.swing.*;
+
+import edu.rice.cs.drjava.*;
+import edu.rice.cs.drjava.config.*;
+import edu.rice.cs.util.swing.SwingFrame;
 
 /**
  * The special option component for the toolbar text and toolbar icon options.
@@ -48,7 +53,7 @@ import java.awt.event.*;
  * their setting.
  * @version $Id$
  */
-public class ToolbarOptionComponent extends OptionComponent<Boolean> {
+public class ToolbarOptionComponent extends OptionComponent<Boolean,JComponent> {
 
   private JRadioButton _noneButton;
   private JRadioButton _textButton;
@@ -63,14 +68,13 @@ public class ToolbarOptionComponent extends OptionComponent<Boolean> {
   public static final String ICONS_ONLY= "icons only";
   public static final String TEXT_AND_ICONS = "text and icons";
 
-  /**
-   * The constructor does not take an option since we have specific knowledge of the
+  /** The constructor does not take an option since we have specific knowledge of the
    * two options we'll need for this component. We simpy access them as needed, and use
    * OptionComponent's degenerate constructor.
    * @param title the title for this panel
    * @param parent the parent frame
    */
-  public ToolbarOptionComponent(String title, Frame parent) {
+  public ToolbarOptionComponent(String title, SwingFrame parent) {
     super(title, parent);
 
     _noneButton = new JRadioButton(NONE);
@@ -115,37 +119,29 @@ public class ToolbarOptionComponent extends OptionComponent<Boolean> {
 
     DrJava.getConfig().addOptionListener(OptionConstants.TOOLBAR_TEXT_ENABLED,
                                          new OptionListener<Boolean>() {
-      public void optionChanged(OptionEvent<Boolean> oe) {
-        resetToCurrent();
-      }
+      public void optionChanged(OptionEvent<Boolean> oe) { resetToCurrent(); }
     });
     DrJava.getConfig().addOptionListener(OptionConstants.TOOLBAR_ICONS_ENABLED,
                                          new OptionListener<Boolean>() {
-      public void optionChanged(OptionEvent<Boolean> oe) {
-        resetToCurrent();
-      }
+      public void optionChanged(OptionEvent<Boolean> oe) { resetToCurrent(); }
     });
     DrJava.getConfig().addOptionListener(OptionConstants.TOOLBAR_ENABLED,
                                          new OptionListener<Boolean>() {
-      public void optionChanged(OptionEvent<Boolean> oe) { 
-        resetToCurrent();
-      }
+      public void optionChanged(OptionEvent<Boolean> oe) { resetToCurrent(); }
     });
       
+    setComponent(_buttonPanel);
   }
 
-  /**
-   * Constructor that allows for a tooltip description.
-   */
-  public ToolbarOptionComponent(String title, Frame parent, String description) {
+  /** Constructor that allows for a tooltip description. */
+  public ToolbarOptionComponent(String title, SwingFrame parent, String description) {
     this(title, parent);
     setDescription(description);
   }
 
-  /**
-   * Sets the tooltip description text for this option.
-   * @param description the tooltip text
-   */
+  /** Sets the tooltip description text for this option.
+    * @param description the tooltip text
+    */
   public void setDescription(String description) {
     _buttonPanel.setToolTipText(description);
     _noneButton.setToolTipText(description);
@@ -155,53 +151,36 @@ public class ToolbarOptionComponent extends OptionComponent<Boolean> {
     _label.setToolTipText(description);
   }
 
-  /**
-   * Selects the radio button corresponding to the current config options.
-   */
+  /** Selects the radio button corresponding to the current config options. */
   public void resetToCurrent() {
     _setSelected(DrJava.getConfig().getSetting(OptionConstants.TOOLBAR_TEXT_ENABLED).booleanValue(),
                  DrJava.getConfig().getSetting(OptionConstants.TOOLBAR_ICONS_ENABLED).booleanValue(),
                  DrJava.getConfig().getSetting(OptionConstants.TOOLBAR_ENABLED).booleanValue());
   }
 
-  /**
-   * Selects the radio button corresponding to the default values.
-   */
+  /** Selects the radio button corresponding to the default values. */
   public void resetToDefault() {
     _setSelected(OptionConstants.TOOLBAR_TEXT_ENABLED.getDefault().booleanValue(),
                  OptionConstants.TOOLBAR_ICONS_ENABLED.getDefault().booleanValue(),
                  OptionConstants.TOOLBAR_ENABLED.getDefault().booleanValue());
   }
 
-  /**
-   * Selects the radio button corresponding to the specified configuration.
-   * @param textEnabled Whether toolbar text is enabled
-   * @param iconsEnabled Whether toolbar icons are enabled
-   */
+  /** Selects the radio button corresponding to the specified configuration.
+    * @param textEnabled Whether toolbar text is enabled
+    * @param iconsEnabled Whether toolbar icons are enabled
+    */
   private void _setSelected(boolean textEnabled, boolean iconsEnabled, boolean isEnabled) {
-    if (! isEnabled) {
-      _noneButton.setSelected(true);
-    }
-    else if (textEnabled && iconsEnabled) {
-      _textAndIconsButton.setSelected(true);
-    }
+    if (! isEnabled) { _noneButton.setSelected(true); }
+    else if (textEnabled && iconsEnabled) { _textAndIconsButton.setSelected(true); }
     else {
       if (textEnabled) _textButton.setSelected(true);
       else if (iconsEnabled) _iconsButton.setSelected(true);
     }
   }
 
-  /**
-   * Return's this OptionComponent's configurable component.
-   */
-  public JComponent getComponent() {
-    return _buttonPanel;
-  }
-
-  /**
-   * Updates the config object with the new setting.
-   * @return true if the new value is set successfully
-   */
+  /** Updates the config object with the new setting.  Should run in event thread.
+    * @return true if the new value is set successfully
+    */
   public boolean updateConfig() {
     String btnIdent = _group.getSelection().getActionCommand();
     boolean textWasEnabled = DrJava.getConfig().getSetting(OptionConstants.TOOLBAR_TEXT_ENABLED).booleanValue();
@@ -209,55 +188,50 @@ public class ToolbarOptionComponent extends OptionComponent<Boolean> {
     boolean wasEnabled = DrJava.getConfig().getSetting(OptionConstants.TOOLBAR_ENABLED).booleanValue();
     
     if (btnIdent.equals(NONE)) {
-      if (wasEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.FALSE);      
-      }
+      if (wasEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.FALSE); }
     }
     if (btnIdent.equals(TEXT_ONLY)) {
-      if (!textWasEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_TEXT_ENABLED, Boolean.TRUE);
-      }
-      if (iconsWereEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ICONS_ENABLED, Boolean.FALSE);
-      }
-      if (!wasEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.TRUE);   
-      }
+      if (! textWasEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_TEXT_ENABLED, Boolean.TRUE); }
+      if (iconsWereEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ICONS_ENABLED, Boolean.FALSE); }
+      if (! wasEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.TRUE); }
     }
 
     if (btnIdent.equals(ICONS_ONLY)) {
-      if (!iconsWereEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ICONS_ENABLED, Boolean.TRUE);
-      }
-      if (textWasEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_TEXT_ENABLED, Boolean.FALSE);
-      }
-      if (!wasEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.TRUE);  
-      }
+      if (! iconsWereEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ICONS_ENABLED, Boolean.TRUE); }
+      if (textWasEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_TEXT_ENABLED, Boolean.FALSE); }
+      if (! wasEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.TRUE); }
     }
 
     if (btnIdent.equals(TEXT_AND_ICONS)) {
-      if (!textWasEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_TEXT_ENABLED, Boolean.TRUE);
-      }
-      if (!iconsWereEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ICONS_ENABLED, Boolean.TRUE);
-      }
-      if (!wasEnabled) {
-        DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.TRUE);        
-      }
+      if (! textWasEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_TEXT_ENABLED, Boolean.TRUE); }
+      if (! iconsWereEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ICONS_ENABLED, Boolean.TRUE); }
+      if (! wasEnabled) { DrJava.getConfig().setSetting(OptionConstants.TOOLBAR_ENABLED, Boolean.TRUE); }
     }
 
     return true;
   }
 
 
-  /**
-   * Displays the given value.
+  /** Displays the given value.
    */
   public void setValue(Boolean value) {
     resetToCurrent();
   }
-
+  
+  /** Set the JComponent to display for this OptionComponent.
+    * @param component GUI component */
+  public void setComponent(JComponent component) {
+    _guiComponent = component;
+    if (_guiComponent!=null) {
+      boolean wasEditable = DrJava.getConfig().isEditable(OptionConstants.TOOLBAR_TEXT_ENABLED);
+      wasEditable = wasEditable && DrJava.getConfig().isEditable(OptionConstants.TOOLBAR_ICONS_ENABLED);
+      wasEditable = wasEditable && DrJava.getConfig().isEditable(OptionConstants.TOOLBAR_ENABLED);
+      
+      _guiComponent.setEnabled(wasEditable);
+      // also enable/disable all subcomponents (see Java bug 4177727)
+      for (Component subComponent: _guiComponent.getComponents()) {
+        subComponent.setEnabled(wasEditable);
+      }
+    }
+  }
 }

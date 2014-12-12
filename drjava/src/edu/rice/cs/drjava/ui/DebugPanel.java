@@ -1,48 +1,49 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui;
 
-import java.util.Vector;
-
-import java.util.Enumeration;
+import java.util.ArrayList;
 
 import javax.swing.*;
-import javax.swing.tree.*;
 import javax.swing.table.*;
 import java.awt.event.*;
 import java.awt.*;
 
+import edu.rice.cs.drjava.ui.avail.*;
 import edu.rice.cs.drjava.model.SingleDisplayModel;
 import edu.rice.cs.drjava.model.debug.*;
 import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
@@ -81,16 +82,18 @@ public class DebugPanel extends JPanel implements OptionConstants {
   private JPanel _buttonPanel;
   private JButton _closeButton;
   private JButton _resumeButton;
+  private JButton _automaticTraceButton;
   private JButton _stepIntoButton;
   private JButton _stepOverButton;
   private JButton _stepOutButton;
   private JLabel _statusBar;
 
-  private Vector<DebugWatchData> _watches;
-  private Vector<DebugThreadData> _threads;
-  private Vector<DebugStackData> _stackFrames;
+  private ArrayList<DebugWatchData> _watches;
+  private ArrayList<DebugThreadData> _threads;
+  private ArrayList<DebugStackData> _stackFrames;
   
-  private DefaultTreeCellRenderer dtcr;
+  /* The following field is commented out because it was never written (and hence always null). */
+//  private DefaultTreeCellRenderer dtcr;
 
   /** Constructs a new panel to display debugging information when the Debugger is active.  This is swing view class and hence should only
    *  be accessed from the event-handling thread.
@@ -103,9 +106,9 @@ public class DebugPanel extends JPanel implements OptionConstants {
     _model = frame.getModel();
     _debugger = _model.getDebugger();
 
-    _watches = new Vector<DebugWatchData>();
-    _threads = new Vector<DebugThreadData>();
-    _stackFrames = new Vector<DebugStackData>();
+    _watches = new ArrayList<DebugWatchData>();
+    _threads = new ArrayList<DebugThreadData>();
+    _stackFrames = new ArrayList<DebugStackData>();
     _leftPane = new JTabbedPane();
     _rightPane = new JTabbedPane();
 
@@ -145,25 +148,26 @@ public class DebugPanel extends JPanel implements OptionConstants {
 
   /** Causes all display tables to update their information from the debug manager. */
   public void updateData() {
+    assert EventQueue.isDispatchThread();
     if (_debugger.isReady()) {
       try {
         _watches = _debugger.getWatches();
         
         if (_debugger.isCurrentThreadSuspended())  _stackFrames = _debugger.getCurrentStackFrameData();
-        else  _stackFrames = new Vector<DebugStackData>();
+        else  _stackFrames = new ArrayList<DebugStackData>();
         
         _threads = _debugger.getCurrentThreadData();
       }
       catch (DebugException de) {
         // Thrown if
-        _frame._showDebugError(de);
+        MainFrameStatics.showDebugError(_frame, de);
       }
     }
     else {
       // Clean up if debugger dies
-      _watches = new Vector<DebugWatchData>();
-      _threads = new Vector<DebugThreadData>();
-      _stackFrames = new Vector<DebugStackData>();
+      _watches = new ArrayList<DebugWatchData>();
+      _threads = new ArrayList<DebugThreadData>();
+      _stackFrames = new ArrayList<DebugStackData>();
     }
 
     ((AbstractTableModel)_watchTable.getModel()).fireTableDataChanged();
@@ -339,7 +343,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
         //fireTableCellUpdated(row, col);
         fireTableRowsUpdated(row, _watches.size()-1);
       }
-      catch (DebugException de) { _frame._showDebugError(de); }
+      catch (DebugException de) { MainFrameStatics.showDebugError(_frame, de); }
     }
   }
 
@@ -360,7 +364,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
       DebugStackData frame = _stackFrames.get(row);
       switch(col) {
         case 0: return frame.getMethod();
-        case 1: return new Integer(frame.getLine());
+        case 1: return Integer.valueOf(frame.getLine());
       }
       return null;
     }
@@ -410,31 +414,53 @@ public class DebugPanel extends JPanel implements OptionConstants {
     Action resumeAction = new AbstractAction("Resume") {
       public void actionPerformed(ActionEvent ae) {
         try { _frame.debuggerResume(); }
-        catch (DebugException de) { _frame._showDebugError(de); }
+        catch (DebugException de) { MainFrameStatics.showDebugError(_frame, de); }
       }
     };
     _resumeButton = new JButton(resumeAction);
+    _frame._addGUIAvailabilityListener(_resumeButton,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER_SUSPENDED);
+    
+    Action automaticTrace = new AbstractAction("Automatic Trace") {
+      public void actionPerformed(ActionEvent ae) {
+        _frame.debuggerAutomaticTrace();
+      }
+    };
+    _automaticTraceButton = new JButton(automaticTrace);
+    _frame._addGUIAvailabilityListener(_automaticTraceButton,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER_SUSPENDED);
     
     Action stepIntoAction = new AbstractAction("Step Into") {
       public void actionPerformed(ActionEvent ae) {
-        _frame.debuggerStep(Debugger.STEP_INTO);
+        _frame.debuggerStep(Debugger.StepType.STEP_INTO);
       }
     };
     _stepIntoButton = new JButton(stepIntoAction);
+    _frame._addGUIAvailabilityListener(_stepIntoButton,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER_SUSPENDED);
 
     Action stepOverAction = new AbstractAction("Step Over") {
       public void actionPerformed(ActionEvent ae) {
-        _frame.debuggerStep(Debugger.STEP_OVER);
+        _frame.debuggerStep(Debugger.StepType.STEP_OVER);
       }
     };
     _stepOverButton = new JButton(stepOverAction);
+    _frame._addGUIAvailabilityListener(_stepOverButton,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER_SUSPENDED);
 
     Action stepOutAction = new AbstractAction( "Step Out" ) {
       public void actionPerformed(ActionEvent ae) {
-        _frame.debuggerStep(Debugger.STEP_OUT);
+        _frame.debuggerStep(Debugger.StepType.STEP_OUT);
       }
     };
     _stepOutButton = new JButton(stepOutAction);
+    _frame._addGUIAvailabilityListener(_stepOutButton,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER,
+                                      GUIAvailabilityListener.ComponentType.DEBUGGER_SUSPENDED);
     
     ActionListener closeListener =
       new ActionListener() {
@@ -447,6 +473,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
 
     closeButtonPanel.add(_closeButton, BorderLayout.NORTH);
     mainButtons.add(_resumeButton);
+    mainButtons.add(_automaticTraceButton);
     mainButtons.add(_stepIntoButton);
     mainButtons.add(_stepOverButton);
     mainButtons.add(_stepOutButton);
@@ -458,6 +485,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
     c.weightx = 1.0;
     
     gbLayout.setConstraints(_resumeButton, c);
+    gbLayout.setConstraints(_automaticTraceButton, c);
     gbLayout.setConstraints(_stepIntoButton, c);
     gbLayout.setConstraints(_stepOverButton, c);
     gbLayout.setConstraints(_stepOutButton, c);
@@ -469,13 +497,12 @@ public class DebugPanel extends JPanel implements OptionConstants {
     
     gbLayout.setConstraints(emptyPanel, c);
     
-    disableButtons();
+    updateButtons();
     _buttonPanel.add(mainButtons, BorderLayout.CENTER);
     _buttonPanel.add(closeButtonPanel, BorderLayout.EAST);
   }
 
-  /**
-   * Initializes the pop-up menu that is revealed when the user
+  /** Initializes the pop-up menu that is revealed when the user
    * right-clicks on a row in the thread table or stack table.
    */
   private void _initPopup() {
@@ -508,7 +535,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
         try {
           if (_threadInPopup.isSuspended()) _debugger.resume(_threadInPopup);
         }
-        catch (DebugException dbe) { _frame._showDebugError(dbe); }
+        catch (DebugException dbe) { MainFrameStatics.showDebugError(_frame, dbe); }
       }
     });
 
@@ -518,7 +545,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
         try {
           _debugger.scrollToSource(getSelectedStackItem());
         }
-        catch (DebugException de) { _frame._showDebugError(de); }
+        catch (DebugException de) { MainFrameStatics.showDebugError(_frame, de); }
       }
     });
 
@@ -530,7 +557,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
           _watchTable.revalidate();
           _watchTable.repaint();
         }
-        catch (DebugException de) { _frame._showDebugError(de); }
+        catch (DebugException de) { MainFrameStatics.showDebugError(_frame, de); }
       }
     });
     _watchTable.addMouseListener(new DebugTableMouseAdapter(_watchTable) {
@@ -548,17 +575,12 @@ public class DebugPanel extends JPanel implements OptionConstants {
    */
   private void _selectCurrentThread() {
     if (_threadInPopup.isSuspended()) {
-      try {
-        _debugger.setCurrentThread(_threadInPopup);
-      }
-      catch(DebugException de) {
-        _frame._showDebugError(de);
-      }
+      try { _debugger.setCurrentThread(_threadInPopup); }
+      catch(DebugException de) { MainFrameStatics.showDebugError(_frame, de); }
     }
   }
 
-  /**
-   * gets the thread that is currently selected in the thread table
+  /** gets the thread that is currently selected in the thread table
    * @return the highlighted thread
    */
   public DebugThreadData getSelectedThread() {
@@ -595,13 +617,13 @@ public class DebugPanel extends JPanel implements OptionConstants {
       Utilities.invokeLater(new Runnable() { public void run() { updateData(); } });
     }
 
-    /** Called when a thread starts.  Must be executed in event thread. */
+    /** Called when a thread starts.  Only runs in event thread. */
     public void threadStarted() { updateData(); }
 
-    /** Called when the current thread dies. Must be executed in event thread. */
+    /** Called when the current thread dies. Only runs in event thread. */
     public void currThreadDied() { updateData(); }
 
-    /** Called when any thread other than the current thread dies. Must be executed in event thread. */
+    /** Called when any thread other than the current thread dies. Only runs in event thread. */
     public void nonCurrThreadDied() { updateData(); }
 
     /** Called when the current (selected) thread is set in the debugger.
@@ -621,33 +643,31 @@ public class DebugPanel extends JPanel implements OptionConstants {
     public void watchSet(final DebugWatchData w) { }
     public void watchRemoved(final DebugWatchData w) { }
     public void stepRequested() { }
-    public void regionAdded(Breakpoint r, int index) { }
-    public void regionChanged(Breakpoint r, int index) { }
+    public void regionAdded(Breakpoint r) { }
+    public void regionChanged(Breakpoint r) { }
     public void regionRemoved(Breakpoint r) { }
   }
 
-
-  /**
-   * Enables and disables the appropriate buttons depending on if the current
-   * thread has been suspended or resumed
-   * @param isSuspended indicates if the current thread has been suspended
-   */
-  public void setThreadDependentButtons(boolean isSuspended) {
-    _resumeButton.setEnabled(isSuspended);
-    _stepIntoButton.setEnabled(isSuspended);
-    _stepOverButton.setEnabled(isSuspended);
-    _stepOutButton.setEnabled(isSuspended);
-  }
-  public void disableButtons() {
-    setThreadDependentButtons(false);
+  public void updateButtons() {
+//    setAutomaticTraceButtonText();
   }
 
+  /**Sets the AutomaticTraceButton text as well as the Automatic Trace check box menu item under Debugger based on whether automatic trace is enabled or not*/
+  public void setAutomaticTraceButtonText() {
+    if(_model.getDebugger().isAutomaticTraceEnabled()) {
+      _automaticTraceButton.setText("Disable Trace"); 
+    }
+    else { 
+      _automaticTraceButton.setText("Automatic Trace");
+    }
+    _frame.setAutomaticTraceMenuItemStatus();
+  }
+  
   public void setStatusText(String text) { _statusBar.setText(text); }
 
   public String getStatusText() { return _statusBar.getText(); }
 
-  /**
-   * Updates the UI to a new look and feel.
+  /** Updates the UI to a new look and feel.
    * Need to update the contained popup menus as well.
    *
    * Currently, we don't support changing the look and feel
@@ -666,8 +686,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
     }
   }*/
 
-  /**
-   * Concrete DebugTableMouseAdapter for the thread table.
+  /** Concrete DebugTableMouseAdapter for the thread table.
    */
   private class ThreadMouseAdapter extends DebugTableMouseAdapter {
     public ThreadMouseAdapter() {
@@ -690,8 +709,7 @@ public class DebugPanel extends JPanel implements OptionConstants {
     }
   }
 
-  /**
-   * Concrete DebugTableMouseAdapter for the stack table.
+  /** Concrete DebugTableMouseAdapter for the stack table.
    */
   private class StackMouseAdapter extends DebugTableMouseAdapter {
     public StackMouseAdapter() {
@@ -707,13 +725,12 @@ public class DebugPanel extends JPanel implements OptionConstants {
         _debugger.scrollToSource(_stackFrames.get(_lastRow));
       }
       catch (DebugException de) {
-        _frame._showDebugError(de);
+        MainFrameStatics.showDebugError(_frame, de);
       }
     }
   }
 
-  /**
-   * A mouse adapter that allows for double-clicking and
+  /** A mouse adapter that allows for double-clicking and
    * bringing up a right-click menu.
    */
   private abstract class DebugTableMouseAdapter extends RightClickMouseAdapter {
@@ -744,19 +761,5 @@ public class DebugPanel extends JPanel implements OptionConstants {
     }
   }
   
-  private class BPTree extends JTree {
-    public BPTree(DefaultTreeModel s) {
-      super(s);
-    }
-    
-    public void setForeground(Color c) {
-      super.setForeground(c);
-      if (dtcr != null) dtcr.setTextNonSelectionColor(c);
-    }
-    
-    public void setBackground(Color c) {
-      super.setBackground(c);
-      if (DebugPanel.this != null && dtcr != null) dtcr.setBackgroundNonSelectionColor(c);
-    }
-  }
+
 }

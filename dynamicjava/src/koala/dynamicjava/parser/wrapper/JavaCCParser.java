@@ -31,6 +31,8 @@ package koala.dynamicjava.parser.wrapper;
 import java.io.*;
 import java.util.*;
 
+import edu.rice.cs.dynamicjava.Options;
+
 import koala.dynamicjava.parser.impl.*;
 import koala.dynamicjava.tree.*;
 
@@ -46,44 +48,33 @@ public class JavaCCParser implements SourceCodeParser {
   /**
    * The parser
    */
-  private Parser parser;
+  private final Parser _parser;
+  private final File _f;
   
-  /**
-   * Creates a new JavaCCParser
-   * @param is    the input stream
-   * @param fname the file name
-   */
-  public JavaCCParser(InputStream is, String fname) {
-    parser = new Parser(is);
-    parser.setFilename(fname);
+  public JavaCCParser(InputStream is, File f, Options opt) {
+    _parser = new Parser(is);
+    _parser.setFile(f);
+    _parser.setOptions(opt);
+    _f = f;
   }
   
-  /**
-   * Creates a new JavaCCParser
-   * @param r     the reader
-   * @param fname the file name
-   */
-  public JavaCCParser(Reader r, String fname) {
-    parser = new Parser(r);
-    parser.setFilename(fname);
+  public JavaCCParser(InputStream is, Options opt) {
+    _parser = new Parser(is);
+    _parser.setOptions(opt);
+    _f = null;
   }
   
-  /**
-   * Creates a new parser and returns it
-   * @param is    the input stream
-   * @param fname the file name
-   */
-  public SourceCodeParser createParser(InputStream is, String fname) {
-    return new JavaCCParser(is, fname);
+  public JavaCCParser(Reader r, File f, Options opt) {
+    _parser = new Parser(r);
+    _parser.setFile(f);
+    _parser.setOptions(opt);
+    _f = f;
   }
   
-  /**
-   * Creates a new parser and returns it
-   * @param r     the reader
-   * @param fname the file name
-   */
-  public SourceCodeParser createParser(Reader r, String fname) {
-    return new JavaCCParser(r, fname);
+  public JavaCCParser(Reader r, Options opt) {
+    _parser = new Parser(r);
+    _parser.setOptions(opt);
+    _f = null;
   }
   
   /**
@@ -93,9 +84,21 @@ public class JavaCCParser implements SourceCodeParser {
    */
   public List<Node> parseStream() {
     try {
-      return parser.parseStream();
-    } catch (ParseException e) {
-      throw new ParseError(e);
+      return _parser.parseStream();
+    }
+    catch (ParseException e) {
+      throw new ParseError(e, _f);
+    }
+    catch (TokenMgrError e) {
+      throw new ParseError(e, SourceInfo.point(_f, 0, 0));
+    }
+    catch (Error e) {
+      // JavaCharStream does not use a useful exception type for escape character errors
+      String msg = e.getMessage();
+      if (msg != null && msg.startsWith("Invalid escape character")) {
+        throw new ParseError(e, SourceInfo.point(_f, 0, 0));
+      }
+      else { throw e; }
     }
   }
   
@@ -103,11 +106,23 @@ public class JavaCCParser implements SourceCodeParser {
    * Parses a library file
    * @see koala.dynamicjava.tree.Node
    */
-  public List<Node> parseCompilationUnit() {
+  public CompilationUnit parseCompilationUnit() {
     try {
-      return parser.parseCompilationUnit();
-    } catch (ParseException e) {
-      throw new ParseError(e);
+      return _parser.parseCompilationUnit();
+    }
+    catch (ParseException e) {
+      throw new ParseError(e, _f);
+    }
+    catch (TokenMgrError e) {
+      throw new ParseError(e, SourceInfo.point(_f, 0, 0));
+    }
+    catch (Error e) {
+      // JavaCharStream does not use a useful exception type for escape character errors
+      String msg = e.getMessage();
+      if (msg != null && msg.startsWith("Invalid escape character")) {
+        throw new ParseError(e, SourceInfo.point(_f, 0, 0));
+      }
+      else { throw e; }
     }
   }
 }

@@ -1,47 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project:
- * http://sourceforge.net/projects/drjava/ or http://www.drjava.org/
- *
- * DrJava Open Source License
- * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu)
+ * Copyright (c) 2001-2008, JavaPLT group at Rice University (drjava@rice.edu)
  * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Developed by:   Java Programming Languages Team
- *                 Rice University
- *                 http://www.cs.rice.edu/~javaplt/
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"),
- * to deal with the Software without restriction, including without 
- * limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to 
- * whom the Software is furnished to do so, subject to the following 
- * conditions:
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- *     - Redistributions of source code must retain the above copyright 
- *       notice, this list of conditions and the following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright 
- *       notice, this list of conditions and the following disclaimers in the
- *       documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor
- *       use the term "DrJava" as part of their names without prior written
- *       permission from the JavaPLT group.  For permission, write to
- *       javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
- * OTHER DEALINGS WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.javalanglevels;
 
@@ -50,38 +41,35 @@ import java.util.*;
 import junit.framework.TestCase;
 import edu.rice.cs.javalanglevels.parser.JExprParser;
 
-/**
- * Abstract type, representing the data for a given braced body-class, 
- * interface, method, or just a body.
- */
+/** Abstract class epresenting the data for a given braced body: a class, interface, method, or just a body. */
 public abstract class Data {
   
-  /**The name of this data.*/
+  /** The fully qualified name of this data. ?? Does it always exist? */
   protected String _name;
   
-  /**The vars defined in the lexical scope of this data.*/
+  /** The vars defined in the lexical scope of this data.  ?? Excludes inner scopes? */
   protected LinkedList<VariableData> _vars;
   
-  /**All enclosing data are in this list */
+  /** All enclosing data are in this list. ?? What are enclosing data?  An environment?? How is it ordered? */
   protected LinkedList<Data> _enclosingData;
   
-  /**The modifiers and visibility of this data.*/
+  /** The modifiers and visibility of this data.*/
   protected ModifiersAndVisibility _modifiersAndVisibility;
   
-  /**The outer data--what directly encloses this data.*/
+  /** The outer data--what directly encloses this data.  ?? The last(?) item in _enclosingData chain? */
   protected Data _outerData;
   
-  /**Any inner classes that are defined in this data.*/
+  /** Any inner classes that are defined in this data.*/
   protected LinkedList<SymbolData> _innerClasses;
   
-  /**All blocks defined within this data, in lexical order.*/
+  /** All blocks defined within this data, in lexical order. ?? What about individual entries like method definitions? */
   protected LinkedList<BlockData> _blocks;
   
-  /**Iterator over _blocks*/
+  /** Iterator over _blocks*/
   protected Iterator<BlockData> _blockIterator;
 
-  /*This is the default constructor for a Data.  It takes in the outerData, and sets
-   * all lists and the name to empty, except that the outer data is asdded to the enclosing data list. */
+  /** The default constructor for a Data.  It takes in the outerData, and sets all lists and the name to empty, except
+    * that the outer data is asdded to the enclosing data list. */
   public Data(Data outerData) {
     _name = "";
     _modifiersAndVisibility = null;
@@ -90,36 +78,44 @@ public abstract class Data {
     _outerData = outerData;
     if (outerData != null) {
       _enclosingData.addLast(_outerData); // We add superclasses and interfaces to the front of this _enclosingData.
+      /** This is really bogus.  The environment bindings for the innermost enclosing context should be FIRST not LAST! */
     }
     _innerClasses = new LinkedList<SymbolData>();
     _blocks = new LinkedList<BlockData>();
     _blockIterator = null;
   }
   
-  /**Return the name of this data.*/
-  public String getName() {
-    return _name;
-  }
+  /** @return the name of this data.*/
+  public String getName() { return _name; }
   
-  /** Set the name of this data.
-   *  @param name  The new name of this data.
-   */
-  void setName(String name) {
-    _name = name;
-  }
+  /** Set the fully qualified name of this data.  ?? What is the name for an arbitrary Data?  Not well-defined.
+    * @param name  The new fully qualified name of this data.
+    */
+  void setName(String name) { _name = name; }
   
-  /** Set the vars list to the specified linked list of vars.
-   *  These are the variables that are defined in the scope of this data.
-   */
-  void setVars(LinkedList<VariableData> vars) {
-    _vars = vars;
-  }
+//  // analyzes name to determine if this Data represents an anonymous class.  Is this Data an Instance or Symbol?
+//  public Boolean isAnonymousClass() {
+//    int lastIndex = _name.lastIndexOf('$');
+//    try { return (lastIndex < 0) && Integer.parseInt(_name.substring(lastIndex+1)) >= 0; }
+//    // What?  If lastIndex < 0, then '$' does not appear and the name does NOT correspond to an anonymous class!
+//    catch(NumberFormatException e) { return false; /* suffix is not an anonymous class index */ }
+//  }
+//  
+//  public Boolean isDoublyAnonymous() {
+//    if (! isAnonymousClass()) return false;
+//    for (Data d: getEnclosingData()) {
+//      if (d.isAnonymousClass()) return true;
+//    }
+//    return false;
+//  }
+     
+  /** Set vars to the specified linked list of vars, the variables that are defined in the scope of this data. */
+  void setVars(LinkedList<VariableData> vars) { _vars = vars; }
   
-  /** 
-   * Finds and returns the particular VariableData declared in this Data's context.
-   * @param name  Name of the variable
-   * @return  The VariableData with the matching name or null if it was not found.
-   */
+  /**  Finds and returns the particular VariableData declared in this Data's context.
+    * @param name  Name of the variable
+    * @return  The VariableData with the matching name or null if it was not found.
+    */
   public VariableData getVar(String name) {
     Iterator<VariableData> iter = _vars.iterator();
     while (iter.hasNext()) {
@@ -132,35 +128,27 @@ public abstract class Data {
   }
   
   /**@return the list of variables declared in the scope of this data.*/
-  public LinkedList<VariableData> getVars() {
-    return _vars;
-  }
+  public LinkedList<VariableData> getVars() { return _vars; }
   
   /** @return the list of enclosing data. */
-  public LinkedList<Data> getEnclosingData() {
-    return _enclosingData;
-  }
+  public LinkedList<Data> getEnclosingData() { return _enclosingData; }
   
-  /** Add to the front because we want the outer data
-   *  to be the last thing in the list.
-   */
+  /** Add to the front because we want the outer data to be the last thing in the list. */
   public void addEnclosingData(Data enclosingData) {
+    assert enclosingData != null;
     if (!_enclosingData.contains(enclosingData)) {
       _enclosingData.addFirst(enclosingData);
     }
   }
   
   //Used during testing
-  public void setEnclosingData(LinkedList<Data> d) {
-    _enclosingData = d;
-  }
+  public void setEnclosingData(LinkedList<Data> d) { _enclosingData = d; }
   
-  /**
-   * Check to see if a variable with the same name as vr has already been
-   * defined in the scope of this data.  If so, return true.  Otherwise, return false.
-   * @param vr  The VariableData whose name we are searching for.
-   * @return  true if that name has already been used in this scope, false otherwise.
-   */
+  /** Check to see if a variable with the same name as vr has already been defined in the scope of this data.  If so, 
+    * return true.  Otherwise, return false.
+    * @param vr  The VariableData whose name we are searching for.
+    * @return  true if that name has already been used in this scope, false otherwise.
+    */
   private boolean _repeatedName (VariableData vr) {
     Iterator<VariableData> iter = _vars.iterator();
     while (iter.hasNext()) {
@@ -172,78 +160,60 @@ public abstract class Data {
     return false;
   }
   
-  
-  /**
-   * Add the specified Variable Data to the list of variables defined in this
-   * scope, unless its name has already been used.  Return true if it was successfully
-   * added, and false otherwise.
-   * @param var  The variable we want to add to this scope.
-   * @return  true if it was successfully added, false otherwise.
-   */
+  /** Add the specified Variable Data to the list of variables defined in this scope, unless its name has already been 
+    * used.  Return true if it was successfully added, and false otherwise.
+    * @param var  The variable we want to add to this scope.
+    * @return  true if it was successfully added, false otherwise.
+    */
   public boolean addVar(VariableData var) {
-    if (!_repeatedName(var)) {
+    if (! _repeatedName(var)) {
       _vars.addLast(var);
       return true;
     }
-    else {
-      return false;
-    }
+    else return false;
   }
   
-  /**
-   * Add the array of variable datas to the list of variables defined in this scope, unless
-   * a name has already been used.  Return true if all variables were added successfully, 
-   * false otherwise.
-   * @param vars  The VariableData[] that we want to add.
-   * @return  true if all VariableDatas were added successfully, false otherwise.
-   */
+  /** Add the array of variable datas to the list of variables defined in this scope, unless a name has already been
+    * used.  Return true if all variables were added successfully, false otherwise.
+    * @param vars  The VariableData[] that we want to add.
+    * @return  true if all VariableDatas were added successfully, false otherwise.
+    */
   public boolean addVars(VariableData[] vars) {
     boolean success = true;
     for (int i = 0; i < vars.length; i++) {
-      if (vars[i]==null) {System.out.println("Var " + i + " was null!");}
-      if (!_repeatedName(vars[i])) {
+//      if (vars[i] == null) { System.out.println("Var " + i + " was null!"); }
+      if (! _repeatedName(vars[i])) {
         _vars.addLast(vars[i]);
       }
-      else {
-        success = false;
-      }
+      else success = false;
     }
     return success;
   }
   
-  /**
-   * Add the array of variable datas to the list of variables defined in this scope, unless
-   * a name has already been used.  Return true if all variables were added successfully, 
-   * false otherwise.  Set each of the variable datas in the array to be final before
-   * adding them.
-   * @param vars the VariableData[] that we want to add.
-   * @return true if all VariableDatas were added successfully, false otherwise.
+  /** Add the array of variable datas to the list of variables defined in this scope, unless a name has already been 
+    * used.  Return true if all variables were added successfully, false otherwise.  Set each of the variable datas in 
+    * the array to be final before adding them.
+    * @param vars the VariableData[] that we want to add.
+    * @return true if all VariableDatas were added successfully, false otherwise.
    */
   public boolean addFinalVars(VariableData[] vars) {
     boolean success = true;
-    for (int i = 0; i<vars.length; i++) {
-      if (!_repeatedName(vars[i])) {
-        vars[i].setFinal();
+    for (int i = 0; i < vars.length; i++) {
+      if (! _repeatedName(vars[i])) {
+        if (! vars[i].isFinal()) vars[i].setFinal();
         _vars.addLast(vars[i]);
       }
-      else {
-        success = false;
-      }
+      else { success = false; }
     }
     return success;
   }
   
-  /**
-   * @return the modifiersAndVisibility for this data.
-   */
-  public ModifiersAndVisibility getMav() {
-    return _modifiersAndVisibility;
-  }
+  /** @return the modifiersAndVisibility for this data. */
+  public ModifiersAndVisibility getMav() { return _modifiersAndVisibility; }
   
-  /**
-   * Assign the specified modifiersAndVisiblity to this data.
-   * @param modifiersAndVisibility  The ModifiersAndVisibility to assign to this data.
-   */
+  /** Assigns the specified modifiersAndVisiblity to this data.
+    * @param modifiersAndVisibility  The ModifiersAndVisibility to assign to this data.
+    */
   public void setMav(ModifiersAndVisibility modifiersAndVisibility) {
     _modifiersAndVisibility = modifiersAndVisibility;
   }
@@ -251,66 +221,74 @@ public abstract class Data {
   /**Return the enclosing getSymbolData()*/
   public abstract SymbolData getSymbolData();
 
-
-
-  /**
-   * @return the directly enclosing outer data.
-   */
-  public Data getOuterData() {
-    return _outerData;
-  }
-
-
+  /** @return the directly enclosing outer data. */
+  public Data getOuterData() { return _outerData; }
   
-  /**
-   * Set the outer data to the specified value--throw an exception if the data already has an outer data.
-   * @param outerData  The Data that encloses this data.
-   */
+  /** Sets the outer data to the specified value--throw an exception if the data already has an outer data.
+    * @param outerData  The Data that encloses this data.
+    */
   public void setOuterData(Data outerData) {
-    if (_outerData == null) {
+    if (outerData == null) {
+      assert _outerData == null; // Client code should not try to nullify a defined outerData value
+      return;
+    }
+    if (_outerData == null || _outerData.equals(outerData)) {
       _outerData = outerData;
-      _enclosingData.addLast(_outerData);
+      if (! _enclosingData.contains(outerData)) _enclosingData.addLast(outerData);
     }
     else {
-      throw new RuntimeException("Internal Program Error: Trying to reset an outer data to " + outerData.getName() +  " for " + this.getName() + " that has already been set.  Please report this bug.");
+      throw new RuntimeException("Internal Program Error: Trying to reset an outer data to " + outerData.getName() +  
+                                 " for " + getName() + " that has already been set to " + _outerData.getName() + 
+                                 ".  Please report this bug.");
     }
   }
   
-  /**@return true if d is an outer data of this data. */
+  /** @return true if d is an outer data of this data. TODO: What if d is a library class? */
   public boolean isOuterData(Data d) {
     Data outerData = _outerData;
-    while ((outerData != null) && !LanguageLevelVisitor.isJavaLibraryClass(outerData.getName())) {
-      if (outerData == d) {
-        return true;
-      }
+    while ((outerData != null) && ! LanguageLevelVisitor.isJavaLibraryClass(outerData.getName())) {
+      if (outerData == d) return true;
       outerData = outerData.getOuterData();
     }
     return false;
   }
   
-  
-  /**
-   * Loop over the specified string, and replace any '$' with '.'  This is used
-   * to change an inner class name to a standard format.
-   * @param s  The String to change.
-   * @return  The converted string.
-   */
-  public static String dollarSignsToDots(String s) {
-    return s.replace('$', '.');
+  /** @return the enclosing class of this. */
+  public SymbolData getEnclosingClass() {
+    Data next = _outerData;
+    
+    while (next != null) {
+      if (next instanceof SymbolData) return (SymbolData) next;
+      next = next.getOuterData();
+    }
+    return null;
   }
+
+  /** Loop over the specified string, and replace any '$' with '.'  This is used to change an inner class name to a 
+    * standard format.  It fails if the inner class is local or anonymous!  
+    * @param s  The String to change.
+    * @return   The converted string.
+    */
+  public static String dollarSignsToDots(String s) { return s.replace('$', '.'); }
   
-  /**
-   * Determine the name of the next anonymous inner class (the enclosing class name, followed by '$' followed by a number).
-   * Look through the list of inner classes of this data to see if you can match it.  (You should be able to).  Return
-   * the matching SymbolData or null if you could not find it.
-   * @return the next anonymous inner class of this data.
-   */
+  /** Loop over the specified string, and replace any '.' with '$'  This is used to change an inner class name from 
+    * external (as in Java source) to internal (as in class files) format.
+    * @param s  The String to change.
+    * @return   The converted string.
+    */
+  public static String dotsToDollarSigns(String s) { return s.replace('.', '$'); }
+  
+  /** Determines the name of the next anonymous inner class (enclosing class name + '$' + sequence number). Looks 
+    * through the list of inner classes of this data to see if there is a match.  (It should succeed).  
+    * @return the SymbolData for next anonymous inner class of this data; null if it cannot be found
+    */
   public SymbolData getNextAnonymousInnerClass() {
-    String name = getSymbolData().getName() + "$" + getSymbolData().preincrementAnonymousInnerClassNum();
+    String name = getSymbolData().getName() + '$' + getSymbolData().preincrementAnonymousInnerClassNum();
+//    System.err.println("**** Looking up anonymous inner class " + name);
     LinkedList<SymbolData> myDatas = getInnerClasses();
     SymbolData myData = null;
     //look through the inner classes for the data
-    for (int i = 0; i<myDatas.size(); i++) {
+    for (int i = 0; i < myDatas.size(); i++) {
       if (myDatas.get(i).getName().equals(name)) {
         myData = myDatas.get(i);
         break;
@@ -320,9 +298,7 @@ public abstract class Data {
   }
   
   /** Reset the block iterator to the beginning of the list of blocks. */
-  public void resetBlockIterator() {
-    _blockIterator = null;
-  }
+  public void resetBlockIterator() { _blockIterator = null; }
   
   /** Returns the next block contained within this data.
    * @return a BlockData, or null if none exists.
@@ -335,114 +311,104 @@ public abstract class Data {
   }
   
   /** Add a BlockData to this Data's list of blocks. */
-  public void addBlock(BlockData b) {
-    _blocks.add(b);
-  }
+  public void addBlock(BlockData b) { _blocks.add(b); }
   
   /** Remove all blocks from this data's list of enclosed blocks.  (Used to simplify testing.) */
-  public void removeAllBlocks() {
-    _blocks.clear();
-  }
+  public void removeAllBlocks() { _blocks.clear(); }
   
-  /**
-   * Takes in a name and tries to match it with one of this Data's inner classes or
-   * inner interfaces.  The input string is a name relative to this SymbolData
-   * (such as B.C to request the class A.B.C from class A) and may be delimited by '.' or '$'.
-   * If the name is not found in this Data, checks the outer data (if there is one).  
-   * If no matching visibile inner classes or interfaces are found, but one or more that are not visible are found, one of the non-visibile ones will be returned.
-   * This means that checkAccessibility should be called after this method.
-   * @param name  The name of the inner class or interface to find.
-   * @return  The SymbolData for the matching inner class or interface or null if there isn't one.
-   */
-  public SymbolData getInnerClassOrInterface(String name) {
-    int firstIndexOfDot = name.indexOf(".");
-    int firstIndexOfDollar = name.indexOf("$");
-    if (firstIndexOfDot == -1) {
-      firstIndexOfDot = firstIndexOfDollar;
-    }
-    else {
-      if (firstIndexOfDollar >= 0 && firstIndexOfDollar < firstIndexOfDot)
-        firstIndexOfDot = firstIndexOfDollar;
-    }
+  /** Takes in a relative name and tries to match it with one of this Data's inner classes or inner interfaces.  The 
+    * relName argument is a name relative to this SymbolData (such as B to request the the class with this
+    * relative name within some enclosing symbol data or B$C to request the class A.B.C from class A) and
+    * may be delimited by '.' or '$' (??).  If the name is not found in this Data, checks the outer data (if there is 
+    * one), which will recursively search up the chain of enclosing Datas. If no matching visible inner classes or 
+    * interfaces are found, but one or more that are not visible are found, one of the non-visible ones will be 
+    * returned. This means that checkAccess should be called after this method.
+    * TODO: Is support for '$' delimiter required to process inner classes in class files?  Yes. 
+    * !!! Eliminate the kludge in this method.
+    * @param relName  The name of the inner class or interface to find RELATIVE to this SymbolData
+    * @return  The SymbolData for the matching inner class or interface is null if there isn't one.
+    */
+  public SymbolData getInnerClassOrInterface(String relName) {
+//    if (relName.equals("MyInner")) System.err.println("getInnerClass('" + relName + "') called on '" + this + "'");
+    int firstIndexOfDot = relName.indexOf('.');
+    int firstIndexOfDollar = relName.indexOf("$");
+    if (firstIndexOfDot == -1) firstIndexOfDot = firstIndexOfDollar;
+    else if (firstIndexOfDollar >= 0 && firstIndexOfDollar < firstIndexOfDot) firstIndexOfDot = firstIndexOfDollar;
 
-    //First, look through the inner classes/interfaces of this class
+    // First, look through the inner classes/interfaces of this class
     SymbolData privateResult = null;
-    SymbolData result = getInnerClassOrInterfaceHelper(name, firstIndexOfDot);
+    SymbolData result = getInnerClassOrInterfaceHelper(relName, firstIndexOfDot);
+    if (relName.equals("MyInner")) {
+//      System.err.println("getInnerClassOrInterfaceHelper('" + relName + "', " + firstIndexOfDot + ")");
+//      System.err.println("_innerClasses = " + _innerClasses);
+//      System.err.println("Result is: '" + result + "'");
+    }
     if (result != null) {
+//      System.err.println("Result is: '" + result + "'");
       SymbolData outerPiece;
       if (firstIndexOfDot > 0) {
-        outerPiece = getInnerClassOrInterfaceHelper(name.substring(0, firstIndexOfDot), -1);
+        outerPiece = getInnerClassOrInterfaceHelper(relName.substring(0, firstIndexOfDot), -1);
       }
       else { outerPiece = result; }
-      if (TypeChecker.checkAccessibility(outerPiece.getMav(), outerPiece, this.getSymbolData())) {return result;}
-      else {privateResult = result; result = null;}
-    
+      if (TypeChecker.checkAccess(outerPiece.getMav(), outerPiece, getSymbolData())) return result;
+      else {
+        privateResult = result; 
+        result = null;
+      }
     }
     
-    
-    //call this method recursively on the outer data
-    //anything our outer class can see we can see, so there is no reason to check accessibility here
+    // Call this method recursively on the outer data; anything our outer class can see we can see, so there is no 
+    // eason to check accessibility here
     if (_outerData != null) {
-      result = _outerData.getInnerClassOrInterface(name);
-      if (result != null) {return result;}
+      result = _outerData.getInnerClassOrInterface(relName);
+//      if (relName.equals("MyInner")) System.err.println("outerResult = " + result);
+      if (result != null) return result;
     }
     
     return privateResult;
   }
   
-  
-  /**
-   * Takes in a name and tries to match it with one of this Data's inner classes or
-   * inner interfaces.  The input string is a name relative to this SymbolData
-   * (such as B.C to request the class A.B.C from class A) and may be delimited by '.' or '$'.
-   * This method is overwritten in SymbolData to handle the fact that classes must check their super classes and interfaces and
-   * interfaces must check their super interfaces.
-   * @return  The SymbolData for the matching inner class or interface or null if there isn't one.
-   */
-  protected SymbolData getInnerClassOrInterfaceHelper(String nameToMatch, int firstIndexOfDot) {
+  /** Takes in a relative name and tries to match it with one of this Data's inner classes or inner interfaces.  The 
+    * relName argument is a name relative to this SymbolData (such as B.C to request the class A.B.C from class A) and 
+    * may be delimited by '.' or '$'. This method is overridden in SymbolData (but not other concrete Data classes) to 
+    * handle the fact that classes must check their super classes and interfaces and interfaces must check their super 
+    * interfaces.
+    * TODO: Kludge!  Only use dots to separate segments!!!
+    * @return  The SymbolData for the matching inner class or interface or null if there isn't one.
+    */
+  protected SymbolData getInnerClassOrInterfaceHelper(String relName, int firstIndexOfDot) {
     Iterator<SymbolData> iter = innerClassesAndInterfacesIterator();
     while (iter.hasNext()) {
       SymbolData sd = iter.next();
       String sdName = sd.getName();
 
       sdName = LanguageLevelVisitor.getUnqualifiedClassName(sdName);
+//      if (sdName.equals("MyInner")) System.err.println("In getInnerClass, sdName = '" + sdName + "'; relName = '"
+//                                                         + relName +"'");
       if (firstIndexOfDot == -1) {
-        if (sdName.equals(nameToMatch))
-          return sd;
+        if (sdName.equals(relName)) return sd;
       }
       else {
-        if (sdName.equals(nameToMatch.substring(0, firstIndexOfDot))) {
-          return sd.getInnerClassOrInterface(nameToMatch.substring(firstIndexOfDot + 1));
+        if (sdName.equals(relName.substring(0, firstIndexOfDot))) {
+          return sd.getInnerClassOrInterface(relName.substring(firstIndexOfDot + 1));
         }
       }
     }
     return null;
   }
   
-  public Iterator<SymbolData> innerClassesAndInterfacesIterator() {
-    return _innerClasses.iterator();
-  }
+  public Iterator<SymbolData> innerClassesAndInterfacesIterator() { return _innerClasses.iterator(); }
   
- /** @return  The inner classes of this Data. */
-  public LinkedList<SymbolData> getInnerClasses() {
-    return _innerClasses;
-  }
+  /** @return  The inner classes of this Data. */
+  public LinkedList<SymbolData> getInnerClasses() { return _innerClasses; }
   
-  /**
-   * Set the inner classes of this data to the specified list.
-   * @param innerClasses  The LinkedList of inner classes.
-   */
-  public void setInnerClasses(LinkedList<SymbolData> innerClasses) {
-    _innerClasses = innerClasses;
-  }  
+  /** Sets the inner classes of this Data. */
+  public void setInnerClasses(LinkedList<SymbolData> innerClasses) { _innerClasses = innerClasses; }  
   
-  /**
-   * Add the specified SymbolData to the end of the list of inner classes.
-   * @param innerClass  The SymbolData to add.
-   */
-  public void addInnerClass(SymbolData innerClass) {
-    _innerClasses.addLast(innerClass);
-  }
+  /** Add the specified SymbolData to the end of the list of inner classes.
+    * @param innerClass  The SymbolData to add.
+    */
+  public void addInnerClass(SymbolData innerClass) { _innerClasses.addLast(innerClass); }
   
   /** @return  true if this data has the specified String modifier, and false otherwise. */
   public boolean hasModifier(String modifier) {
@@ -457,14 +423,12 @@ public abstract class Data {
   }
   
   //TODO: now that we have this, can we factor out some code in VariableData?
-  /**
-   * Add the specified modifier to the modifiers and visibility for this data, if it is not
-   * already present.
-   * @param modifier  The String to add.
-   */
+  /** Add the specified modifier to the modifiers and visibility for this data, if it is not already present.
+    * @param modifier  The String to add.
+    */
   public void addModifier(String modifier) {
-    if (!hasModifier(modifier)) {
-      if (_modifiersAndVisibility == null) {setMav(new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[0]));}
+    if (! hasModifier(modifier)) {
+      if (_modifiersAndVisibility == null) { setMav(new ModifiersAndVisibility(SourceInfo.NONE, new String[0])); }
       String[] modifiers = _modifiersAndVisibility.getModifiers();
       String[] newModifiers = new String[modifiers.length + 1];
       newModifiers[0] = modifier;
@@ -475,81 +439,79 @@ public abstract class Data {
     }    
   }
   
-  /**
-   * Check to see if varName is used in this Data's scope.  If so, find a 
-   * new name for the variable by appending a counter to its name until an unused variable
-   * name results.  Return the new name.
-   * @param varName  The initial String name of the variable we are creating.
-   * @return  The new variable name which does not shadow anything in vars.
-   */
+  /** Check if varName is used in this Data's scope.  If so, find a new name for the variable by appending a counter to 
+    * its name until an unused variable name results.  Return the new name.
+    * @param varName  The initial String name of the variable we are creating.
+    * @return  The new variable name which does not shadow anything in vars.
+    */
   public String createUniqueName(String varName) {
-    VariableData vd = TypeChecker.getFieldOrVariable(varName, this, getSymbolData(), new NullLiteral(JExprParser.NO_SOURCE_INFO), getVars(), true, false);
+    VariableData vd = 
+      TypeChecker.getFieldOrVariable(varName, this, getSymbolData(), new NullLiteral(SourceInfo.NONE), getVars(), 
+                                     true, false);
     String newName = varName;
-    int counter = 0;  //note: it is possible that the counter could wrap around and this could run infinitely, but that is very unlikely.
+    int counter = 0;  // Note: counter overflow is effectively impossible; 2G anonymous classes would blow memory
     while (vd != null && counter != -1) {
       newName = varName + counter; counter++;
-      vd = TypeChecker.getFieldOrVariable(newName, this, getSymbolData(), new NullLiteral(JExprParser.NO_SOURCE_INFO), getVars(), true, false);
+      vd = TypeChecker.getFieldOrVariable(newName, this, getSymbolData(), new NullLiteral(SourceInfo.NONE), 
+                                          getVars(), true, false);
     }
-    
-    if (counter == -1) {throw new RuntimeException("Internal Program Error: Unable to rename variable " + varName + ".  All possible names were taken.  Please report this bug");}
-
+    if (counter == -1) { throw new RuntimeException("Internal Program Error: Unable to rename variable " + varName
+                                                      + ".  All possible names were taken.  Please report this bug");}
     return newName; 
   }
 
   
-  /**
-   * Test the methods in the above class.
-   */
+  /** Test the methods in the above class. */
   public static class DataTest extends TestCase {
     
     private Data _d;
     
-    private ModifiersAndVisibility _publicMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"public"});
-    private ModifiersAndVisibility _staticMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"static"});
-    private ModifiersAndVisibility _lotsaMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"public", "final", "abstract"});
-    private ModifiersAndVisibility _protectedMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"protected"});
-    private ModifiersAndVisibility _privateMav = new ModifiersAndVisibility(JExprParser.NO_SOURCE_INFO, new String[] {"private"});
+    private ModifiersAndVisibility _publicMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] { "public" });
+    private ModifiersAndVisibility _staticMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] { "static" });
+    private ModifiersAndVisibility _lotsaMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] { "public", "final", "abstract" });
+    private ModifiersAndVisibility _protectedMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] { "protected" });
+    private ModifiersAndVisibility _privateMav = 
+      new ModifiersAndVisibility(SourceInfo.NONE, new String[] { "private" });
     
-    public DataTest() {
-      this("");
-    }
-    public DataTest(String name) {
-      super(name);
-    }
-    
+    public DataTest() { this("");}
+    public DataTest(String name) { super(name); }
 
-    public void test_repeatedName() {
+    public void testRepeatedName() {
       _d = new SymbolData("myname");
       
       VariableData vd = new VariableData("v1", _publicMav, SymbolData.INT_TYPE, false, _d);
 
-      //compare a vd to an symbol data with no vars
+      // Compare a vd to an symbol data with no vars
       assertFalse("No variables to repeat name", _d._repeatedName(vd));
       
-      //compare a vd to a symbol data with 1 var with a different name
+      // Compare a vd to a symbol data with 1 var with a different name
       _d.addVar(new VariableData("v2", _protectedMav, SymbolData.BOOLEAN_TYPE, true, _d));
       assertFalse("No repeated name", _d._repeatedName(vd));
       
-      //compare a vd to a symbol data who has a var with the same name
+      // Compare a vd to a symbol data who has a var with the same name
       _d.addVar(vd);
       assertTrue("Should be repeated name", _d._repeatedName(vd));
+//      System.err.println("testRepeatedName finished");
     }
     
     public void testIsAbstract() {
       _d = new SymbolData("myName");
       _d.setMav(_publicMav);
       
-      //not abstract
+      // not abstract
       assertFalse("Should not be abstract", _d.hasModifier("abstract"));
       
       _d.setMav(_lotsaMav);
 
-      //abstract
+      // abstract
       assertTrue("Should be abstract", _d.hasModifier("abstract"));
       
+//      System.err.println("testIsAbstract finished");
     }
-  
-   
    
     public void testAddVar() {
       _d = new SymbolData("myName");
@@ -570,6 +532,8 @@ public abstract class Data {
       myVds.addLast(vd2);
       assertTrue("Should be able to add a different variable", _d.addVar(vd2));
       assertEquals("Variable list should have 2 variables, vd, vd2", myVds, _d.getVars());
+      
+//      System.err.println("testAddVar finished");
       
     }
     
@@ -601,6 +565,8 @@ public abstract class Data {
       //try adding an empty array of variable datas
       assertTrue("Should be able to add an empty array", _d.addVars(new VariableData[0]));
       assertEquals("Variable list should not have changed by adding empty array", myVds, _d.getVars());
+      
+//      System.err.println("testAddVars finished");
     }
     
     public void testGetVar() {
@@ -610,14 +576,15 @@ public abstract class Data {
      VariableData[] toAdd = new VariableData[] {vd, vd2};
      _d.addVars(toAdd);
      
-     //lookup a name that should be there
+     // Lookup a name that should be there
      assertEquals("Should return vd", vd, _d.getVar("v1"));
      
-     //lookup a name that should not be there
+     // Lookup a name that should not be there
       assertEquals("Should return null--no variable with that name", null, _d.getVar("whatever"));
+//      System.err.println("testGetVar finished");
     }
     
-    public void test_isOuterData() {
+    public void testIsOuterData() {
       _d = new SymbolData("asdf");      
       SymbolData d2 = new SymbolData("qwer");
       SymbolData d246 = new SymbolData("fdsa");
@@ -626,6 +593,7 @@ public abstract class Data {
       assertTrue("d246 should be outer data of d2", d2.isOuterData(d246));
       assertTrue("d246 should be outer data of _d", _d.isOuterData(d246));
       assertFalse("d2 should not be outer data of d246", d246.isOuterData(d2));
+//      System.err.println("testIsOuterData finished");
     }
     
     public void testGetInnerClassOrInterface() {
@@ -635,12 +603,11 @@ public abstract class Data {
       sd1.addInnerClass(sd2);
       sd2.addInnerClass(sd3);
       
-      
-      //one level can be found
+      // One level can be found
       SymbolData result = sd1.getInnerClassOrInterface("test123");
       assertEquals("The correct inner SymbolData should be returned", sd2, result);
       
-      //dollars or dots are okay, and nested inner classes can be found
+      // Dollars or dots are okay, and nested inner classes can be found
       result = sd2.getInnerClassOrInterface("test1234");
       assertEquals("The correct nested inner SymbolData should be returned", sd3, result);
       
@@ -648,23 +615,22 @@ public abstract class Data {
       result = sd1.getInnerClassOrInterface("test123.test1234");
       assertEquals("The correct nested inner SymbolData should be returned", sd3, result);
 
-      //dollars or dots are okay, and nested inner classes can be found
+      // Dollars or dots are okay, and nested inner classes can be found
       result = sd1.getInnerClassOrInterface("test123$test1234");
       assertEquals("The correct nested inner SymbolData should be returned", sd3, result);
 
-      //null is returned when a non-present inner class is looked for.
+      // null is returned when a non-present inner class is looked for.
       result = sd1.getInnerClassOrInterface("testing.notYourInnerClass");
       assertEquals("null should be returned", null, result);
 
-    
       SymbolData sd4 = new SymbolData("testing");
       SymbolData sd5 = new SymbolData("testing$test123");
+      sd5.setInterface(true);
       SymbolData sd6 = new SymbolData("testing$test123$2test1234");
       sd4.addInnerInterface(sd5);
       sd5.addInnerClass(sd6);
       
-      
-      //one level can be found
+      // One level can be found
       result = sd4.getInnerClassOrInterface("test123");
       assertEquals("The correct inner SymbolData should be returned", sd5, result);
       
@@ -682,17 +648,24 @@ public abstract class Data {
       
       //Test a class defined in the context of a method
       SymbolData sd7 = new SymbolData("test123.myMethod$bob");
+      sd7.setIsContinuation(false);
       MethodData md = new MethodData("myMethod", _publicMav, new TypeParameter[0], 
                     SymbolData.INT_TYPE, new VariableData[0], new String[0], sd1, 
-                    new NullLiteral(JExprParser.NO_SOURCE_INFO));
+                    new NullLiteral(SourceInfo.NONE));
       md.addInnerClass(sd7);
       assertEquals("Should return sd7", sd7, md.getInnerClassOrInterface("bob"));
       
       //Test an ambiguous case, where the inner class is in both the super interface and the super class.
       SymbolData interfaceInner = new SymbolData("MyInterface$MyInner");
+      interfaceInner.setIsContinuation(false);
+      interfaceInner.setInterface(true);
+
       SymbolData superInner = new SymbolData("MySuper$MyInner");
+      superInner.setIsContinuation(false);
       
       SymbolData myInterface = new SymbolData("MyInterface");
+      myInterface.setInterface(true);
+      myInterface.setIsContinuation(false);
       myInterface.addInnerClass(interfaceInner);
       interfaceInner.setOuterData(myInterface);
       
@@ -700,28 +673,31 @@ public abstract class Data {
       mySuper.addInnerClass(superInner);
       superInner.setOuterData(mySuper);
       
-      
       SymbolData me = new SymbolData("Me");
       me.setSuperClass(mySuper);
       me.addInterface(myInterface);
       
-      assertEquals("Should return SymbolData.AMBIGUOUS_REFERENCE", SymbolData.AMBIGUOUS_REFERENCE, me.getInnerClassOrInterface("MyInner"));
+      assertEquals("Should return SymbolData.AMBIGUOUS_REFERENCE", SymbolData.AMBIGUOUS_REFERENCE, 
+                   me.getInnerClassOrInterface("MyInner"));
       
-      //Test a case where the inner class is private in one, but not the other
+      // Test a case where the inner class is private in one, but not the other
       superInner.setMav(_privateMav);
       assertEquals("Should return interfaceInner", interfaceInner, me.getInnerClassOrInterface("MyInner"));
       
-      //Test a case where the inner class is private in both--returns one of them
+      // Test a case where the inner class is private in both--returns one of them
       interfaceInner.setMav(_privateMav);
       assertEquals("Should return interfaceInner", interfaceInner, me.getInnerClassOrInterface("MyInner"));
  
-      //Test a case where the inner most class is private, but one layer is public
+      // Test a case where the inner most class is private, but one layer is public
       interfaceInner.setMav(_publicMav);
       SymbolData innerInterfaceInner = new SymbolData("MyInterface$MyInner$Inner");
       innerInterfaceInner.setMav(_privateMav);
       interfaceInner.addInnerClass(innerInterfaceInner);
       innerInterfaceInner.setOuterData(interfaceInner);
-      assertEquals("Should return innerInterfaceInner", innerInterfaceInner, me.getInnerClassOrInterface("MyInner.Inner"));
+      assertEquals("Should return innerInterfaceInner", innerInterfaceInner, 
+                   me.getInnerClassOrInterface("MyInner.Inner"));
+      
+//      System.err.println("testGetInnerClassOrInterface finished");
     }
     
     public void testCreateUniqueName() {
@@ -765,9 +741,9 @@ public abstract class Data {
       sd3.addVar(vd0);
       result = sd.createUniqueName("avar");
       assertEquals("the result is correct", "avar1", result);
+//      System.err.println("testCreateName finished");
     }
 
-    
     public void testGetNextAnonymousInnerClass() {
       SymbolData sd1 = new SymbolData("silly");
       sd1.setIsContinuation(false);
@@ -788,9 +764,7 @@ public abstract class Data {
       assertEquals("Should return null", null, _d.getNextAnonymousInnerClass());
       assertEquals("Should return null", null, sd1.getNextAnonymousInnerClass());
       
-    }
-
-    
+//      System.err.println("testGetNextAnonymousInnerClass finished");
+    } 
   }
-
 }

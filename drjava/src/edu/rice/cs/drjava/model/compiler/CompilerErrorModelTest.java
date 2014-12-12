@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 /** This class tests the internal functionality of CompilerErrorModel using a dummy implementation of the 
  *  IGetDocuments interface.
@@ -42,10 +45,10 @@ import java.io.File;
 import java.io.IOException;
 import javax.swing.text.Position;
 
-import junit.framework.TestCase;
 import edu.rice.cs.drjava.model.*;
 import edu.rice.cs.drjava.DrJavaTestCase;
 import edu.rice.cs.util.OperationCanceledException;
+import edu.rice.cs.util.swing.Utilities;
 
 /** Tests the CompilerErrorModel.
  *  @version $Id$
@@ -54,54 +57,54 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
   private File[] files;
   private String[] texts;
   private TestDocGetter getter;       // subclass of DummyGlobalModel
-  private CompilerError[] errors;
+  private DJError[] errors;
   private CompilerErrorModel model;
   
   /** Tests CompilerErrorModel setup code with no compiler errors. */
   public void testConstructNoErrors() {
     getter = new TestDocGetter();
-    model = new CompilerErrorModel(new CompilerError[0], getter);
-    
+    model = new CompilerErrorModel(new DJError[0], getter);
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
     // We successfully built the model, now test the basics.
-    assertEquals("Should have no compiler errors.", 0, model.getNumErrors());
+    assertEquals("Should have no errors.", 0, model.getNumErrors());
     assertEquals("Should have 0 warnings" , 0, model.getNumWarnings());
-    assertEquals("Should have 0 compiler errors" , 0, model.getNumCompErrors());
+    assertEquals("Should have 0 compiler errors" , 0, model.getNumCompilerErrors());
     assertTrue("hasOnlyWarnings should return true.", model.hasOnlyWarnings());
   }
   
   /** Tests CompilerErrorModel setup code with only warnings without files. Also tests hasOnlyWarnings logic. */
   public void testConstructOnlyWarnings() {
     getter = new TestDocGetter();
-    errors = new CompilerError[] { 
-      new CompilerError("Test warning without File", true),
-      new CompilerError("Test warning without File", true) 
+    errors = new DJError[] { 
+      new DJError("Test warning without File", true),
+      new DJError("Test warning without File", true) 
     };
     model = new CompilerErrorModel(errors, getter);
-    
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
     // We successfully built the model, now test the basics.
     assertEquals("Should have 2 errors.", 2, model.getNumErrors());
     assertEquals("Should have 2 warnings" , 2, model.getNumWarnings());
-    assertEquals("Should have 0 compiler errors" , 0, model.getNumCompErrors());
+    assertEquals("Should have 0 compiler errors" , 0, model.getNumCompilerErrors());
     assertTrue("hasOnlyWarnings should return true.", model.hasOnlyWarnings());
   }
   
   /** Tests CompilerErrorModel setup code with only errors without files. */
   public void testConstructDoclessErrors() {
     getter = new TestDocGetter();
-    errors = new CompilerError[] { 
-      new CompilerError("Test error without File", false),
-      new CompilerError("Test warning without File", true),
-      new CompilerError("Test error without File", false) 
+    errors = new DJError[] { 
+      new DJError("Test error without File", false),
+      new DJError("Test warning without File", true),
+      new DJError("Test error without File", false) 
     };
     
-    CompilerError[] copy = new CompilerError[errors.length];
+    DJError[] copy = new DJError[errors.length];
     for (int i = 0; i < errors.length; i++) copy[i] = errors[i];
     model = new CompilerErrorModel(copy, getter);
-    
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
     // We successfully built the model, now test the basics.
     assertEquals("Should have 3 compiler errors.", 3, model.getNumErrors());
     assertEquals("Should have 1 warning" , 1, model.getNumWarnings());
-    assertEquals("Should have 2 compiler errors" , 2, model.getNumCompErrors());
+    assertEquals("Should have 2 compiler errors" , 2, model.getNumCompilerErrors());
 //    System.out.println(model.getError(0) + "\n" + model.getError(1) + "\n" + model.getError(2));
     assertEquals("Errors should be sorted.", errors[1], model.getError(2));
     assertTrue("hasOnlyWarnings should return false.", !model.hasOnlyWarnings());
@@ -110,20 +113,21 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
   /** Tests CompilerErrorModel setup code with one file and only errors without line numbers. */
   public void testConstructOneDocWithoutLineNums() {
     setupDoc();
-    errors = new CompilerError[] { 
-      new CompilerError(files[0], "Test error with File", false),
-      new CompilerError(files[0], "Test warning with File", true),
-      new CompilerError(files[0], "Test error with File", false) 
+    errors = new DJError[] { 
+      new DJError(files[0], "Test error with File", false),
+      new DJError(files[0], "Test warning with File", true),
+      new DJError(files[0], "Test error with File", false) 
     };
     
-    CompilerError[] copy = new CompilerError[errors.length];
+    DJError[] copy = new DJError[errors.length];
     for (int i = 0; i < errors.length; i++)  copy[i] = errors[i];
     model = new CompilerErrorModel(copy, getter);
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
     
     // We successfully built the model, now test the basics.
-    assertEquals("Should have 3 compiler errors.", 3, model.getNumErrors());
+    assertEquals("Should have 3 errors.", 3, model.getNumErrors());
     assertEquals("Should have 1 warning" , 1, model.getNumWarnings());
-    assertEquals("Should have 2 compiler errors" , 2, model.getNumCompErrors());
+    assertEquals("Should have 2 compiler errors" , 2, model.getNumCompilerErrors());
     assertEquals("Errors should be sorted.", errors[1], model.getError(2));
     assertTrue("hasOnlyWarnings should return false.", !model.hasOnlyWarnings());
   }
@@ -131,21 +135,22 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
   /** Tests CompilerErrorModel setup code with one file and only errors with line numbers. */
   public void testConstructOneDocWithLineNums() {
     setupDoc();
-    errors = new CompilerError[] { 
-      new CompilerError(files[0], 2, 0, "Test error with File and line", false),
-      new CompilerError(files[0], 1, 0, "Test warning with File and line", true),
-      new CompilerError(files[0], 3, 0, "Test error with File and line", false),
-      new CompilerError(files[0], 1, 0, "Test error with File and line", false) 
+    errors = new DJError[] { 
+      new DJError(files[0], 2, 0, "Test error with File and line", false),
+      new DJError(files[0], 1, 0, "Test warning with File and line", true),
+      new DJError(files[0], 3, 0, "Test error with File and line", false),
+      new DJError(files[0], 1, 0, "Test error with File and line", false) 
     };
     
-    CompilerError[] copy = new CompilerError[errors.length];
+    DJError[] copy = new DJError[errors.length];
     for (int i = 0; i < errors.length; i++) copy[i] = errors[i];
     model = new CompilerErrorModel(copy, getter);
-    
+        Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
+        
     // We successfully built the model, now test the basics.
-    assertEquals("Should have 4 compiler errors.", 4, model.getNumErrors());
+    assertEquals("Should have 4 errors.", 4, model.getNumErrors());
     assertEquals("Should have 1 warning" , 1, model.getNumWarnings());
-    assertEquals("Should have  compiler errors" , 3, model.getNumCompErrors());
+    assertEquals("Should have 3 compiler errors" , 3, model.getNumCompilerErrors());
     assertEquals("Errors should be sorted.", errors[3], model.getError(0));
     assertEquals("Errors should be sorted.", errors[1], model.getError(1));
     assertEquals("Errors should be sorted.", errors[0], model.getError(2));
@@ -156,24 +161,25 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
   /** Tests CompilerErrorModel setup code with one file and errors both with and without line numbers. */
   public void testConstructOneDocWithBoth() {
     setupDoc();
-    errors = new CompilerError[] { 
-      new CompilerError(files[0], 2, 0, "Test error with File and line", false),
-      new CompilerError(files[0], "Test warning with File (no line)", true),
-      new CompilerError(files[0], 3, 0, "Test error with File and line", false),
-      new CompilerError("Test error without File or line", false),
-      new CompilerError(files[0], 3, 0, "Test warning with File and line", true),
-      new CompilerError(files[0], "Test error with File (no line)", false),
-      new CompilerError(files[0], 1, 0, "Test error with File and line", false) 
+    errors = new DJError[] { 
+      new DJError(files[0], 2, 0, "Test error with File and line", false),
+      new DJError(files[0], "Test warning with File (no line)", true),
+      new DJError(files[0], 3, 0, "Test error with File and line", false),
+      new DJError("Test error without File or line", false),
+      new DJError(files[0], 3, 0, "Test warning with File and line", true),
+      new DJError(files[0], "Test error with File (no line)", false),
+      new DJError(files[0], 1, 0, "Test error with File and line", false) 
     };
     
-    CompilerError[] copy = new CompilerError[errors.length];
+    DJError[] copy = new DJError[errors.length];
     for (int i = 0; i < errors.length; i++) copy[i] = errors[i];
     model = new CompilerErrorModel(copy, getter);
-    
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
+        
     // We successfully built the model, now test the basics.
-    assertEquals("Should have 7 compiler errors.", 7, model.getNumErrors());
+    assertEquals("Should have 7 errors.", 7, model.getNumErrors());
     assertEquals("Should have 2 warnings" , 2, model.getNumWarnings());
-    assertEquals("Should have 5 compiler errors" , 5, model.getNumCompErrors());
+    assertEquals("Should have 5 compiler errors" , 5, model.getNumCompilerErrors());
     assertEquals("Errors should be sorted.", errors[3], model.getError(0));
     assertEquals("Errors should be sorted.", errors[5], model.getError(1));
     assertEquals("Errors should be sorted.", errors[1], model.getError(2));
@@ -187,25 +193,26 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
   /** Tests CompilerErrorModel setup code with several files and only errors without line numbers. */
   public void testConstructManyDocsWithoutLineNums() {
     setupDocs();
-    errors = new CompilerError[] { 
-      new CompilerError(files[0], "Test error with File", false),
-      new CompilerError(files[2], "Test warning with File", true),
-      new CompilerError(files[4], "Test warning with File", true),
-      new CompilerError(files[1], "Test error with File", false),
-      new CompilerError(files[3], "Test warning with File", true),
-      new CompilerError(files[3], "Test error with File", false),
-      new CompilerError(files[4], "Test error with File", false),
-      new CompilerError(files[0], "Test error with File", false) 
+    errors = new DJError[] { 
+      new DJError(files[0], "Test error with File", false),
+      new DJError(files[2], "Test warning with File", true),
+      new DJError(files[4], "Test warning with File", true),
+      new DJError(files[1], "Test error with File", false),
+      new DJError(files[3], "Test warning with File", true),
+      new DJError(files[3], "Test error with File", false),
+      new DJError(files[4], "Test error with File", false),
+      new DJError(files[0], "Test error with File", false) 
     };
     
-    CompilerError[] copy = new CompilerError[errors.length];
+    DJError[] copy = new DJError[errors.length];
     for (int i = 0; i < errors.length; i++) copy[i] = errors[i];
     model = new CompilerErrorModel(copy, getter);
-    
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
+        
     // We successfully built the model, now test the basics.
-    assertEquals("Should have 8 compiler errors.", 8, model.getNumErrors());
+    assertEquals("Should have 8 errors.", 8, model.getNumErrors());
     assertEquals("Should have 3 warnings" , 3, model.getNumWarnings());
-    assertEquals("Should have 5 compiler errors" , 5, model.getNumCompErrors());
+    assertEquals("Should have 5 compiler errors" , 5, model.getNumCompilerErrors());
     assertEquals("Errors should be sorted.", errors[0], model.getError(0));
     assertEquals("Errors should be sorted.", errors[7], model.getError(1));
     assertEquals("Errors should be sorted.", errors[3], model.getError(2));
@@ -220,25 +227,26 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
   /** Tests CompilerErrorModel setup code with several files and only errors with line numbers. */
   public void testConstructManyDocsWithLineNums() {
     setupDocs();
-    errors = new CompilerError[] { 
-      new CompilerError(files[0], 2, 0, "Test error with File", false),
-      new CompilerError(files[2], 3, 0, "Test warning with File", true),
-      new CompilerError(files[4], 1, 0, "Test warning with File", true),
-      new CompilerError(files[1], 2, 0, "Test error with File", false),
-      new CompilerError(files[2], 2, 0, "Test warning with File", true),
-      new CompilerError(files[3], 3, 0, "Test error with File", false),
-      new CompilerError(files[4], 3, 0, "Test error with File", false),
-      new CompilerError(files[0], 1, 0, "Test error with File", false) 
+    errors = new DJError[] { 
+      new DJError(files[0], 2, 0, "Test error with File", false),
+      new DJError(files[2], 3, 0, "Test warning with File", true),
+      new DJError(files[4], 1, 0, "Test warning with File", true),
+      new DJError(files[1], 2, 0, "Test error with File", false),
+      new DJError(files[2], 2, 0, "Test warning with File", true),
+      new DJError(files[3], 3, 0, "Test error with File", false),
+      new DJError(files[4], 3, 0, "Test error with File", false),
+      new DJError(files[0], 1, 0, "Test error with File", false) 
     };
     
-    CompilerError[] copy = new CompilerError[errors.length];
+    DJError[] copy = new DJError[errors.length];
     for (int i = 0; i < errors.length; i++) copy[i] = errors[i];
     model = new CompilerErrorModel(copy, getter);
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
     
     // We successfully built the model, now test the basics.
-    assertEquals("Should have 8 compiler errors.", 8, model.getNumErrors());
+    assertEquals("Should have 8 errors.", 8, model.getNumErrors());
     assertEquals("Should have 3 warnings" , 3, model.getNumWarnings());
-    assertEquals("Should have 5 compiler errors" , 5, model.getNumCompErrors());
+    assertEquals("Should have 5 compiler errors" , 5, model.getNumCompilerErrors());
     assertEquals("Errors should be sorted.", errors[7], model.getError(0));
     assertEquals("Errors should be sorted.", errors[0], model.getError(1));
     assertEquals("Errors should be sorted.", errors[3], model.getError(2));
@@ -255,9 +263,9 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
     fullSetup();
     
     // We successfully built the model, now test the basics.
-    assertEquals("Should have 15 compiler errors.", 15, model.getNumErrors());
+    assertEquals("Should have 15 errors.", 15, model.getNumErrors());
     assertEquals("Should have 6 warnings" , 6, model.getNumWarnings());
-    assertEquals("Should have 9 compiler errors" , 9, model.getNumCompErrors());
+    assertEquals("Should have 9 compiler errors" , 9, model.getNumCompilerErrors());
     assertEquals("Errors should be sorted.", errors[0], model.getError(0));
     assertEquals("Errors should be sorted.", errors[14], model.getError(1));
     assertEquals("Errors should be sorted.", errors[12], model.getError(2));
@@ -276,10 +284,10 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
     assertTrue("hasOnlyWarnings should return false.", !model.hasOnlyWarnings());
   }
   
-  /** Tests CompilerErrorModel.getPosition(CompilerError). */
+  /** Tests CompilerErrorModel.getPosition(DJError). */
   public void testGetPosition() {
     fullSetup();
-    
+
     Position pos = model.getPosition(errors[1]);
     assertEquals("Incorrect error Position.", 125, pos.getOffset());
     pos = model.getPosition(errors[5]);
@@ -321,26 +329,30 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
       new File("/tmp/nowhere2") 
     };
     texts = new String[] { 
-      new String("kfgkasjg\n" + "faijskgisgj\n" + "sifjsidgjsd\n"),
-      new String("isdjfdi\n" + "jfa") 
+      "kfgkasjg\n" + "faijskgisgj\n" + "sifjsidgjsd\n",
+      "isdjfdi\n" + "jfa" 
     };
     getter = new TestDocGetter(files, texts);
     
-    errors = new CompilerError[] { 
-      new CompilerError(files[1], 0, 0, "Test error with File", false),
-      new CompilerError(files[0], 0, 0, "Test error with File", false) 
+    errors = new DJError[] { 
+      new DJError(files[1], 0, 0, "Test error with File", false),
+      new DJError(files[0], 0, 0, "Test error with File", false) 
     };
     model = new CompilerErrorModel(errors, getter);
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
+    
     model.getErrorAtOffset(getter.getDocumentForFile(files[0]), 25);
     String temp = texts[0];
     texts[0] = texts[1];
     texts[1] = temp;
     getter = new TestDocGetter(files, texts);
-    errors = new CompilerError[] { 
-      new CompilerError(files[0], 0, 0, "Test error with File", false),
-      new CompilerError(files[1], 2, 0, "Test error with File", false)
+    errors = new DJError[] { 
+      new DJError(files[0], 0, 0, "Test error with File", false),
+      new DJError(files[1], 2, 0, "Test error with File", false)
     };
     model = new CompilerErrorModel(errors, getter);
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
+    
     model.getErrorAtOffset(getter.getDocumentForFile(files[0]), 10);
   }
   
@@ -348,8 +360,8 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
   private void setupDoc() {
     files = new File[] { new File("/tmp/nowhere") };
     texts = new String[] { 
-      new String("This is a block of test text.\n" + "It doesn't matter what goes in here.\n" +
-                 "But it does matter if it is manipulated properly!\n") };
+      "This is a block of test text.\n" + "It doesn't matter what goes in here.\n" +
+                 "But it does matter if it is manipulated properly!\n"};
     getter = new TestDocGetter(files, texts);
   }
   
@@ -363,42 +375,43 @@ public final class CompilerErrorModelTest extends DrJavaTestCase {
       new File("/tmp/nowhere5") 
     };
     texts = new String[] { 
-      new String("This is the first block of test text.\n" + "It doesn't matter what goes in here.\n" +
-                 "But it does matter if it is manipulated properly!\n"),
-      new String("This is the second block of test text.\n" + "It doesn't matter what goes in here.\n" +
-                 "But it does matter if it is manipulated properly!\n"),
-      new String("This is the third block of test text.\n" + "It doesn't matter what goes in here.\n" +
-                 "But it does matter if it is manipulated properly!\n"),
-      new String("This is the fourth block of test text.\n" + "It doesn't matter what goes in here.\n" +
-                 "But it does matter if it is manipulated properly!\n"),
-      new String("This is the fifth block of test text.\n" + "It doesn't matter what goes in here.\n" +
-                 "But it does matter if it is manipulated properly!\n") };
+      "This is the first block of test text.\n" + "It doesn't matter what goes in here.\n" +
+                 "But it does matter if it is manipulated properly!\n",
+      "This is the second block of test text.\n" + "It doesn't matter what goes in here.\n" +
+                 "But it does matter if it is manipulated properly!\n",
+      "This is the third block of test text.\n" + "It doesn't matter what goes in here.\n" +
+                 "But it does matter if it is manipulated properly!\n",
+      "This is the fourth block of test text.\n" + "It doesn't matter what goes in here.\n" +
+                 "But it does matter if it is manipulated properly!\n",
+      "This is the fifth block of test text.\n" + "It doesn't matter what goes in here.\n" +
+                 "But it does matter if it is manipulated properly!\n" };
     getter = new TestDocGetter(files, texts);
   }
   
   /** Extra setup for test cases with several documents. */
   private void fullSetup() {
     setupDocs();
-    errors = new CompilerError[] { 
-      new CompilerError(files[0], "Test error with File (no line)", false),
-      new CompilerError(files[4], 3, 0, "Test error with File", false),
-      new CompilerError(files[2], "Test warning with File (no line)", true),
-      new CompilerError(files[4], "Test warning with File (no line)", true),
-      new CompilerError(files[2], 3, 0, "Test warning with File", true),
-      new CompilerError(files[4], 1, 0, "Test warning with File", true),
-      new CompilerError(files[1], "Test warning with File (no line)", true),
-      new CompilerError(files[1], "Test error with File (no line)", false),
-      new CompilerError(files[2], "Test error with File (no line)", false),
-      new CompilerError(files[3], "Test error with File (no line)", false),
-      new CompilerError(files[3], 3, 0, "Test error with File", false),
-      new CompilerError(files[4], "Test error with File (no line)", false),
-      new CompilerError(files[0], 2, 0, "Test error with File", false),
-      new CompilerError(files[2], 2, 0, "Test warning with File", true),
-      new CompilerError(files[0], 1, 0, "Test error with File", false) 
+    errors = new DJError[] { 
+      new DJError(files[0], "Test error with File (no line)", false),
+      new DJError(files[4], 3, 0, "Test error with File", false),
+      new DJError(files[2], "Test warning with File (no line)", true),
+      new DJError(files[4], "Test warning with File (no line)", true),
+      new DJError(files[2], 3, 0, "Test warning with File", true),
+      new DJError(files[4], 1, 0, "Test warning with File", true),
+      new DJError(files[1], "Test warning with File (no line)", true),
+      new DJError(files[1], "Test error with File (no line)", false),
+      new DJError(files[2], "Test error with File (no line)", false),
+      new DJError(files[3], "Test error with File (no line)", false),
+      new DJError(files[3], 3, 0, "Test error with File", false),
+      new DJError(files[4], "Test error with File (no line)", false),
+      new DJError(files[0], 2, 0, "Test error with File", false),
+      new DJError(files[2], 2, 0, "Test warning with File", true),
+      new DJError(files[0], 1, 0, "Test error with File", false) 
     };
         
-    CompilerError[] copy = new CompilerError[errors.length];
+    DJError[] copy = new DJError[errors.length];
     for (int i = 0; i < errors.length; i++) copy[i] = errors[i];
     model = new CompilerErrorModel(copy, getter);
+    Utilities.clearEventQueue();  // constructor for CompilerErrorModel calls invokeLater
   }
 }

@@ -1,3 +1,37 @@
+/*BEGIN_COPYRIGHT_BLOCK*
+
+PLT Utilities BSD License
+
+Copyright (c) 2007-2010 JavaPLT group at Rice University
+All rights reserved.
+
+Developed by:   Java Programming Languages Team
+                Rice University
+                http://www.cs.rice.edu/~javaplt/
+
+Redistribution and use in source and binary forms, with or without modification, are permitted 
+provided that the following conditions are met:
+
+    - Redistributions of source code must retain the above copyright notice, this list of conditions 
+      and the following disclaimer.
+    - Redistributions in binary form must reproduce the above copyright notice, this list of 
+      conditions and the following disclaimer in the documentation and/or other materials provided 
+      with the distribution.
+    - Neither the name of the JavaPLT group, Rice University, nor the names of the library's 
+      contributors may be used to endorse or promote products derived from this software without 
+      specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR 
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND 
+FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND 
+CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER 
+IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT 
+OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+*END_COPYRIGHT_BLOCK*/
+
 package edu.rice.cs.plt.recur;
 
 import java.util.Arrays;
@@ -6,12 +40,14 @@ import edu.rice.cs.plt.lambda.Lambda2;
 import edu.rice.cs.plt.lambda.Predicate2;
 import edu.rice.cs.plt.lambda.LambdaUtil;
 import edu.rice.cs.plt.collect.TotalMap;
+import edu.rice.cs.plt.reflect.ReflectUtil;
+import edu.rice.cs.plt.text.TextUtil;
 
 /**
  * TODO: Is the extra overhead required to check for infinite loops enough to justify non-checking
  * alternatives to safeToString, safeEquals, and safeHashCode?
  */
-public class RecurUtil {
+public final class RecurUtil {
   
   private static final TotalMap<Thread, RecursionStack<Object>> TO_STRING_STACKS;
   private static final TotalMap<Thread, RecursionStack2<Object, Object>> EQUALS_STACKS;
@@ -19,7 +55,7 @@ public class RecurUtil {
   
   private static final Lambda<ArrayStringMode, Lambda<Object, String>> TO_STRING_GENERATOR;
   private static final Lambda<ArrayStringMode, Lambda<Object, String>> DEFAULT_INF_STRING_GENERATOR;
-  private static final Predicate2<Object, Object> EQUALS;
+  private static final Lambda2<Object, Object, Boolean> EQUALS;
   private static final Lambda<Object, Integer> HASH_CODE;
   private static final Lambda<Object, Integer> DEFAULT_INF_HASH_CODE;
   
@@ -49,11 +85,11 @@ public class RecurUtil {
     DEFAULT_INF_STRING_GENERATOR = LambdaUtil.curry(new Lambda2<ArrayStringMode, Object, String>() {
       public String value(ArrayStringMode mode, Object obj) { 
         if (obj.getClass().isArray()) { return mode.prefix() + "..." + mode.suffix(); }
-        else { return simpleNameOf(obj.getClass()) + "..."; }
+        else { return ReflectUtil.simpleName(obj.getClass()) + "..."; }
       }
     });
     
-    EQUALS = new Predicate2<Object, Object>() {
+    EQUALS = new Lambda2<Object, Object, Boolean>() {
       public Boolean value(Object obj1, Object obj2) {
         if (obj1.getClass().isArray()) {
           if (obj2.getClass().isArray()) { return arrayEquals(obj1, obj2); }
@@ -81,7 +117,7 @@ public class RecurUtil {
   
   /** 
    * Invokes {@link #safeToString(Object, Lambda, int, ArrayStringMode)} using a default 
-   * {@code infiniteString} like {@code "ClassName..."} or {@code "{ ... }"}, a default 
+   * {@code infiniteString} like {@code "ClassName..."} or <code>"{ ... }"</code>, a default 
    * {@code depth} of {@code 1}, and {@link ArrayStringMode#DEEP_BRACED} as a default array 
    * string mode.
    */
@@ -110,7 +146,7 @@ public class RecurUtil {
 
   /** 
    * Invokes {@link #safeToString(Object, Lambda, int, ArrayStringMode)} using a default 
-   * {@code infiniteString} like {@code "ClassName..."} or {@code "{ ... }"}, and a default 
+   * {@code infiniteString} like {@code "ClassName..."} or <code>"{ ... }"</code>, and a default 
    * {@code depth} of {@code 1}.
    */
   public static String safeToString(Object obj, ArrayStringMode arrayMode) {
@@ -136,7 +172,7 @@ public class RecurUtil {
   
   /** 
    * Invokes {@link #safeToString(Object, Lambda, int, ArrayStringMode)} using a default 
-   * {@code infiniteString} like {@code "ClassName..."} or {@code "{ ... }"}, and 
+   * {@code infiniteString} like {@code "ClassName..."} or <code>"{ ... }"</code>, and 
    * {@link ArrayStringMode#DEEP_BRACED} as a default array string mode.
    */
   public static String safeToString(Object obj, int depth) {
@@ -163,7 +199,7 @@ public class RecurUtil {
 
   /** 
    * Invokes {@link #safeToString(Object, Lambda, int, ArrayStringMode)} using a default 
-   * {@code infiniteString} like {@code "ClassName..."} or {@code "{ ... }"}.
+   * {@code infiniteString} like {@code "ClassName..."} or <code>"{ ... }"</code>.
    */
   public static String safeToString(Object obj, int depth, ArrayStringMode arrayMode) {
     return safeToString(obj, DEFAULT_INF_STRING_GENERATOR.value(arrayMode), depth, arrayMode);
@@ -180,13 +216,12 @@ public class RecurUtil {
   
   /**
    * <p>Evaluate {@code obj.toString()} under the protection of an infinite-recursion check.
-   * When a client calls this method from its own {@code toString} method, and the evaluation
-   * of {@code obj.toString()} requires the recursive evaluation of that previous {@code toString} 
-   * method, this method, after {@code depth} invocations of {@code obj.toString}, will instead 
-   * return an alternate representation (as determined by {@code infiniteString}).</p>
+   * If a string for {@code obj} is already in the process of being computed by this method
+   * {@code depth} times (that is, this is the {@code depth+1}st nested invocation), 
+   * {@code infiniteString} will be applied.  Otherwise, the result is {@code obj.toString()}.</p>
    * 
    * <p>To simplify client code, this method also handles {@code null} values (returning 
-   * {@code "null"}) and arrays (calling {@link #arrayToString(Object)}).</p>
+   * {@code "null"}) and arrays (calling {@link #arrayToString(Object, ArrayStringMode)}).</p>
    * 
    * @param obj  An object (may be {@code null} or an array)
    * @param infiniteString  A lambda to generate a string for {@code obj} if its {@code toString}
@@ -230,7 +265,6 @@ public class RecurUtil {
    * @throws IllegalArgumentException  If {@code array} is not an array
    */
   public static String arrayToString(Object array, ArrayStringMode stringMode) {
-    if (!array.getClass().isArray()) { throw new IllegalArgumentException("Non-array argument"); }
     if (array instanceof Object[]) { return arrayToString((Object[]) array, stringMode); }
     else if (array instanceof int[]) { return arrayToString((int[]) array, stringMode); }
     else if (array instanceof char[]) { return arrayToString((char[]) array, stringMode); }
@@ -240,7 +274,7 @@ public class RecurUtil {
     else if (array instanceof short[]) { return arrayToString((short[]) array, stringMode); }
     else if (array instanceof long[]) { return arrayToString((long[]) array, stringMode); }
     else if (array instanceof float[]) { return arrayToString((float[]) array, stringMode); }
-    else { throw new IllegalArgumentException("Unrecognized array type"); }
+    else { throw new IllegalArgumentException("Non-array argument"); }
   }
   
   /** 
@@ -267,7 +301,7 @@ public class RecurUtil {
         return array.toString();
         
       case TYPE_AND_SIZE:
-        return simpleNameOf(array.getClass().getComponentType()) + "[" + array.length + "]";
+        return ReflectUtil.simpleName(array.getClass().getComponentType()) + "[" + array.length + "]";
 
       default:
         StringBuilder result = new StringBuilder();
@@ -275,7 +309,7 @@ public class RecurUtil {
         boolean first = true;
         for (Object elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(safeToString(elt, stringMode.nestedMode()));
         }
         result.append(stringMode.suffix());
@@ -310,7 +344,7 @@ public class RecurUtil {
         boolean first = true;
         for (boolean elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -345,7 +379,7 @@ public class RecurUtil {
         boolean first = true;
         for (char elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -380,7 +414,7 @@ public class RecurUtil {
         boolean first = true;
         for (byte elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -415,7 +449,7 @@ public class RecurUtil {
         boolean first = true;
         for (short elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -450,7 +484,7 @@ public class RecurUtil {
         boolean first = true;
         for (int elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -485,7 +519,7 @@ public class RecurUtil {
         boolean first = true;
         for (long elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -520,7 +554,7 @@ public class RecurUtil {
         boolean first = true;
         for (float elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -555,7 +589,7 @@ public class RecurUtil {
         boolean first = true;
         for (double elt : array) {
           if (first) { first = false; }
-          else { result.append(", "); }
+          else { result.append(stringMode.delimiter()); }
           result.append(elt);
         }
         result.append(stringMode.suffix());
@@ -563,35 +597,6 @@ public class RecurUtil {
     }
   }
   
-  /**
-   * Produce the simple name of the given class, as specified by {@link Class#getSimpleName},
-   * with an improved scheme for anonymous classes.  The simple name of a class is generally
-   * the unqualified name used to declare it.  Arrays evaluate to the simple name of their
-   * element type, followed by a pair of brackets.  Anonymous classes, rather than evaluating to an 
-   * empty string, produce something like "anonymous Foo" (where Foo is the supertype).
-   */
-  public static String simpleNameOf(Class<?> c) {
-    if (c.isArray()) { return simpleNameOf(c.getComponentType()) + "[]"; }
-    else if (isAnonymousClass(c)) {
-      if (c.getInterfaces().length > 0) { return "anonymous " + simpleNameOf(c.getInterfaces()[0]); }
-      else { return "anonymous " + simpleNameOf(c.getSuperclass()); }
-    }
-    else {
-      String fullName = c.getName();
-      return fullName.substring(fullName.lastIndexOf('.') + 1);
-    }
-  }
-  
-  /** An implementation of {@link Class#isAnonymousClass}, which is unavailable prior to Java 5.0 */
-  private static boolean isAnonymousClass(Class<?> c) {
-    String name = c.getName();
-    String nameEnd = name.substring(name.lastIndexOf('$') + 1); // index is -1 if there is none
-    for (int i = 0; i < nameEnd.length(); i++) {
-      if (Character.isJavaIdentifierStart(nameEnd.charAt(i))) { return false; }
-    }
-    return true;
-  }
-
   /** 
    * Invokes {@link #safeEquals(Object, Object, Predicate2)} using {@code true} for 
    * {@code infiniteEquals} (note that {@code false} is not a reasonable value for 
@@ -599,15 +604,14 @@ public class RecurUtil {
    * 
    */
   public static boolean safeEquals(Object obj1, Object obj2) {
-    return safeEquals(obj1, obj2, Predicate2.TRUE);
+    return safeEquals(obj1, obj2, LambdaUtil.TRUE);
   }
   
   /**
    * <p>Evaluate {@code obj1.equals(obj2)} under the protection of an infinite-recursion check.
-   * When a client calls this method from its own {@code equals} method, and the evaluation
-   * of {@code obj1.equals(obj2)} requires the recursive evaluation of that previous 
-   * {@code equals} invocation (with the same argument), this method, on the second call to 
-   * {@code obj1.equals(obj2)}, will instead apply {@code infiniteEquals}.</p>
+   * If the equality of {@code obj1} and {@code obj2} is already in the process of being computed 
+   * by this method, {@code infiniteEquals} will be applied.  Otherwise, the result is 
+   * {@code obj1.equals(obj2)}.</p>
    * 
    * <p>To simplify client code, this method also handles {@code null} values (equal iff both
    * values are {@code null}) and arrays (calling {@link #arrayEquals(Object, Object)}.</p>
@@ -627,7 +631,7 @@ public class RecurUtil {
       Thread t = Thread.currentThread();
       synchronized (EQUALS_STACKS) { stack = EQUALS_STACKS.get(t); }
       // no synchronization on stack, because it is only used in this thread
-      boolean result = stack.<T1, T2, Boolean>apply(EQUALS, infiniteEquals, obj1, obj2);
+      boolean result = stack.<T1, T2, Boolean>apply(EQUALS, LambdaUtil.asLambda(infiniteEquals), obj1, obj2);
       if (stack.isEmpty()) {
         synchronized (EQUALS_STACKS) { EQUALS_STACKS.revert(t); }
       }
@@ -676,8 +680,6 @@ public class RecurUtil {
     return true;
   }
   
- 
-  
   
   /** 
    * Invokes {@link #safeHashCode(Object, Lambda)} using an arbitrary default value as the
@@ -697,13 +699,11 @@ public class RecurUtil {
   
   /**
    * <p>Evaluate {@code obj.hashCode()} under the protection of an infinite-recursion check.
-   * When a client calls this method from its own {@code hashCode} method, and the evaluation
-   * of {@code obj.hashCode()} requires the recursive evaluation of that previous {@code hashCode} 
-   * method, this method, on the second invocation of {@code obj.hashCode()}, will instead 
-   * apply {@code infiniteHashCode}.</p>
+   * If the hash code for {@code obj} is already in the process of being computed by this method, 
+   * {@code infiniteHashCode} will be applied.  Otherwise, the result is {@code obj.hashCode()}.</p>
    * 
    * <p>To simplify client code, this method also handles {@code null} values (returning {@code 0})
-   * and arrays (calling {@link #arrayHashCode(Object)}.</p>
+   * and arrays (calling {@link #arrayHashCode(Object)}).</p>
    * 
    * @param obj  An object (may be {@code null} or an array)
    * @param infiniteHashCode  A lambda to generate a hash code for {@code obj} if its 
@@ -734,7 +734,6 @@ public class RecurUtil {
    * @throws IllegalArgumentException  If {@code array} is not an array
    */
   public static int arrayHashCode(Object array) {
-    if (!array.getClass().isArray()) { throw new IllegalArgumentException("Non-array argument"); }
     if (array instanceof Object[]) { return arrayHashCode((Object[]) array); }
     else if (array instanceof int[]) { return arrayHashCode((int[]) array); }
     else if (array instanceof char[]) { return arrayHashCode((char[]) array); }
@@ -744,7 +743,7 @@ public class RecurUtil {
     else if (array instanceof short[]) { return arrayHashCode((short[]) array); }
     else if (array instanceof long[]) { return arrayHashCode((long[]) array); }
     else if (array instanceof float[]) { return arrayHashCode((float[]) array); }
-    else { throw new IllegalArgumentException("Unrecognized array type"); }
+    else { throw new IllegalArgumentException("Non-array argument"); }
   }
   
   /**
@@ -861,12 +860,14 @@ public class RecurUtil {
     /** Arrays are printed according to the array {@code toString} method */
     CLASS_NAME { 
       protected String prefix() { throw new IllegalArgumentException(); }
+      protected String delimiter() { throw new IllegalArgumentException(); }
       protected String suffix() { throw new IllegalArgumentException(); }
       protected ArrayStringMode nestedMode() { throw new IllegalArgumentException(); }
     }, 
     /** Arrays are printed with an element type name and a size, like {@code "String[10]"} */
     TYPE_AND_SIZE {
       protected String prefix() { throw new IllegalArgumentException(); }
+      protected String delimiter() { throw new IllegalArgumentException(); }
       protected String suffix() { throw new IllegalArgumentException(); }
       protected ArrayStringMode nestedMode() { throw new IllegalArgumentException(); }
     },
@@ -876,6 +877,7 @@ public class RecurUtil {
      */
     SHALLOW_BRACKETED { 
       protected String prefix() { return "["; }
+      protected String delimiter() { return ", "; }
       protected String suffix() { return "]"; }
       protected ArrayStringMode nestedMode() { return CLASS_NAME; }
     }, 
@@ -885,29 +887,47 @@ public class RecurUtil {
      */
     DEEP_BRACKETED { 
       protected String prefix() { return "["; }
+      protected String delimiter() { return ", "; }
       protected String suffix() { return "]"; }
       protected ArrayStringMode nestedMode() { return DEEP_BRACKETED; }
     },
     /**
-     * Arrays are printed like array initializers, using braces ({@code "{ 1, 2, 3 }"}); 
+     * Arrays are printed like array initializers, using braces (<code>"{ 1, 2, 3 }"</code>); 
      * nested arrays use {@link #TYPE_AND_SIZE}
      */
     SHALLOW_BRACED { 
       protected String prefix() { return "{ "; }
+      protected String delimiter() { return ", "; }
       protected String suffix() { return " }"; }
       protected ArrayStringMode nestedMode() { return TYPE_AND_SIZE; }
     }, 
     /**
-     * Arrays are printed like array initializers, using braces ({@code "{ 1, 2, 3 }"}); 
+     * Arrays are printed like array initializers, using braces (<code>"{ 1, 2, 3 }"</code>); 
      * nested arrays also use {@link #DEEP_BRACED}
      */
     DEEP_BRACED {
       protected String prefix() { return "{ "; }
+      protected String delimiter() { return ", "; }
       protected String suffix() { return " }"; }
       protected ArrayStringMode nestedMode() { return DEEP_BRACED; }
-    };
+    },
+    /** Arrays are printed with a single entry on each line; nested arrays use {@link #DEEP_BRACED} */
+    DEEP_MULTILINE {
+      protected String prefix() { return ""; }
+      protected String delimiter() { return TextUtil.NEWLINE; }
+      protected String suffix() { return ""; }
+      protected ArrayStringMode nestedMode() { return DEEP_BRACED; }
+    },
+    /** Arrays are printed with a single entry on each line; nested arrays use {@link #SHALLOW_BRACED} */
+    SHALLOW_MULTILINE {
+      protected String prefix() { return ""; }
+      protected String delimiter() { return TextUtil.NEWLINE; }
+      protected String suffix() { return ""; }
+      protected ArrayStringMode nestedMode() { return SHALLOW_BRACED; }
+    }; 
     
     protected abstract String prefix();
+    protected abstract String delimiter();
     protected abstract String suffix();
     protected abstract ArrayStringMode nestedMode();
   }

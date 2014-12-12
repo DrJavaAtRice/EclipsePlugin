@@ -30,6 +30,8 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
 import koala.dynamicjava.tree.visitor.*;
 
 /**
@@ -39,54 +41,71 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/04/25
  */
 
-public class InnerAllocation extends Allocation implements ExpressionStatement,
-  ExpressionContainer {
-  /**
-   * The arguments property name
-   */
-  public final static String ARGUMENTS = "arguments";
-  
-  /**
-   * The outer object expression
-   */
+public class InnerAllocation extends PrimaryExpression implements StatementExpression, ExpressionContainer {
   private Expression expression;
-  
-  /**
-   * The arguments to pass to the constructor
-   */
+  private Option<List<TypeName>> typeArgs;
+  private String className;
+  private Option<List<TypeName>> classTypeArgs;
   private List<Expression> arguments;
   
   /**
    * Initializes the expression
    * @param exp   the outer object
-   * @param tp    the type prefix
+   * @param targs the constructor's type arguments
+   * @param cn    the inner class name
+   * @param ctargs the inner class's type arguments
    * @param args  the arguments of the constructor. null if no arguments.
    * @exception IllegalArgumentException if exp is null or tp is null
    */
-  public InnerAllocation(Expression exp, TypeName tp, List<Expression> args) {
-    this(exp, tp, args, null, 0, 0, 0, 0);
+  public InnerAllocation(Expression exp, Option<List<TypeName>> targs, String cn,
+                          Option<List<TypeName>> ctargs, List<? extends Expression> args) {
+    this(exp, targs, cn, ctargs, args, SourceInfo.NONE);
   }
   
   /**
    * Initializes the expression
    * @param exp   the outer object
-   * @param tp    the type prefix
+   * @param cn    the inner class name
+   * @param ctargs the inner class's type arguments
    * @param args  the arguments of the constructor. null if no arguments.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if exp is null or tp is null
    */
-  public InnerAllocation(Expression exp, TypeName tp, List<Expression> args,
-                         String fn, int bl, int bc, int el, int ec) {
-    super(tp, fn, bl, bc, el, ec);
-    
-    if (exp == null) throw new IllegalArgumentException("exp == null");
-    
+  public InnerAllocation(Expression exp, String cn, Option<List<TypeName>> ctargs, List<? extends Expression> args) {
+    this(exp, Option.<List<TypeName>>none(), cn, ctargs, args, SourceInfo.NONE);
+  }
+  
+  /**
+   * Initializes the expression
+   * @param exp   the outer object
+   * @param cn    the inner class name
+   * @param ctargs the inner class's type arguments
+   * @param args  the arguments of the constructor. null if no arguments.
+   * @exception IllegalArgumentException if exp is null or cn is null
+   */
+  public InnerAllocation(Expression exp, String cn, Option<List<TypeName>> ctargs, List<? extends Expression> args,
+                         SourceInfo si) {
+    this(exp, Option.<List<TypeName>>none(), cn, ctargs, args, si);
+  }
+  
+  /**
+   * Initializes the expression
+   * @param exp   the outer object
+   * @param targs the constructor type arguments
+   * @param cn    the inner class name
+   * @param ctargs the inner class's type arguments
+   * @param args  the arguments of the constructor. null if no arguments.
+   * @exception IllegalArgumentException if exp is null or cn is null
+   */
+  public InnerAllocation(Expression exp, Option<List<TypeName>> targs, String cn,
+                         Option<List<TypeName>> ctargs, List<? extends Expression> args,
+                         SourceInfo si) {
+    super(si);
+    if (targs == null || cn == null || ctargs == null || exp == null) throw new IllegalArgumentException();
     expression = exp;
-    arguments  = args;
+    typeArgs = targs;
+    className = cn;
+    classTypeArgs = ctargs;
+    arguments  = (args == null) ? new ArrayList<Expression>(0) : new ArrayList<Expression>(args);
   }
   
   /**
@@ -102,8 +121,37 @@ public class InnerAllocation extends Allocation implements ExpressionStatement,
    */
   public void setExpression(Expression e) {
     if (e == null) throw new IllegalArgumentException("e == null");
-    
-    firePropertyChange(EXPRESSION, expression, expression = e);
+    expression = e;
+  }
+  
+  public Option<List<TypeName>> getTypeArgs() { return typeArgs; }
+  public void setTypeArgs(List<TypeName> targs) { typeArgs = Option.wrap(targs); }
+  public void setTypeArgs(Option<List<TypeName>> targs) {
+    if (targs == null) throw new IllegalArgumentException();
+    typeArgs = targs;
+  }
+  
+  /**
+   * Returns the inner class name
+   */
+  public String getClassName() {
+    return className;
+  }
+  
+  /**
+   * Sets the inner class name
+   * @exception IllegalArgumentException if cn is null
+   */
+  public void setClassName(String cn) {
+    if (cn == null) throw new IllegalArgumentException("cn == null");
+    className = cn;
+  }
+  
+  public Option<List<TypeName>> getClassTypeArgs() { return classTypeArgs; }
+  public void setClassTypeArgs(List<TypeName> ctargs) { classTypeArgs = Option.wrap(ctargs); }
+  public void setClassTypeArgs(Option<List<TypeName>> ctargs) {
+    if (ctargs == null) throw new IllegalArgumentException();
+    classTypeArgs = ctargs;
   }
   
   /**
@@ -117,8 +165,8 @@ public class InnerAllocation extends Allocation implements ExpressionStatement,
   /**
    * Sets the constructor arguments.
    */
-  public void setArguments(List<Expression> l) {
-    firePropertyChange(ARGUMENTS, arguments, arguments = l);
+  public void setArguments(List<? extends Expression> l) {
+    arguments = (l == null) ? new ArrayList<Expression>(0) : new ArrayList<Expression>(l);
   }
   
   /**
@@ -132,6 +180,7 @@ public class InnerAllocation extends Allocation implements ExpressionStatement,
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+getCreationType()+" "+getExpression()+" "+getArguments()+")";
+    return "("+getClass().getName()+": "+getTypeArgs()+" "+getClassName()+" "+getClassTypeArgs()+" "+
+             getExpression()+" "+getArguments()+")";
   }
 }

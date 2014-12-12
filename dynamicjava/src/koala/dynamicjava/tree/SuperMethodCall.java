@@ -30,10 +30,13 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
 import koala.dynamicjava.tree.visitor.*;
 
 /**
- * This class represents the super method call nodes of the syntax tree
+ * This class represents the super method call nodes of the syntax tree.
+ * For example: "super.foo(x, y+3)"
  *
  * @author  Stephane Hillion
  * @version 1.0 - 1999/04/24
@@ -41,29 +44,44 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class SuperMethodCall extends MethodCall {
   /**
-   * Creates a new node
-   * @param mn    the method name
-   * @param args  the arguments. null if no arguments.
-   * @exception IllegalArgumentException if mn is null
+   * The class that qualify that object
    */
-  public SuperMethodCall(String mn, List<Expression> args) {
-    this(mn, args, null, 0, 0, 0, 0);
+  private Option<String> className;
+  
+  public SuperMethodCall(Option<String> cn, Option<List<TypeName>> targs, String mn,
+                          List<? extends Expression> args, SourceInfo si) {
+    super(targs, mn, args, si);
+    if (cn == null) throw new IllegalArgumentException("cn == null");
+    className = cn;
+  }
+  
+  public SuperMethodCall(Option<String> cn, String mn, List<? extends Expression> args, SourceInfo si) {
+    this(cn, Option.<List<TypeName>>none(), mn, args, si);
+  }
+  
+  public SuperMethodCall(Option<String> cn, Option<List<TypeName>> targs, String mn,
+                          List<? extends Expression> args) {
+    this(cn, targs, mn, args, SourceInfo.NONE);
+  }
+  
+  public SuperMethodCall(Option<String> cn, String mn, List<? extends Expression> args) {
+    this(cn, Option.<List<TypeName>>none(), mn, args, SourceInfo.NONE);
   }
   
   /**
-   * Creates a new node
-   * @param mn    the method name
-   * @param args  the arguments. null if no arguments.
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
-   * @exception IllegalArgumentException if mn is null
+   * Returns the name of the class that qualify that object
    */
-  public SuperMethodCall(String mn, List<Expression> args,
-                         String fn, int bl, int bc, int el, int ec) {
-    super(mn, args, fn, bl, bc, el, ec);
+  public Option<String> getClassName() {
+    return className;
+  }
+  
+  /**
+   * Sets the name of the class that qualifies that object
+   * @exception IllegalArgumentException if s is null or body is null
+   */
+  public void setClassName(Option<String> cn) {
+    if (cn == null) throw new IllegalArgumentException("cn == null");
+    className = cn;
   }
   
   /**
@@ -83,6 +101,6 @@ public class SuperMethodCall extends MethodCall {
    * Implementation of toString for use in unit testing
    */
   public String toStringHelper() {
-    return getMethodName()+" "+getArguments();
+    return getClassName()+" "+getTypeArgs()+" "+getMethodName()+" "+getArguments();
   }
 }

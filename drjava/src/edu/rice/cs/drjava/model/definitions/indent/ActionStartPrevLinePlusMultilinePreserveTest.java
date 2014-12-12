@@ -1,47 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project:
- * http://sourceforge.net/projects/drjava/ or http://www.drjava.org/
- *
- * DrJava Open Source License
- * 
- * Copyright (C) 2001-2004 JavaPLT group at Rice University (javaplt@rice.edu)
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
  * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Developed by:   Java Programming Languages Team
- *                 Rice University
- *                 http://www.cs.rice.edu/~javaplt/
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a 
- * copy of this software and associated documentation files (the "Software"),
- * to deal with the Software without restriction, including without 
- * limitation the rights to use, copy, modify, merge, publish, distribute, 
- * sublicense, and/or sell copies of the Software, and to permit persons to 
- * whom the Software is furnished to do so, subject to the following 
- * conditions:
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- *     - Redistributions of source code must retain the above copyright 
- *       notice, this list of conditions and the following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright 
- *       notice, this list of conditions and the following disclaimers in the
- *       documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the
- *       names of its contributors may be used to endorse or promote products
- *       derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor
- *       use the term "DrJava" as part of their names without prior written
- *       permission from the JavaPLT group.  For permission, write to
- *       javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL 
- * THE CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR 
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, 
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR 
- * OTHER DEALINGS WITH THE SOFTWARE.
- * 
-END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.definitions.indent;
 
@@ -57,33 +48,23 @@ import javax.swing.text.BadLocationException;
  */
 public class ActionStartPrevLinePlusMultilinePreserveTest extends IndentRulesTestCase {
   
-  /**
-   * This is a clever (IMHO) factory trick to reuse these methods in TestCases
-   * for logically similar IndentActions.
-   * @see ActionStartPrevLinePlusMultilinePreserve#ActionStartPrevLinePlusMultilinePreserve(String[], int, int, int, int)
-   */
-  private IndentRuleAction makeAction(String[] suffices,
-                                      int cursorLine, int cursorPos,
-                                      int psrvLine, int psrvPos) {
-    return new ActionStartPrevLinePlusMultilinePreserve(suffices,
-                                                        cursorLine, cursorPos,
-                                                        psrvLine, psrvPos);
+  /** A factory method that constructs the specified instance of IndentRuleAction.  @see 
+    * ActionStartPrevLinePlusMultilinePreserve#ActionStartPrevLinePlusMultilinePreserve(String[], int, int, int, int)
+    */
+  private IndentRuleAction makeAction(String[] suffices, int cursorLine, int cursorPos, int psrvLine, int psrvPos) {
+    return new ActionStartPrevLinePlusMultilinePreserve(suffices, cursorLine, cursorPos, psrvLine, psrvPos);
   }
   
-  /**
-   * This method abstracts the common processes of the tests so that the tests
-   * themselves may only contain information about original conditions and
-   * expected results.
-   * @param start The text that should be in the document at time rule is called
-   * @param loc the location of the cursor when rule is called
-   * @param endLoc the expected final size of the document
-   * @param finish the text string that remaining after the rule is called
-   */
-  public void helperCommentTest(String start, int loc, int endLoc, String finish) throws 
-    BadLocationException {
+  /** This method abstracts the common behavior in subsequent tests.
+    * @param start The text that should be in the document at time rule is called
+    * @param loc the location of the cursor when rule is called
+    * @param endLoc the expected final size of the document
+    * @param finish the text string that remaining after the rule is called
+    */
+  public void helperCommentTest(String start, int loc, int endLoc, String finish) throws BadLocationException {
       _setDocText(start);
       _doc.setCurrentLocation(loc);
-      makeAction(new String[]{" * \n", " */"},0,3,0,3).indentLine(_doc, Indenter.ENTER_KEY_PRESS);
+      makeAction(new String[]{" * \n", " */"},0,3,0,3).testIndentLine(_doc, Indenter.IndentReason.ENTER_KEY_PRESS);
       assertEquals(endLoc, _doc.getCurrentLocation());
       //assertEquals(finish.length(), _doc.getLength());
       assertEquals(finish, _doc.getText());
@@ -160,7 +141,7 @@ public class ActionStartPrevLinePlusMultilinePreserveTest extends IndentRulesTes
                       "/* This \n * is a comment block\n */\n * That is already closed \n */");
   }
   
-  public void xtest8() throws BadLocationException {
+  public void test8() throws BadLocationException {
 ///* ABC | */
 //
 //---------------------------------
@@ -199,7 +180,7 @@ public class ActionStartPrevLinePlusMultilinePreserveTest extends IndentRulesTes
                       "/** This is \n * bad */ **/\n */");
   }
 
-  public void xtest11() throws BadLocationException {
+  public void test11() throws BadLocationException {
 ///** ABC **/ | /** ABC **/
 //
 //---------------------------------
@@ -207,8 +188,8 @@ public class ActionStartPrevLinePlusMultilinePreserveTest extends IndentRulesTes
 //|/** ABC **/
 
     helperCommentTest("/** ABC **/ \n /** ABC **/",
-                      13, 13,
-                      "/** ABC **/ \n/** ABC **/");
+                      13, 16,
+                      "/** ABC **/ \n *  /** ABC **/\n */");
   }
   
 }

@@ -1,43 +1,45 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.definitions;
 
 import javax.swing.text.*;
 import java.awt.*;
-import javax.swing.event.DocumentEvent;
 // TODO: Check synchronization.
-import java.util.Vector;
+import java.util.ArrayList;
 
 import edu.rice.cs.drjava.DrJava;
 import edu.rice.cs.drjava.model.*;
@@ -46,6 +48,8 @@ import edu.rice.cs.drjava.config.OptionConstants;
 import edu.rice.cs.drjava.config.OptionEvent;
 import edu.rice.cs.drjava.config.OptionListener;
 import edu.rice.cs.drjava.model.definitions.reducedmodel.*;
+
+// import edu.rice.cs.util.swing.Utilities;  // conflicts with javax.swing.text.Utilities
 
 
 public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements OptionConstants {
@@ -77,12 +81,12 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
     // _metrics is initialized by sync(), which thus must be called before any use of _metrics
   }
   
-  /** Paints the glyphs representing the given range. */
-  public void paint(GlyphView v, Graphics g, Shape a, int p0, int p1) {
+  /** Paints the glyphs representing the given range. Only runs in the event thread. */
+  public void paint(GlyphView v, Graphics g, Shape a, int start, int end) {
     
     // If there's nothing to show, don't do anything!
     // For some reason I don't understand we tend to get called sometimes to render a zero-length area.
-    if (p0 == p1) return;
+    if (start == end) return;
     
     sync(v);
     
@@ -102,8 +106,8 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
     // determine the x coordinate to render the glyphs
     int x = alloc.x;
     int p = v.getStartOffset();
-    if (p != p0) {
-      text = v.getText(p, p0);
+    if (p != start) {
+      text = v.getText(p, start);
       int width = Utilities.getTabbedTextWidth(text, _metrics, x, expander, p);
       x += width;
     }
@@ -111,30 +115,26 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
     // determine the y coordinate to render the glyphs
     int y = alloc.y + _metrics.getHeight() - _metrics.getDescent();
     
-    text = v.getText(p0, p1);
+    text = v.getText(start, end);
     
-    Vector<HighlightStatus> stats = djdoc.getHighlightStatus(p0, p1);
+    ArrayList<HighlightStatus> stats = djdoc.getHighlightStatus(start, end);
     if (stats.size() < 1) throw  new RuntimeException("GetHighlightStatus returned nothing!");
     try {
-      for (int i = 0; i < stats.size(); i++) {
-        HighlightStatus stat = stats.get(i);
+      for (HighlightStatus stat: stats) {
         int length = stat.getLength();
         int location = stat.getLocation();
         
-        
-        if((location < p1) && ((location + length) > p0)) {
+        if (location < end && location + length > start) {
           
-          // Adjust the length and location to fit within the bounds of
-          // the element we're about to render
-          if (location < p0) {
-            length -= (p0-location);
-            location = p0;
+          // Adjust the length and location to fit within the bounds of the element we're about to render
+          if (location < start) {
+            length -= (start-location);
+            location = start;
           }        
-          if ((location + length) > p1) {
-            length = p1 - location;
-          }
+          if (location + length > end) length = end - location;
           
-          if (!(djdoc instanceof InteractionsDJDocument) || !((InteractionsDJDocument)djdoc).setColoring((p0+p1)/2,g))      
+          if (! (djdoc instanceof InteractionsDJDocument) || 
+              ! ((InteractionsDJDocument)djdoc).setColoring((start+end)/2,g))      
             setFormattingForState(g, stat.getState());
           
           djdoc.getText(location, length, text);
@@ -142,98 +142,86 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
         }
       }
     }
-    catch(BadLocationException ble) {
-      // don't continue rendering if such an exception is found
-    }
+    catch(BadLocationException ble) { /* don't continue rendering if such an exception is found */ }
   }
   
-  /**
-   * Determine the span the glyphs given a start location
-   * (for tab expansion).
-   */
-  public float getSpan(GlyphView v, int p0, int p1, 
-                       TabExpander e, float x) {
+  /** Determines the span the glyphs given a start location (for tab expansion).  Only runs in event thread. */
+  public float getSpan(GlyphView v, int start, int end, TabExpander e, float x) {
     sync(v);
-    Segment text = v.getText(p0, p1);
-    int width = Utilities.getTabbedTextWidth(text, _metrics, (int) x, e, p0);
+    Segment text = v.getText(start, end);
+    int width = Utilities.getTabbedTextWidth(text, _metrics, (int) x, e, start);
     return width;
   }
   
+  /** Only runs in event thread. */
   public float getHeight(GlyphView v) {
     sync(v);
     return _metrics.getHeight();
   }
   
-  /**
-   * Fetches the ascent above the baseline for the glyphs
-   * corresponding to the given range in the model.
-   */
+  /** Fetches the ascent above the baseline for the glyphs corresponding to the given range in the model.  Only runs
+    * in event thread.
+    */
   public float getAscent(GlyphView v) {
     sync(v);
     return _metrics.getAscent();
   }
   
-  /**
-   * Fetches the descent below the baseline for the glyphs
-   * corresponding to the given range in the model.
-   */
+  /** Fetches the descent below the baseline for the glyphs corresponding to the given range in the model.  Assumes 
+    * ReadLocak is held.
+    */
   public float getDescent(GlyphView v) {
     sync(v);
     return _metrics.getDescent();
   }
   
-  public Shape modelToView(GlyphView v, int pos, Position.Bias bias,
-                           Shape a) throws BadLocationException {
+  /** Only runs in event thread. */
+  public Shape modelToView(GlyphView v, int pos, Position.Bias bias, Shape a) throws BadLocationException {
     
     sync(v);
     Rectangle alloc = (a instanceof Rectangle) ? (Rectangle)a : a.getBounds();
-    int p0 = v.getStartOffset();
-    int p1 = v.getEndOffset();
+    int start = v.getStartOffset();
+    int end = v.getEndOffset();
     TabExpander expander = v.getTabExpander();
     Segment text;
     
-    if(pos == p1) {
+    if(pos == end) {
       // The caller of this is left to right and borders a right to
       // left view, return our end location.
       return new Rectangle(alloc.x + alloc.width, alloc.y, 0,
                            _metrics.getHeight());
     }
-    if ((pos >= p0) && (pos <= p1)) {
+    if ((pos >= start) && (pos <= end)) {
       // determine range to the left of the position
-      text = v.getText(p0, pos);
-      int width = Utilities.getTabbedTextWidth(text, _metrics, alloc.x, expander, p0);
+      text = v.getText(start, pos);
+      int width = Utilities.getTabbedTextWidth(text, _metrics, alloc.x, expander, start);
       return new Rectangle(alloc.x + width, alloc.y, 0, _metrics.getHeight());
     }
-    throw new BadLocationException("modelToView - can't convert", p1);
+    throw new BadLocationException("modelToView - can't convert", end);
   }
   
-  /**
-   * Provides a mapping from the view coordinate space to the logical
-   * coordinate space of the model.
-   *
-   * @param v the view containing the view coordinates
-   * @param x the X coordinate
-   * @param y the Y coordinate
-   * @param a the allocated region to render into
-   * @param biasReturn always returns <code>Position.Bias.Forward</code>
-   *   as the zero-th element of this array
-   * @return the location within the model that best represents the
-   *  given point in the view
-   * @see View#viewToModel
-   */
-  public int viewToModel(GlyphView v, float x, float y, Shape a, 
-                         Position.Bias[] biasReturn) {
+  /** Provides a mapping from the view coordinate space to the logical coordinate space of the model.  Only runs in
+    * event thread.
+    * @param v the view containing the view coordinates
+    * @param x the X coordinate
+    * @param y the Y coordinate
+    * @param a the allocated region to render into
+    * @param biasReturn always returns <code>Position.Bias.Forward</code> as the zero-th element of this array
+    * @return the location within the model that best represents the given point in the view
+    * @see View#viewToModel
+    */
+  public int viewToModel(GlyphView v, float x, float y, Shape a, Position.Bias[] biasReturn) {
     sync(v);
     Rectangle alloc = (a instanceof Rectangle) ? (Rectangle)a : a.getBounds();
-    int p0 = v.getStartOffset();
-    int p1 = v.getEndOffset();
+    int start = v.getStartOffset();
+    int end = v.getEndOffset();
     TabExpander expander = v.getTabExpander();
-    Segment text = v.getText(p0, p1);
+    Segment text = v.getText(start, end);
     
     int offs = Utilities.getTabbedTextOffset(text, _metrics, 
-                                             alloc.x, (int) x, expander, p0);
-    int retValue = p0 + offs;
-    if(retValue == p1) {
+                                             alloc.x, (int) x, expander, start);
+    int retValue = start + offs;
+    if(retValue == end) {
       // No need to return backward bias as GlyphPainter1 is used for
       // ltr text only.
       retValue--;
@@ -241,35 +229,29 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
     biasReturn[0] = Position.Bias.Forward;
     return retValue;
   }
-  
-  /**
-   * Determines the best location (in the model) to break
-   * the given view.
-   * This method attempts to break on a whitespace
-   * location.  If a whitespace location can't be found, the
-   * nearest character location is returned.
-   *
-   * @param v the view 
-   * @param p0 the location in the model where the
-   *  fragment should start its representation >= 0
-   * @param x the graphic location along the axis that the
-   *  broken view would occupy >= 0; this may be useful for
-   *  things like tab calculations
-   * @param len specifies the distance into the view
-   *  where a potential break is desired >= 0  
-   * @return the model location desired for a break
-   * @see View#breakView
-   */
-  public int getBoundedPosition(GlyphView v, int p0, float x, float len) {
+
+  /** Determines the best location (in the model) to break the given view.  This method attempts to break on a 
+    * whitespace location.  If a whitespace location can't be found, the nearest character location is returned.
+    * Only runs in event thread.
+    *
+    * @param v  The view 
+    * @param start  The location in the model where the fragment should start its representation >= 0
+    * @param x  The graphic location along the axis that the broken view would occupy >= 0; this may be useful for
+    *           things like tab calculations
+    * @param len  Specifies the distance into the view where a potential break is desired >= 0  
+    * @return  The model location desired for a break
+    * @see View#breakView
+    */
+  public int getBoundedPosition(GlyphView v, int start, float x, float len) {
     sync(v);
     TabExpander expander = v.getTabExpander();
-    Segment s = v.getText(p0, v.getEndOffset());
-    int index = Utilities.getTabbedTextOffset(s, _metrics, (int)x, (int)(x+len),
-                                              expander, p0, false);
-    int p1 = p0 + index;
-    return p1;
+    Segment s = v.getText(start, v.getEndOffset());
+    int index = Utilities.getTabbedTextOffset(s, _metrics, (int)x, (int)(x+len), expander, start, false);
+    int end = start + index;
+    return end;
   }
   
+  /** Only runs in event thread. */
   void sync(GlyphView v) {
     Font f = v.getFont();
     if ((_metrics == null) || (! f.equals(_metrics.getFont()))) {
@@ -281,29 +263,27 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
       } else {
         kit = Toolkit.getDefaultToolkit();
       }
-      /* Use of the deprecated method here is necessary to get a handle on
-       * a FontMetrics object.  This is required by our dependence on the
-       * javax.swing.text.Utilities class, which does a lot of Java 1.1-style
-       * calculation (presumably these methods should be deprecated, too).
-       * The deprecated use can't be fixed without an in-depth understanding
-       * of fonts, glyphs, and font rendering.  Where _metrics is currently used,
-       * the Font methods getLineMetrics, getStringBounds, getHeight, getAscent,
-       * and getDescent will probably be helpful.
+      /* The deprecated method here is necessary to get a handle on a FontMetrics object.  This is required by our 
+       * dependence on the javax.swing.text.Utilities class, which does a lot of Java 1.1-style calculation (presumably
+       * these methods should be deprecated, too). The deprecated use can't be fixed without an in-depth understanding
+       * of fonts, glyphs, and font rendering.  Where _metrics is currently used, the Font methods getLineMetrics, 
+       * getStringBounds, getHeight, getAscent, and getDescent will probably be helpful.
        */
-      @SuppressWarnings("deprecation") FontMetrics newMetrics = kit.getFontMetrics(f);
+      @SuppressWarnings("deprecation") 
+      FontMetrics newMetrics = kit.getFontMetrics(f);
       _metrics = newMetrics;
     }
     
     Document doc = v.getDocument();
-    if (!_listenersAttached && (doc instanceof AbstractDJDocument)) {
+    if (! _listenersAttached && (doc instanceof AbstractDJDocument)) {
       attachOptionListeners((AbstractDJDocument)doc);
     }
   }
   
   /** Given a particular state, assign it a color.
-   *  @param g Graphics object
-   *  @param state a given state
-   */
+    * @param g Graphics object
+    * @param state a given state
+    */
   private void setFormattingForState(Graphics g, int state) {
     switch (state) {
       case HighlightStatus.NORMAL:
@@ -334,14 +314,14 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
   }
   
   
-  /** Called when a change occurs.
-   *  @param changes document changes
-   *  @param a a Shape
-   *  @param f a ViewFactory
-   */
+//  /** Called when a change occurs.
+//    * @param changes document changes
+//    * @param a a Shape
+//    * @param f a ViewFactory
+//    */
 //  public void changedUpdate(DocumentEvent changes, Shape a, ViewFactory f) {
 //    super.changedUpdate(changes, a, f);
-//    // Make sure we redraw since something changed in the formatting
+//// Make sure we redraw since something changed in the formatting
 //    Container c = getContainer();
 //    if (c != null) c.repaint();
 //  }
@@ -351,6 +331,8 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
     final ColorOptionListener col = new ColorOptionListener();
     final FontOptionListener fol = new FontOptionListener();
     
+    // These events can occur in the event thread, and so can't clear the event queue
+
     // delete the old color listeners, because they're hanging onto the wrong coloringview
     // add color listeners to highlight keywords etc
     DrJava.getConfig().addOptionListener( OptionConstants.DEFINITIONS_COMMENT_COLOR, col);
@@ -412,7 +394,7 @@ public class ColoringGlyphPainter extends GlyphView.GlyphPainter implements Opti
     ERROR_COLOR = DrJava.getConfig().getSetting(INTERACTIONS_ERROR_COLOR);
     DEBUGGER_COLOR = DrJava.getConfig().getSetting(DEBUG_MESSAGE_COLOR);
     
-    edu.rice.cs.util.swing.Utilities.invokeLater(_lambdaRepaint);
+    EventQueue.invokeLater(_lambdaRepaint);
   }
   
   /** The OptionListeners for DEFINITIONS COLORs */

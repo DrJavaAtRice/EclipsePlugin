@@ -30,6 +30,9 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
+import edu.rice.cs.plt.tuple.Option;
+
+import koala.dynamicjava.tree.tiger.TypeParameter;
 import koala.dynamicjava.tree.visitor.*;
 
 /**
@@ -39,70 +42,18 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/05/11
  */
 
-public class MethodDeclaration extends Node {
-  /**
-   * The accessFlags property name
-   */
-  public final static String ACCESS_FLAGS = "accessFlags";
-
-  /**
-   * The type property name
-   */
-  public final static String RETURN_TYPE = "returnType";
-
-  /**
-   * The name property name
-   */
-  public final static String NAME = "name";
-
-  /**
-   * The parameters property name
-   */
-  public final static String PARAMETERS = "parameters";
-
-  /**
-   * The exceptions property name
-   */
-  public final static String EXCEPTIONS = "exceptions";
-
-  /**
-   * The body property name
-   */
-  public final static String BODY = "body";
-
-  /**
-   * The access flags
-   */
-  private int accessFlags;
-
-  /**
-   * The return type of this method
-   */
+public class MethodDeclaration extends Declaration {
+  
+  private Option<List<TypeParameter>> typeParams;
   private TypeName returnType;
-
-  /**
-   * The name of this method
-   */
   private String name;
-
-  /**
-   * The parameters
-   */
   private List<FormalParameter> parameters;
-
-  /**
-   * The exceptions
-   */
-  private List<String> exceptions;
-
-  /**
-   * The body of the method
-   */
+  private List<? extends ReferenceTypeName> exceptions;
   private BlockStatement body;
 
   /**
    * Creates a new method declaration
-   * @param flags   the access flags
+   * @param mods    the modifiers
    * @param type    the return type of this method
    * @param name    the name of the method to declare
    * @param params  the parameters list
@@ -111,65 +62,82 @@ public class MethodDeclaration extends Node {
    * @exception IllegalArgumentException if name is null or type is null or
    *            params is null or excepts is null
    */
-  public MethodDeclaration(int flags, TypeName type, String name,
+  public MethodDeclaration(ModifierSet mods, TypeName type, String name,
                            List<FormalParameter> params, List<? extends ReferenceTypeName> excepts, BlockStatement body) {
-    this(flags, type, name, params, excepts, body, null, 0, 0, 0, 0);
+    this(mods, Option.<List<TypeParameter>>none(), type, name, params, excepts, body, SourceInfo.NONE);
   }
 
   /**
    * Creates a new method declaration
-   * @param flags   the access flags
+   * @param mods    the modifiers
+   * @param tparams type parameters
    * @param type    the return type of this method
    * @param name    the name of the method to declare
    * @param params  the parameters list
    * @param excepts the exception list
    * @param body    the body statement
-   * @param fn      the filename
-   * @param bl      the begin line
-   * @param bc      the begin column
-   * @param el      the end line
-   * @param ec      the end column
    * @exception IllegalArgumentException if name is null or type is null or
    *            params is null or excepts is null
    */
-  public MethodDeclaration(int flags, TypeName type, String name,
-                           List<FormalParameter> params, List<? extends ReferenceTypeName> excepts, BlockStatement body,
-                           String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public MethodDeclaration(ModifierSet mods, Option<List<TypeParameter>> tparams, TypeName type, String name,
+                           List<FormalParameter> params, List<? extends ReferenceTypeName> excepts, BlockStatement body) {
+    this(mods, tparams, type, name, params, excepts, body, SourceInfo.NONE);
+  }
 
+  /**
+   * Creates a new method declaration
+   * @param mods    the modifiers
+   * @param type    the return type of this method
+   * @param name    the name of the method to declare
+   * @param params  the parameters list
+   * @param excepts the exception list
+   * @param body    the body statement
+   * @exception IllegalArgumentException if name is null or type is null or
+   *            params is null or excepts is null
+   */
+  public MethodDeclaration(ModifierSet mods, TypeName type, String name,
+                           List<FormalParameter> params, List<? extends ReferenceTypeName> excepts, BlockStatement body,
+                           SourceInfo si) {
+    this(mods, Option.<List<TypeParameter>>none(), type, name, params, excepts, body, si);
+  }
+  /**
+   * Creates a new method declaration
+   * @param mods    the modifiers
+   * @param tparams type parameters
+   * @param type    the return type of this method
+   * @param name    the name of the method to declare
+   * @param params  the parameters list
+   * @param excepts the exception list
+   * @param body    the body statement
+   * @exception IllegalArgumentException if name is null or type is null or
+   *            params is null or excepts is null
+   */
+  public MethodDeclaration(ModifierSet mods, Option<List<TypeParameter>> tparams, TypeName type, String name,
+                           List<FormalParameter> params, List<? extends ReferenceTypeName> excepts, BlockStatement body,
+                           SourceInfo si) {
+    super(mods, si);
+
+    if (tparams == null) throw new IllegalArgumentException("tparams == null");
     if (type == null)    throw new IllegalArgumentException("type == null");
     if (name == null)    throw new IllegalArgumentException("name == null");
     if (params == null)  throw new IllegalArgumentException("params == null");
     if (excepts == null) throw new IllegalArgumentException("excepts == null");
 
-    accessFlags = flags;
+    typeParams  = tparams;
     returnType  = type;
     this.name   = name;
     parameters  = params;
     this.body   = body;
-
-    exceptions            = new LinkedList<String>();
-
-    ListIterator<? extends ReferenceTypeName> it = excepts.listIterator();
-    while (it.hasNext()) {
-      exceptions.add(it.next().getRepresentation());
-    }
+    exceptions = excepts;
   }
 
-  /**
-   * Returns the access flags for this method
-   */
-  public int getAccessFlags() {
-    return accessFlags;
+  public Option<List<TypeParameter>> getTypeParams() { return typeParams; }
+  public void setTypeArgs(List<TypeParameter> tparams) { typeParams = Option.wrap(tparams); }
+  public void setTypeArgs(Option<List<TypeParameter>> tparams) {
+    if (tparams == null) throw new IllegalArgumentException();
+    typeParams = tparams;
   }
-
-  /**
-   * Sets the access flags for this constructor
-   */
-  public void setAccessFlags(int f) {
-    firePropertyChange(ACCESS_FLAGS, accessFlags, accessFlags = f);
-  }
-
+  
   /**
    * Gets the return type of this method
    */
@@ -183,8 +151,7 @@ public class MethodDeclaration extends Node {
    */
   public void setReturnType(TypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-
-    firePropertyChange(RETURN_TYPE, returnType, returnType = t);
+    returnType = t;
   }
 
   /**
@@ -200,8 +167,7 @@ public class MethodDeclaration extends Node {
    */
   public void setName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-
-    firePropertyChange(NAME, name, name = s);
+    name = s;
   }
 
   /**
@@ -217,15 +183,14 @@ public class MethodDeclaration extends Node {
    */
   public void setParameters(List<FormalParameter> l) {
     if (l == null) throw new IllegalArgumentException("l == null");
-
-    firePropertyChange(PARAMETERS, parameters, parameters = l);
+    parameters = l;
   }
 
   /**
    * Returns the list of the exception thrown by this method
    * @return a list of string
    */
-  public List getExceptions() {
+  public List<? extends ReferenceTypeName> getExceptions() {
     return exceptions;
   }
 
@@ -233,10 +198,9 @@ public class MethodDeclaration extends Node {
    * Sets the exceptions list
    * @exception IllegalArgumentException if l is null
    */
-  public void setExceptions(List<String> l) {
+  public void setExceptions(List<? extends ReferenceTypeName> l) {
     if (l == null) throw new IllegalArgumentException("l == null");
-
-    firePropertyChange(EXCEPTIONS, exceptions, exceptions = l);
+    exceptions = l;
   }
 
   /**
@@ -250,19 +214,9 @@ public class MethodDeclaration extends Node {
    * Sets the body
    */
   public void setBody(BlockStatement bs) {
-    firePropertyChange(BODY, body, body = bs);
+    body = bs;
   }
 
-  // Not strictly needed. just added as a convenience /**/
-  public boolean isVarArgs(){
-    return (accessFlags & 0x00000080) != 0; // java.lang.reflect.Modifier.VARARGS == 0x00000080 /**/
-  }
-  
-  // Not strictly needed. just added as a convenience /**/
-  public boolean isBridge(){
-    return (accessFlags & 0x00000040) != 0; // java.lang.reflect.Modifier.BRIDGE == 0x00000040 /**/
-  }
-  
 
   /**
    * Allows a visitor to traverse the tree
@@ -279,6 +233,6 @@ public class MethodDeclaration extends Node {
   }
 
   public String toStringHelper() {
- return java.lang.reflect.Modifier.toString(getAccessFlags())+" "+getReturnType()+" "+getName()+" "+getParameters()+" "+getExceptions()+" "+getBody();
+ return getModifiers()+" "+getTypeParams()+" "+getReturnType()+" "+getName()+" "+getParameters()+" "+getExceptions()+" "+getBody();
   }
 }

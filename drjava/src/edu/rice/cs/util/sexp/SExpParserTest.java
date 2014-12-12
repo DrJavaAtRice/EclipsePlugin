@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util.sexp;
 
@@ -43,8 +46,7 @@ import java.util.List;
  */
 public class SExpParserTest extends DrJavaTestCase {
   
-  /**
-   * Creates a temporary file and writes the given string to that file
+  /** Creates a temporary file and writes the given string to that file
    * @param fname the name of the file to create
    * @param text the text to write to the file
    * @return the File that was created
@@ -63,8 +65,7 @@ public class SExpParserTest extends DrJavaTestCase {
     return f;
   }
   
-  /**
-   * There are three ways to input the data to a parse.
+  /** There are three ways to input the data to a parse.
    * this tests to make sure they all three return the same
    * thing.
    */
@@ -86,8 +87,7 @@ public class SExpParserTest extends DrJavaTestCase {
     assertEquals("the 3rd parse wasn't right", ans, sa3);
   }
   
-  /**
-   * Tests to make sure that multiple top-level s-exps 
+  /** Tests to make sure that multiple top-level s-exps 
    * are parsed separately and in tact
    */
   public void testParseMultiple() throws SExpParseException{
@@ -100,7 +100,7 @@ public class SExpParserTest extends DrJavaTestCase {
     // use a few visitors to test the instances
     final SExpVisitor<String> innerVisitor = new SExpVisitor<String>() {
       private String _failMe(String who) {
-        fail("The inside was "+ who +" but should have been text");
+        fail("The inside was " +  who  + " but should have been text");
         return "";
       }
       public String forEmpty(Empty e){ return _failMe("an empty list"); }
@@ -112,7 +112,7 @@ public class SExpParserTest extends DrJavaTestCase {
     
     final SExpVisitor<String> outerVisitor = new SExpVisitor<String>() {
       private String _failMe(String who) {
-        fail("The top-level was "+ who +" but should have been a cons");
+        fail("The top-level was " +  who  + " but should have been a cons");
         return "";
       }
       public String forEmpty(Empty e){ return _failMe("an empty list"); }
@@ -130,31 +130,31 @@ public class SExpParserTest extends DrJavaTestCase {
     // Test an illegal top-level s-exp
     String text = "true";
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 
-                   "A top-level s-expression must be a list. "+
+                   "A top-level s-expression must be a list. " + 
                    "Invalid start of list: true",
                    e.getMessage());
     }
     text = "123 ((help) me)";
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 
-                   "A top-level s-expression must be a list. "+
+                   "A top-level s-expression must be a list. " + 
                    "Invalid start of list: 123",
                    e.getMessage());
     }
     text = "[help me]"; // right now, I haven't allowed other brace types
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 
-                   "A top-level s-expression must be a list. "+
+                   "A top-level s-expression must be a list. " + 
                    "Invalid start of list: [help",
                    e.getMessage());
     }
@@ -164,7 +164,7 @@ public class SExpParserTest extends DrJavaTestCase {
     
     String text = "(abcdefg";
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 
@@ -174,7 +174,7 @@ public class SExpParserTest extends DrJavaTestCase {
     
     text = "(ab\ncdefg";
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 
@@ -184,18 +184,18 @@ public class SExpParserTest extends DrJavaTestCase {
     
     text = "(ab\ncdefg))";
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 
-                   "A top-level s-expression must be a list. "+
+                   "A top-level s-expression must be a list. " + 
                    "Invalid start of list: )",
                    e.getMessage());
     }
     
     text = "(\")";  //  (") <-- unclosed string
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 
@@ -206,7 +206,7 @@ public class SExpParserTest extends DrJavaTestCase {
     
     text = "(;)";  // <-- last ) is commented out
     try {
-      SExp exp = SExpParser.parse(text).get(0);
+      SExpParser.parse(text).get(0);
       fail("Didn't throw a parse exception");
     }catch(SExpParseException e) {
       assertEquals("Incorrect exception message", 

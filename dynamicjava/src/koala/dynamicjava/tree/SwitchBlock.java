@@ -41,12 +41,7 @@ import koala.dynamicjava.tree.visitor.*;
 
 public class SwitchBlock  extends Node implements ExpressionContainer {
   /**
-   * The statements property name
-   */
-  public final static String STATEMENTS = "statements";
-  
-  /**
-   * The expression
+   * The expression; null for a {@code default} block
    */
   private Expression expression;
   
@@ -59,20 +54,17 @@ public class SwitchBlock  extends Node implements ExpressionContainer {
    * Creates a new binding
    */
   public SwitchBlock(Expression exp, List<Node> stmts) {
-    this(exp, stmts, null, 0, 0, 0, 0);
+    this(exp, stmts, SourceInfo.NONE);
   }
   
   /**
    * Creates a new binding
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
+   * @param exp   the case expression, or {@code null} for a {@code default} block
+   * @param stmts the body
    */
   public SwitchBlock(Expression exp, List<Node> stmts,
-                     String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+                     SourceInfo si) {
+    super(si);
     
     expression = exp;
     statements = stmts;
@@ -89,7 +81,7 @@ public class SwitchBlock  extends Node implements ExpressionContainer {
    * Sets the 'case' expression
    */
   public void setExpression(Expression e) {
-    firePropertyChange(EXPRESSION, expression, expression = e);
+    expression = e;
   }
   
   /**
@@ -103,7 +95,7 @@ public class SwitchBlock  extends Node implements ExpressionContainer {
    * Sets the statements
    */
   public void setStatements(List<Node> l) {
-    firePropertyChange(STATEMENTS, statements, statements = l);
+    statements = l;
   }
   
   /**

@@ -32,64 +32,85 @@ import java.util.*;
 
 import koala.dynamicjava.tree.visitor.*;
 
-/**
- * This class represents the array allocation nodes of the syntax tree
- *
- * @author  Stephane Hillion
- * @version 1.0 - 1999/04/25
- */
+/** This class represents the array allocation nodes of the syntax tree
+  * @author  Stephane Hillion
+  * @version 1.0 - 1999/04/25
+  */
 
-public class ArrayAllocation extends Allocation {
-  /**
-   * The type descriptor
-   */
+public class ArrayAllocation extends PrimaryExpression {
+  /** The creationType */
+  private TypeName elementType;
+  
+  /** The type descriptor */
   private TypeDescriptor typeDescriptor;
   
-  /**
-   * Initializes the expression
-   * @param tp    the type prefix
-   * @param td    the type descriptor
-   * @exception IllegalArgumentException if tp is null or td is null
-   */
-  public ArrayAllocation(TypeName tp, TypeDescriptor td) {
-    this(tp, td, null, 0, 0, 0, 0);
-  }
+  /** Initializes the expression
+    * @param tp    the type prefix
+    * @param td    the type descriptor
+    * @exception IllegalArgumentException if tp is null or td is null
+    */
+  public ArrayAllocation(TypeName tp, TypeDescriptor td) { this(tp, td, SourceInfo.NONE); }
   
   /**
    * Initializes the expression
    * @param tp    the type prefix
-   * @param td    the type descriptor
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
+   * @param td    the type descriptor.  The element type of the enclosed initializer will
+   *              be automatically and recursively set.
    * @exception IllegalArgumentException if tp is null or td is null
    */
   public ArrayAllocation(TypeName tp, TypeDescriptor td,
-                         String fn, int bl, int bc, int el, int ec) {
-    super(tp, fn, bl, bc, el, ec);
+                         SourceInfo si) {
+    super(si);
     
+    if (tp == null) throw new IllegalArgumentException("tp == null");
     if (td == null) throw new IllegalArgumentException("td == null");
-    
+    elementType = tp;
     typeDescriptor = td;
     td.initialize(tp);
   }
   
   /**
-   * Returns the dimension of the array
+   * Returns the creation type
    */
-  public int getDimension() {
-    return typeDescriptor.dimension;
+  public TypeName getElementType() {
+    return elementType;
   }
   
   /**
-   * Returns the size expressions
+   * Sets the creation type
+   * @exception IllegalArgumentException if t is null
    */
+  public void setElementType(TypeName t) {
+    if (t == null) throw new IllegalArgumentException("t == null");
+    elementType = t;
+  }
+
+  /**
+   * Returns the dimension of the array
+   */
+  public int getDimension() { return typeDescriptor.dimension; }
+  
+  /**
+   * Note: This method <em>doesn't</em> follow the usual convention of
+   * firing a property change.  If that functionality is needed, the code should
+   * be fixed.
+   */
+  public void setDimension(int dim) { typeDescriptor.dimension = dim; }
+  
+  /** Returns the size expressions */
   public List<Expression> getSizes() {
     return typeDescriptor.sizes;
   }
   
+  /**
+   * Note: This method <em>doesn't</em> follow the usual convention of
+   * firing a property change.  If that functionality is needed, the code should
+   * be fixed.
+   */
+  public void setSizes(List<? extends Expression> sz) { 
+    typeDescriptor.sizes = (sz == null) ? null : new ArrayList<Expression>(sz);
+  }
+
   /**
    * Returns the initialization expression
    */
@@ -97,6 +118,17 @@ public class ArrayAllocation extends Allocation {
     return typeDescriptor.initialization;
   }
   
+  /**
+   * Note: This method <em>doesn't</em> follow the usual convention of
+   * firing a property change.  If that functionality is needed, the code should
+   * be fixed.
+   * 
+   * @param init  An initializer, assumed to already be set up with a valid element type.
+   *              (The ArrayInitializer constructor will set up the element type automatically,
+   *               but this method does not.)
+   */
+  public void setInitialization(ArrayInitializer init) { typeDescriptor.initialization = init; }
+
   /**
    * Allows a visitor to traverse the tree
    * @param visitor the visitor to accept
@@ -109,61 +141,43 @@ public class ArrayAllocation extends Allocation {
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+getCreationType()+" "+getDimension()+" "+getSizes()+")";
+    return "(" + getClass().getName() + ": " + getElementType() + " " + getDimension() + " " + getSizes() + ")";
   }
   
   /**
    * This class contains informations about the array to create
    */
-  public static class TypeDescriptor {
-    /**
-     * The array dimension sizes
-     */
+  public static class TypeDescriptor implements SourceInfo.Wrapper {
+    /** The array dimension sizes */
     List<Expression> sizes;
     
-    /**
-     * The array dimension
-     */
+    /** The array dimension */
     int dimension;
     
-    /**
-     * The initialization expression
-     */
+    /** The initialization expression */
     ArrayInitializer initialization;
     
-    /**
-     * The end line
-     */
-    public int endLine;
+    SourceInfo sourceInfo;
     
-    /**
-     * The end column
-     */
-    public int endColumn;
-    
-    /**
-     * Creates a new type descriptor
-     */
-    public TypeDescriptor(List<Expression> sizes, int dim,
-                          ArrayInitializer init, int el, int ec) {
-      this.sizes     = sizes;
+    /** Creates a new type descriptor */
+    public TypeDescriptor(List<? extends Expression> sizes, int dim, ArrayInitializer init, SourceInfo si) {
+      this.sizes     = (sizes == null) ? null : new ArrayList<Expression>(sizes);
       dimension      = dim;
       initialization = init;
-      endLine        = el;
-      endColumn      = ec;
+      sourceInfo     = si;
     }
     
-    /**
-     * Initializes the type descriptor
-     */
+    public SourceInfo getSourceInfo() { return sourceInfo; }
+    
+    /** Initializes the type descriptor */
     void initialize(TypeName t) {
       if (initialization != null) {
-        TypeName et = (dimension > 1)
-          ? new ArrayTypeName(t, dimension - 1,
-                          t.getFilename(),
-                          t.getBeginLine(), t.getBeginColumn(),
-                          endLine, endColumn)
-          : t;
+        TypeName et;
+        if (dimension > 1)
+          et = new ArrayTypeName(t, dimension-1, false, SourceInfo.span(t, this));
+        else
+          et = t; 
+
         initialization.setElementType(et);
       }
     }

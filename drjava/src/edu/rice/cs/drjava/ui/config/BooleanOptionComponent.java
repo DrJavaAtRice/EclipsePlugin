@@ -1,67 +1,90 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui.config;
 
+import java.awt.event.*;
 import javax.swing.*;
 import edu.rice.cs.drjava.config.*;
 import edu.rice.cs.drjava.*;
-import java.awt.*;
-import java.awt.event.*;
+import edu.rice.cs.util.swing.SwingFrame;
 
-
-/**
- * Graphical form of a BooleanOption.
- * @version $Id$
- */
-public class BooleanOptionComponent extends OptionComponent<Boolean> {
+/** Graphical form of a BooleanOption.
+  * @version $Id$
+  */
+public class BooleanOptionComponent extends OptionComponent<Boolean,JCheckBox> {
   protected JCheckBox _jcb;
 
-  /**
-   * Constructs a new BooleanOptionComponent.
+  /** Constructs a new BooleanOptionComponent.
    * @param opt the BooleanOption this component represents
    * @param text the text to display with the option
    * @param parent the parent frame
+   * @param left whether the descriptive text should be on the left
    */
-  public BooleanOptionComponent(BooleanOption opt, String text, Frame parent) {
-    super(opt, "", parent);
+  public BooleanOptionComponent(BooleanOption opt, String text, SwingFrame parent, boolean left) {
+    super(opt, left?text:"", parent);
     _jcb = new JCheckBox();
-    _jcb.setText(text);
+    _jcb.setText(left?"":text);
     _jcb.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) { notifyChangeListeners(); }
     });
     
     _jcb.setSelected(DrJava.getConfig().getSetting(_option).booleanValue());
+    setComponent(_jcb);
+  }
+
+  /** Constructs a new BooleanOptionComponent with a tooltip description.
+   *  @param opt the BooleanOption this component represents
+   *  @param text the text to display with the option
+   *  @param parent the parent frame
+   *  @param description text to show in a tooltip over 
+   *  @param left whether the descriptive text should be on the left
+   */
+  public BooleanOptionComponent(BooleanOption opt, String text, SwingFrame parent, String description, boolean left) {
+    this(opt, text, parent, left);
+    setDescription(description);
+  }
+  
+    /** Constructs a new BooleanOptionComponent.
+   * @param opt the BooleanOption this component represents
+   * @param text the text to display with the option
+   * @param parent the parent frame
+   */
+  public BooleanOptionComponent(BooleanOption opt, String text, SwingFrame parent) {
+    this(opt, text, parent, true);
   }
 
   /** Constructs a new BooleanOptionComponent with a tooltip description.
@@ -70,39 +93,40 @@ public class BooleanOptionComponent extends OptionComponent<Boolean> {
    *  @param parent the parent frame
    *  @param description text to show in a tooltip over 
    */
-  public BooleanOptionComponent(BooleanOption opt, String text,
-                                Frame parent, String description) {
-    this(opt, text, parent);
-    setDescription(description);
+  public BooleanOptionComponent(BooleanOption opt, String text, SwingFrame parent, String description) {
+    this(opt, text, parent, true);
   }
 
   /** Sets the tooltip description text for this option.
-   *  @param description the tooltip text
-   */
+    * @param description the tooltip text
+    */
   public void setDescription(String description) {
     _jcb.setToolTipText(description);
     _label.setToolTipText(description);
   }
 
   /** Updates the config object with the new setting.
-   *  @return true if the new value is set successfully
-   */
+    * @return true if the new value is set successfully
+    */
   public boolean updateConfig() {
     Boolean oldValue = DrJava.getConfig().getSetting(_option);
     Boolean newValue = Boolean.valueOf(_jcb.isSelected());
     
-    if (!oldValue.equals(newValue)) DrJava.getConfig().setSetting(_option, newValue);      
+    if (! oldValue.equals(newValue)) DrJava.getConfig().setSetting(_option, newValue);      
 
     return true;
   } 
   
   /** Displays the given value. */
-  public void setValue(Boolean value) {
-    _jcb.setSelected(value.booleanValue());
-  }
+  public void setValue(Boolean value) { _jcb.setSelected(value.booleanValue()); }
   
-  /**
-   * Return's this OptionComponent's configurable component.
-   */
-  public JComponent getComponent() { return _jcb; }
+//  /** Return's this OptionComponent's configurable component. */
+//  public JCheckBox getComponent() { return _jcb; }
+  
+  /** Whether the component should occupy the entire column. */
+  public BooleanOptionComponent setEntireColumn(boolean entireColumn) {
+    _entireColumn = entireColumn;
+    return this;
+  }
+
 }

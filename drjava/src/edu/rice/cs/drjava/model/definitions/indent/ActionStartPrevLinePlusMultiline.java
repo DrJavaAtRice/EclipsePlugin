@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2006 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model.definitions.indent;
 
@@ -49,8 +52,7 @@ class ActionStartPrevLinePlusMultiline extends IndentRuleAction {
   // private int _position = 0;
   private int _offset = 0;
 
-  /**
-   * Creates a multiline insert rule.  It should be noted that although the suffices
+  /** Creates a multiline insert rule.  It should be noted that although the suffices
    * are referred to as "lines", this class simply appends the strings with a
    * number of spaces for padding.  Any newline characters you intend to place
    * in the document must be explicitly placed within the input strings.
@@ -79,10 +81,6 @@ class ActionStartPrevLinePlusMultiline extends IndentRuleAction {
       throw new IllegalArgumentException
         ("The specified position was not within the bounds of the specified line.");
     }
-//    else {
-//      _position = position;
-//    }
-
     
     // pre-compute the relative offset (without indents) of the new position
     for (int i = 0; i < line; i++) {
@@ -91,24 +89,23 @@ class ActionStartPrevLinePlusMultiline extends IndentRuleAction {
     _offset += position;
   }
   
-  /**
-   * Indents the line according to the previous line, with the suffix lines added
-   * and the cursor moved to a specific location.
-   * If on the first line, indent is set to 0.
-   * @param doc AbstractDJDocument containing the line to be indented.
-   * @return this is always false, since we are updating the cursor location
-   */
-  public boolean indentLine(AbstractDJDocument doc, int reason) {
+  /** Indents the line according to the previous line, with the suffix lines added and the cursor moved to a specific 
+    * location.  If on the first line, indent is set to 0.  Only runs in event thread.
+    * @param doc AbstractDJDocument containing the line to be indented.
+    * @param reason The reason that the indentation is taking place
+    * @return this is always false, since we are updating the cursor location
+    */
+  public void indentLine(AbstractDJDocument doc, Indenter.IndentReason reason) {
     super.indentLine(doc, reason);
     try {
       // Find start of line
       int here = doc.getCurrentLocation();
-      int startLine = doc.getLineStartPos(here);
+      int startLine = doc._getLineStartPos(here);
 
-      if (startLine > AbstractDJDocument.DOCSTART) {
+      if (startLine > 0) {
         // Find prefix of previous line
-        int startPrevLine = doc.getLineStartPos(startLine - 1);
-        int firstChar = doc.getLineFirstCharPos(startPrevLine);
+        int startPrevLine = doc._getLineStartPos(startLine - 1);
+        int firstChar = doc._getLineFirstCharPos(startPrevLine);
         String prefix = doc.getText(startPrevLine, firstChar - startPrevLine);
         
         // indent and add the suffices
@@ -128,7 +125,6 @@ class ActionStartPrevLinePlusMultiline extends IndentRuleAction {
           here += _suffices[i].length();
         }
       }
-      return false;
     }
     catch (BadLocationException e) {
       // Shouldn't happen

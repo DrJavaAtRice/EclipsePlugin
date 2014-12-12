@@ -37,27 +37,7 @@ import koala.dynamicjava.tree.visitor.*;
  * @version 1.0 - 1999/05/11
  */
 
-public class FormalParameter extends Node {
-  /**
-   * The final property name
-   */
-  public final static String FINAL = "final";
-  
-  /**
-   * The type property name
-   */
-  public final static String TYPE = "type";
-  
-  /**
-   * The name property name
-   */
-  public final static String NAME = "name";
-  
-  /**
-   * Is this parameter final?
-   */
-  private boolean finalParameter;
-  
+public class FormalParameter extends Declaration {
   /**
    * The type of this parameter
    */
@@ -70,45 +50,30 @@ public class FormalParameter extends Node {
   
   /**
    * Initializes the node
-   * @param f     is the parameter final?
+   * @param mods  the modifiers
    * @param t     the type of the parameter
    * @param n     the name of the parameter
-   * @param va    whether paramater is a varargs
    * @exception IllegalArgumentException if t is null or n is null
    */
-  public FormalParameter(boolean f, TypeName t, String n) {
-    this(f, t, n, null, 0, 0, 0, 0);
+  public FormalParameter(ModifierSet mods, TypeName t, String n) {
+    this(mods, t, n, SourceInfo.NONE);
   }
   
   /**
    * Initializes the node
-   * @param f     is the parameter final?
+   * @param mods  the modifiers
    * @param t     the type of the parameter
    * @param n     the name of the parameter
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    * @exception IllegalArgumentException if t is null or n is null
    */
-  public FormalParameter(boolean f, TypeName t, String n,
-                         String fn, int bl, int bc, int el, int ec) {
-    super(fn, bl, bc, el, ec);
+  public FormalParameter(ModifierSet mods, TypeName t, String n,
+                         SourceInfo si) {
+    super(mods, si);
     
     if (t == null) throw new IllegalArgumentException("t == null");
     if (n == null) throw new IllegalArgumentException("n == null");
-    
-    finalParameter = f;
     type           = t;
     name           = n;
-  }
-  
-  /**
-   * Is this parameter final?
-   */
-  public boolean isFinal() {
-    return finalParameter;
   }
   
   /**
@@ -124,8 +89,7 @@ public class FormalParameter extends Node {
    */
   public void setType(TypeName t) {
     if (t == null) throw new IllegalArgumentException("t == null");
-    
-    firePropertyChange(TYPE, type, type = t);
+    type = t;
   }
   
   /**
@@ -141,8 +105,7 @@ public class FormalParameter extends Node {
    */
   public void setName(String s) {
     if (s == null) throw new IllegalArgumentException("s == null");
-    
-    firePropertyChange(NAME, name, name = s);
+    name = s;
   }
   
   /**
@@ -156,6 +119,6 @@ public class FormalParameter extends Node {
    * Implementation of toString for use in unit testing
    */
   public String toString() {
-    return "("+getClass().getName()+": "+isFinal()+" "+getType()+" "+getName()+")";
+    return "("+getClass().getName()+": "+getModifiers()+" "+getType()+" "+getName()+")";
   }
 }

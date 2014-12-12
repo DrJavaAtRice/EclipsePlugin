@@ -36,47 +36,41 @@ package koala.dynamicjava.tree;
  */
 
 public abstract class UnaryExpression extends Expression implements ExpressionContainer {
-    /**
-     * The target expression
-     */
-    private Expression expression;
+  /**
+   * The target expression
+   */
+  private Expression expression;
 
-    /**
-     * Initializes the expression
-     * @param exp   the target expression
-     * @param fn    the filename
-     * @param bl    the begin line
-     * @param bc    the begin column
-     * @param el    the end line
-     * @param ec    the end column
-     * @exception IllegalArgumentException if exp is null
-     */
-    protected UnaryExpression(Expression exp,
-         String fn, int bl, int bc, int el, int ec) {
- super(fn, bl, bc, el, ec);
+  /**
+   * Initializes the expression
+   * @param exp   the target expression
+   * @exception IllegalArgumentException if exp is null
+   */
+  protected UnaryExpression(Expression exp,
+       SourceInfo si) {
+   super(si);
+  
+   if (exp == null) throw new IllegalArgumentException("exp == null");
+  
+     expression = exp;
+  }
 
- if (exp == null) throw new IllegalArgumentException("exp == null");
+  /**
+   * Returns the target expression
+   */
+  public Expression getExpression() {
+    return expression;
+  }
 
- expression = exp;
-    }
-
-    /**
-     * Returns the target expression
-     */
-    public Expression getExpression() {
- return expression;
-    }
-
-    /**
-     * Sets the target expression
-     * @exception IllegalArgumentException if e is null
-     */
-    public void setExpression(Expression e) {
- if (e == null) throw new IllegalArgumentException("e == null");
-
- firePropertyChange(EXPRESSION, expression, expression = e);
-    }
-       /**
+  /**
+   * Sets the target expression
+   * @exception IllegalArgumentException if e is null
+   */
+  public void setExpression(Expression e) {
+    if (e == null) throw new IllegalArgumentException("e == null");
+    expression = e;
+  }
+     /**
    * Implementation of toString for use in unit testing
    */
   public String toString() {

@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.ui;
 
@@ -41,8 +44,8 @@ import java.util.LinkedList;
 import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
 import edu.rice.cs.drjava.DrJava;
 import edu.rice.cs.drjava.config.*;
-import edu.rice.cs.drjava.CodeStatus;
 import edu.rice.cs.util.swing.DisplayManager;
+import edu.rice.cs.util.swing.Utilities;
 
 /** This class extends a Swing view class.  Hence it should only be accessed from the event-handling thread. */
 public class RecentDocFrame extends JWindow {
@@ -50,8 +53,8 @@ public class RecentDocFrame extends JWindow {
   MainFrame _frame;
   
   // The manager that gives filenames and icons
-  DisplayManager<OpenDefinitionsDocument> _displayManager = _frame.getOddDisplayManager30();
-    
+  DisplayManager<OpenDefinitionsDocument> _displayManager = MainFrame.getOddDisplayManager30();
+  
   // the label that shows the icon and filename
   JLabel _label;
   // the panel that holds the label and textpane
@@ -96,12 +99,9 @@ public class RecentDocFrame extends JWindow {
     _label = new JLabel("...") {
       // Enable anti-aliased text by overriding paintComponent.
       protected void paintComponent(Graphics g) {
-        if (CodeStatus.DEVELOPMENT) {
-          if (_antiAliasText && g instanceof Graphics2D) {
-            Graphics2D g2d = (Graphics2D)g;
-            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
-                                 RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-          }
+        if (_antiAliasText && g instanceof Graphics2D) {
+          Graphics2D g2d = (Graphics2D)g;
+          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
         super.paintComponent(g);
       }
@@ -111,11 +111,9 @@ public class RecentDocFrame extends JWindow {
     _textpane = new JTextPane() {
       // Enable anti-aliased text by overriding paintComponent.
       protected void paintComponent(Graphics g) {
-        if (CodeStatus.DEVELOPMENT) {
-          if (_antiAliasText && g instanceof Graphics2D) {
-            Graphics2D g2d = (Graphics2D)g;
-            g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-          }
+        if (_antiAliasText && g instanceof Graphics2D) {
+          Graphics2D g2d = (Graphics2D)g;
+          g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         }
         super.paintComponent(g);
       }
@@ -141,15 +139,14 @@ public class RecentDocFrame extends JWindow {
     DrJava.getConfig().addOptionListener(OptionConstants.TEXT_ANTIALIAS, _antialiasListener);
     DrJava.getConfig().addOptionListener(OptionConstants.SHOW_SOURCE_WHEN_SWITCHING, _showSourceListener);
   }
-
+  
   private void updateFontColor() {
     Font  mainFont = DrJava.getConfig().getSetting(OptionConstants.FONT_MAIN);
     Color backColor = DrJava.getConfig().getSetting(OptionConstants.DEFINITIONS_BACKGROUND_COLOR);
     Color fontColor = DrJava.getConfig().getSetting(OptionConstants.DEFINITIONS_NORMAL_COLOR);
     /* make it bigger */
     Font titleFont = mainFont.deriveFont((float) (mainFont.getSize() + 3));
-    if (CodeStatus.DEVELOPMENT)
-      _antiAliasText = DrJava.getConfig().getSetting(OptionConstants.TEXT_ANTIALIAS).booleanValue();
+    _antiAliasText = DrJava.getConfig().getSetting(OptionConstants.TEXT_ANTIALIAS).booleanValue();
     
     _label.setForeground(fontColor);
     _panel.setBackground(backColor);
@@ -161,10 +158,9 @@ public class RecentDocFrame extends JWindow {
     _scroller.setBorder(new EmptyBorder(0,0,0,0));
     _panel.setBorder(new LineBorder(fontColor, 1));
   }
-  /** Moves the document d to the beginning of the list
-   *  if it's already in the list, or it adds it to the
-   *  beginning if its not already in the list
-   */
+  /** Moves the document d to the beginning of the list if it's already in the list, or it adds it to the
+    * beginning if its not already in the list.
+    */
   public void pokeDocument(OpenDefinitionsDocument d) {
     if (_docs.contains(d)) {
       _current = _docs.indexOf(d);
@@ -177,31 +173,31 @@ public class RecentDocFrame extends JWindow {
   public void closeDocument(OpenDefinitionsDocument d) { _docs.remove(d); }
   
   private void show(int _current) {
-      OpenDefinitionsDocument doc = _docs.get(_current);
+    OpenDefinitionsDocument doc = _docs.get(_current);
+    
+    String text = getTextFor(doc);
+    
+    _label.setText(_displayManager.getName(doc));
+    _label.setIcon(_displayManager.getIcon(doc));
+    
+    if (text.length() > 0) {
+      // as wide as the text area wants, but only 200px high
+      _textpane.setText(text);
+      _scroller.setPreferredSize(_textpane.getPreferredScrollableViewportSize());
+      if (_scroller.getPreferredSize().getHeight() > 200)
+        _scroller.setPreferredSize(new Dimension((int)_scroller.getPreferredSize().getWidth(), 200));
       
-      String text = getTextFor(doc);
-      
-      _label.setText(_displayManager.getName(doc));
-      _label.setIcon(_displayManager.getIcon(doc));
-      
-      if (text.length() > 0) {
-        // as wide as the text area wants, but only 200px high
-        _textpane.setText(text);
-        _scroller.setPreferredSize(_textpane.getPreferredScrollableViewportSize());
-        if (_scroller.getPreferredSize().getHeight() > 200)
-          _scroller.setPreferredSize(new Dimension((int)_scroller.getPreferredSize().getWidth(), 200));
-        
-        _scroller.setVisible(_showSource);
-      }
-      else _scroller.setVisible(false);
-      
-      Dimension d = _label.getMinimumSize();
-      d.setSize(d.getWidth() + _padding*2, d.getHeight() + _padding*2);
-      _label.setPreferredSize(d);
-      _label.setHorizontalAlignment(SwingConstants.CENTER);
-      _label.setVerticalAlignment(SwingConstants.CENTER);
-      pack();
-      centerH();
+      _scroller.setVisible(_showSource);
+    }
+    else _scroller.setVisible(false);
+    
+    Dimension d = _label.getMinimumSize();
+    d.setSize(d.getWidth() + _padding*2, d.getHeight() + _padding*2);
+    _label.setPreferredSize(d);
+    _label.setHorizontalAlignment(SwingConstants.CENTER);
+    _label.setVerticalAlignment(SwingConstants.CENTER);
+    pack();
+    centerH();
   }
   
   /** Sets the current document to be the next document in the list. */
@@ -224,7 +220,7 @@ public class RecentDocFrame extends JWindow {
   
   private String getTextFor(OpenDefinitionsDocument doc) {
     DefinitionsPane pane = _frame.getDefPaneGivenODD(doc);
-    String endl = System.getProperty("line.separator");
+    String endl = "\n"; // was StringOps.EOL; but Swing uses '\n' for newLine
     int loc = pane.getCaretPosition();
     int start = loc;
     int end = loc;
@@ -238,13 +234,15 @@ public class RecentDocFrame extends JWindow {
     if (start == -1) start = 0;
     
     // skip the end line, if we're at one
-    // if (doc.getLength() >= endl.length() && text.substring(start, start+endl.length()) == endl) start+=endl.length();
-    if (doc.getLength() >= endl.length() && text.substring(start, start+endl.length()).equals(endl)) start+=endl.length();
+//    if (doc.getLength() >= endl.length() && text.substring(start, start+endl.length()) == endl) 
+//    start += endl.length();
+    if (doc.getLength() >= endl.length() && text.substring(start, start+endl.length()).equals(endl)) 
+      start += endl.length();
     /* get the ending point 2 lines down */
     int index;
-    for (int i=0;i<4;i++) {
+    for (int i = 0; i < 4; i++) {
       if (end < doc.getLength()) {
-        index = text.indexOf(endl, end+endl.length());
+        index = text.indexOf(endl, end + endl.length());
         if (index != -1) end = index;
       }
     }
@@ -252,7 +250,7 @@ public class RecentDocFrame extends JWindow {
     text = text.substring(start, end);
     return text;
   }
-    
+  
   /** Resets the frame to point to the first document in the list. */
   public void first() {
     _current = 0;
@@ -261,10 +259,7 @@ public class RecentDocFrame extends JWindow {
   
   public void refreshColor() { }
   
-  /**
-   * sets this frame as visible only if _docs is non empty.
-   * also resets the frame accordingly
-   */
+  /** Sets this frame as visible only if _docs is non empty. Also resets the frame accordingly */
   public void setVisible(boolean v) {
     centerH();
     if (_docs.size() > 0) {
@@ -279,9 +274,7 @@ public class RecentDocFrame extends JWindow {
   }
   
   /** Centers the frame in the screen. */
-  private void centerH() {
-    MainFrame.setPopupLoc(this, _frame);
-  }
+  private void centerH() { Utilities.setPopupLoc(this, _frame); }
   
   /** Centers the frame in the screen. */
   private void centerV() {
@@ -300,7 +293,7 @@ public class RecentDocFrame extends JWindow {
     if (_docs.size() > 0) return _docs.getFirst();
     return null;
   }
-
+  
 //  private ImageIcon _getIconResource(String name) {
 //    URL url = RecentDocFrame.class.getResource("icons/" + name);
 //    if (url != null) return new ImageIcon(url);

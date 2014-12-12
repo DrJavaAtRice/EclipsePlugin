@@ -30,7 +30,10 @@ package koala.dynamicjava.tree;
 
 import java.util.*;
 
-import koala.dynamicjava.tree.visitor.*;
+import koala.dynamicjava.tree.tiger.GenericReferenceTypeName;
+import koala.dynamicjava.tree.visitor.Visitor;
+
+import static koala.dynamicjava.tree.ModifierSet.Modifier.*;
 
 /**
  * This class represents an enum declaration
@@ -39,18 +42,17 @@ import koala.dynamicjava.tree.visitor.*;
  */
 
 public class EnumDeclaration extends ClassDeclaration {
- 
   
   /**
    * Creates a new enum declaration
-   * @param flags the access flags
+   * @param mods  the modifiers
    * @param name  the name of the enum to declare
    * @param impl  the list of implemented interfaces (a list of list of
    *              Token). Can be null.
    * @param body  the list of members declarations
    */
-  public EnumDeclaration(int flags, String name, List<? extends ReferenceTypeName> impl, EnumBody body) {
-    this(flags, name, impl, body, null, 0, 0, 0, 0);
+  public EnumDeclaration(ModifierSet mods, String name, List<? extends ReferenceTypeName> impl, EnumBody body) {
+    this(mods, name, impl, body, SourceInfo.NONE);
   }
 
 //  /** Flag is set if symbol has a synthetic attribute.
@@ -72,19 +74,14 @@ public class EnumDeclaration extends ClassDeclaration {
 
  /**
    * Creates a new enum declaration
-   * @param flags the access flags
+   * @param mods  the modifiers
    * @param name  the name of the enum to declare
    * @param impl  the list of implemented interfaces (a list of list of
    *              Token). Can be null.
    * @param body  the list of members declarations
-   * @param fn    the filename
-   * @param bl    the begin line
-   * @param bc    the begin column
-   * @param el    the end line
-   * @param ec    the end column
    */
-  public EnumDeclaration(int flags, String name, List<? extends ReferenceTypeName> impl, EnumBody body,
-                          String fn, int bl, int bc, int el, int ec) {
+  public EnumDeclaration(ModifierSet mods, String name, List<? extends ReferenceTypeName> impl, EnumBody body,
+                          SourceInfo si) {
     // the first parameter should be (flags | 0x4000), 
     // but this causes problems when trying to create 
     // an instance of it using reflection since you 
@@ -94,88 +91,86 @@ public class EnumDeclaration extends ClassDeclaration {
     // The only real consequence of this is that Class.isEnum() 
     // will return false, but since dynamicjava uses 
     // TigerUtilities.isEnum(), this doesn't pose too big of a problem.
-    super(flags, 
-          name, new ReferenceTypeName("java.lang.Enum"), impl,
+    super(mods, 
+          name, makeTypeName(name), impl,
       AddValues(name,
         HandleConstructors(name,
           makeEnumBodyDeclarationsFromEnumConsts(name, body)),
         body.getConstants()),
-      fn, bl, bc, el, ec);
-    // Do all Enum checks here? /**/
+      si);
+  }
+  
+  private static ReferenceTypeName makeTypeName(String name) {
+    List<Identifier> c = Arrays.asList(new Identifier("java"), new Identifier("lang"), new Identifier("Enum"));
+    List<TypeName> emptyTargs = Collections.emptyList(); 
+    List<ReferenceTypeName> targs = Arrays.asList(new ReferenceTypeName(name));
+    List<List<? extends TypeName>> allTArgs = new LinkedList<List<? extends TypeName>>();
+    allTArgs.add(emptyTargs);
+    allTArgs.add(emptyTargs);
+    allTArgs.add(targs);
+    return new GenericReferenceTypeName(c, allTArgs);
   }
 
   static List<Node> AddValues(String enumTypeName, List<Node> body, List<EnumConstant> consts){
-    String[] consts_names = new String[consts.size()];
-    for(int i = 0; i < consts_names.length; i++)
-      consts_names[i] = consts.get(i).getName();
-
     List<Node> newbody = body;
 
-    int accessFlags  = java.lang.reflect.Modifier.PRIVATE | java.lang.reflect.Modifier.STATIC | java.lang.reflect.Modifier.FINAL;
-
+    // public static Foo[] values() { return new Foo[]{ Foo.FIRST, Foo.SECOND, Foo.THIRD }; }
     ReferenceTypeName enumType = new ReferenceTypeName(enumTypeName);
-    TypeName valuesType = new ArrayTypeName(enumType, 1);
-    List<Expression> sizes = new LinkedList<Expression>();
-    sizes.add(new IntegerLiteral(String.valueOf(consts_names.length)));
     List<Expression> cells = new LinkedList<Expression>();
-    for( int i = 0; i < consts_names.length; i++ )
-      cells.add(new StaticFieldAccess(enumType, consts_names[i]));
-    ArrayAllocation allocExpr = new ArrayAllocation(enumType, new ArrayAllocation.TypeDescriptor(sizes, 1, new ArrayInitializer(cells), 0, 0));
-    newbody.add(new FieldDeclaration(accessFlags, valuesType, "$VALUES", allocExpr));
-
-    accessFlags  = java.lang.reflect.Modifier.PUBLIC | java.lang.reflect.Modifier.STATIC | java.lang.reflect.Modifier.FINAL;
-    List<FormalParameter> vparams = new LinkedList<FormalParameter>();
-    ///*for testing jlugo code*/vparams.add(new FormalParameter(false, new ReferenceTypeName("String"), "s"));
-    List<Node> stmts = new LinkedList<Node>();
-    stmts.add(new ReturnStatement(new CastExpression(enumType, new ObjectMethodCall(new StaticFieldAccess(enumType, "$VALUES"), "clone", null))));
-    newbody.add(new MethodDeclaration(accessFlags, valuesType, "values", vparams, new LinkedList<ReferenceTypeName>(), new BlockStatement(stmts)));
-
-    List<FormalParameter> voparams = new LinkedList<FormalParameter>();
-    voparams.add(new FormalParameter(false, new ReferenceTypeName("String"), "s"));
-    accessFlags  = java.lang.reflect.Modifier.PUBLIC | java.lang.reflect.Modifier.STATIC;
+    for(EnumConstant c : consts) {
+      cells.add(new StaticFieldAccess(enumType, c.getName()));
+    }
     
-    //  for( int i = 0; i < $VALUES.length; i++ )
-    //    if($VALUES[i].name().equals(s))
-    //      return $VALUES[i];
-    //  throw new IllegalArgumentException(s);
-    List<Node> stmtsOf = new LinkedList<Node>();
-    List<Node> init = new LinkedList<Node>();
-    init.add(new VariableDeclaration(false, new IntTypeName(), "i", new IntegerLiteral("0")));
-    List<IdentifierToken> iIds = new LinkedList<IdentifierToken>();
-    iIds.add(new Identifier("i"));
-    QualifiedName iId = new QualifiedName(iIds);
-    Expression cond = new LessExpression(iId, new ObjectFieldAccess(new StaticFieldAccess(enumType, "$VALUES"), "length"));
-    List<Node> updt = new LinkedList<Node>();
-    updt.add(new PostIncrement(iId));
-    ArrayAccess arrCell = new ArrayAccess(new StaticFieldAccess(enumType, "$VALUES"), iId);
-    List<Expression> args = new LinkedList<Expression>();
-    List<IdentifierToken> sIds = new LinkedList<IdentifierToken>();
-    sIds.add(new Identifier("s"));
-    QualifiedName sId = new QualifiedName(sIds);
-    args.add(new QualifiedName(sIds));
-    IfThenStatement bodyOf = new IfThenStatement(new ObjectMethodCall(new ObjectMethodCall(arrCell, "name", null), "equals", args), new ReturnStatement(arrCell));
-    stmtsOf.add(new ForStatement(init, cond, updt, bodyOf));
-    stmtsOf.add(new ThrowStatement(new SimpleAllocation(new ReferenceTypeName("IllegalArgumentException"), args)));
-    newbody.add(new MethodDeclaration(accessFlags, enumType, "valueOf", voparams, new LinkedList<ReferenceTypeName>(), new BlockStatement(stmtsOf)));
-
+    Expression alloc = new ArrayAllocation(enumType,
+                                           new ArrayAllocation.TypeDescriptor(Collections.<Expression>emptyList(), 1,
+                                                                              new ArrayInitializer(cells),
+                                                                              SourceInfo.NONE));
+    Statement valuesBody = new ReturnStatement(alloc);
+    newbody.add(new MethodDeclaration(ModifierSet.make(PUBLIC, STATIC),
+                                      new ArrayTypeName(enumType, 1, false),
+                                      "values",
+                                      Collections.<FormalParameter>emptyList(),
+                                      Collections.<ReferenceTypeName>emptyList(),
+                                      new BlockStatement(Collections.<Node>singletonList(valuesBody))));
+               
+    // public static Foo valueOf(String name) {
+    //   if ("FIRST".equals(name)) return Foo.FIRST;
+    //   if ("SECOND".equals(name)) return Foo.SECOND;
+    //   if ("THIRD".equals(name)) return Foo.THIRD;
+    //   throw new IllegalArgumentException();
+    // }
+    FormalParameter nameParam = new FormalParameter(ModifierSet.make(),
+                                                    new ReferenceTypeName("java", "lang", "String"),
+                                                    "name");
+    List<Node> valueOfBody = new LinkedList<Node>();
+    for (EnumConstant c : consts) {
+      String cn = c.getName();
+      Expression cond = new ObjectMethodCall(new StringLiteral("\"" + cn + "\""), "equals",
+                                             Collections.singletonList(new VariableAccess("name")));
+      Statement ret = new ReturnStatement(new StaticFieldAccess(enumType, cn));
+      valueOfBody.add(new IfThenStatement(cond, ret));
+    }
+    valueOfBody.add(new ThrowStatement(new SimpleAllocation(new ReferenceTypeName("IllegalArgumentException"),
+                                                            Collections.<Expression>emptyList())));
+    newbody.add(new MethodDeclaration(ModifierSet.make(PUBLIC, STATIC),
+                                      enumType,
+                                      "valueOf",
+                                      Collections.singletonList(nameParam),
+                                      Collections.<ReferenceTypeName>emptyList(),
+                                      new BlockStatement(valueOfBody)));
     return newbody;
   }
 
   static List<Node> HandleConstructors(String name, List<Node> body){
     Iterator<Node> it = body.listIterator();
 
-    List<IdentifierToken> idnt1  = new LinkedList<IdentifierToken>();
-    idnt1.add(new Identifier("$1"));
-    List<IdentifierToken> idnt2  = new LinkedList<IdentifierToken>();
-    idnt2.add(new Identifier("$2"));
-
     List<FormalParameter> addToConsDeclaration = new LinkedList<FormalParameter>();
-    addToConsDeclaration.add(new FormalParameter(false, new ReferenceTypeName("String"), "$1"));
-    addToConsDeclaration.add(new FormalParameter(false, new IntTypeName(),               "$2"));
+    addToConsDeclaration.add(new FormalParameter(ModifierSet.make(), new ReferenceTypeName("String"), "$1"));
+    addToConsDeclaration.add(new FormalParameter(ModifierSet.make(), new IntTypeName(),               "$2"));
 
     List<Expression> args = new LinkedList<Expression>();
-    args.add(new QualifiedName(idnt1));
-    args.add(new QualifiedName(idnt2));
+    args.add(new AmbiguousName("$1"));
+    args.add(new AmbiguousName("$2"));
 
     List<FormalParameter> consParams;
     boolean noConstructor = true;
@@ -193,33 +188,39 @@ public class EnumDeclaration extends ClassDeclaration {
 
         ((ConstructorDeclaration)current).setParameters(newConsParam);
 
-        ((ConstructorDeclaration)current).setConstructorInvocation(new ConstructorInvocation(null, args, true));
+        ((ConstructorDeclaration)current).setConstructorCall(new ConstructorCall(null, args, true));
       }
     }
 
     if (noConstructor) {
-      body.add(new ConstructorDeclaration(java.lang.reflect.Modifier.PRIVATE, name, addToConsDeclaration,
+      body.add(new ConstructorDeclaration(ModifierSet.make(PRIVATE), name, addToConsDeclaration,
                                           new LinkedList<ReferenceTypeName>(),
-                                          new ConstructorInvocation(null, args, true),
+                                          new ConstructorCall(null, args, true),
                                           new LinkedList<Node>()));
     }
     return body;
   }
 
-  public static class EnumConstant {
-    String name;
-    List<Expression> args;
-    List<Node> classBody;
+  public static class EnumConstant extends Declaration {
+    private String name;
+    private List<Expression> args;
+    private List<Node> classBody;
 
-    public EnumConstant(String _name, List<Expression> _args, List<Node> _classBody) {
+    public EnumConstant(ModifierSet mods, String _name, List<? extends Expression> _args, List<Node> _classBody,
+                        SourceInfo si) {
+      super(mods, si);
       name = _name;
-      args = _args;
+      args = (_args == null) ? null : new ArrayList<Expression>(_args);
       classBody = _classBody;
     }
 
-    String           getName() {return name;}
-    List<Expression> getArguments() {return args;}
-    List<Node>        getClassBody() {return classBody;}
+    public String           getName() {return name;}
+    public List<Expression> getArguments() {return args;}
+    public List<Node>        getClassBody() {return classBody;}
+    
+    public <T> T acceptVisitor(Visitor<T> visitor) {
+      return visitor.visit(this);
+    }
   }
 
   public static class EnumBody {
@@ -231,11 +232,11 @@ public class EnumDeclaration extends ClassDeclaration {
       decls = d;
     }
 
-    List<EnumConstant> getConstants() {
+    public List<EnumConstant> getConstants() {
       return consts;
     }
 
-    List<Node> getDeclarations(){
+    public List<Node> getDeclarations(){
       return decls;
     }
   }
@@ -244,14 +245,9 @@ public class EnumDeclaration extends ClassDeclaration {
     List<EnumConstant> consts = body.getConstants();
     List<Node> decls = body.getDeclarations();
 
-    int accessFlags  = java.lang.reflect.Modifier.PUBLIC;
-        accessFlags |= java.lang.reflect.Modifier.STATIC;
-        accessFlags |= java.lang.reflect.Modifier.FINAL;
-        accessFlags |= 0x4000; // java.lang.reflect.Modifier.ENUM; /**/ or ACC_ENUM
-
     ReferenceTypeName enumType = new ReferenceTypeName(enumTypeName);
 
-    Allocation allocExpr = null;
+    SimpleAllocation allocExpr = null;
 
     Iterator<EnumConstant> it = consts.listIterator();
     int i = 0;
@@ -267,13 +263,13 @@ public class EnumDeclaration extends ClassDeclaration {
       }
 
       if (ec.getClassBody() != null){
-        allocExpr = new ClassAllocation(enumType, args, ec.getClassBody());
+        allocExpr = new AnonymousAllocation(enumType, args, ec.getClassBody());
       }
       else {
         allocExpr = new SimpleAllocation(enumType, args);
       }
 
-      decls.add(new FieldDeclaration(accessFlags, enumType, ec.getName(), allocExpr));
+      decls.add(new FieldDeclaration(ModifierSet.make(PUBLIC, STATIC, FINAL, ENUM), enumType, ec.getName(), allocExpr));
     }
     return decls;
   }

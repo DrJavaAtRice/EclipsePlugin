@@ -1,35 +1,38 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.project;
 
@@ -41,15 +44,13 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.text.SimpleDateFormat;
 
-import edu.rice.cs.drjava.config.FileOption;
-import edu.rice.cs.util.Pair;
+import edu.rice.cs.plt.tuple.Pair;
+import edu.rice.cs.util.FileOps;
 import edu.rice.cs.util.sexp.*;
-import edu.rice.cs.drjava.model.DocumentRegion;
-import edu.rice.cs.drjava.model.SimpleDocumentRegion;
-import edu.rice.cs.drjava.model.OpenDefinitionsDocument;
+import edu.rice.cs.drjava.model.FileRegion;
+import edu.rice.cs.drjava.model.DummyDocumentRegion;
 import edu.rice.cs.drjava.model.debug.DebugWatchData;
 import edu.rice.cs.drjava.model.debug.DebugBreakpointData;
-import edu.rice.cs.drjava.model.debug.DebugException;
 
 /** This parser uses the s-expression parser defined in the util pacakge.  The SExp tree given by the parser is 
  *  interpreted into a ProjectFileIR that is given to the user.  This class must also deal with different
@@ -65,20 +66,17 @@ import edu.rice.cs.drjava.model.debug.DebugException;
  *  <p> If the change is at the top level, you must modify the evaluateExpression method in this parser and add the 
  *  corresponding methods to the ProjectFileIR, ProjectFileIRImpl, and ProjectFileBuilder</p>
  */
-public class ProjectFileParser {
+public class ProjectFileParser extends ProjectFileParserFacade {
   /** Singleton instance of ProjectFileParser */
   public static final ProjectFileParser ONLY = new ProjectFileParser();
   
-  private File _projectFile;
   private String _parent;
   private String _srcFileBase;
   
   BreakpointListVisitor breakpointListVisitor = new BreakpointListVisitor();
   BookmarkListVisitor bookmarkListVisitor = new BookmarkListVisitor();
   
-  private ProjectFileParser() { }
-  
-  /* methods */
+  private ProjectFileParser() { _xmlProjectFile = false; }
   
   /** @param projFile the file to parse
    *  @return the project file IR
@@ -95,6 +93,9 @@ public class ProjectFileParser {
     catch(SExpParseException e) { throw new MalformedProjectFileException("Parse Error: " + e.getMessage()); }
     
     ProjectFileIR pfir = new ProjectProfile(projFile);
+    
+    //We don't store version information in .pjt files.  Yet another reason to use the .drjava or .xml format.
+    pfir.setDrJavaVersion("unknown");
 
     try { for (SEList exp : forest) evaluateExpression(exp, pfir, new DocFileListVisitor(_parent)); }
     catch(PrivateProjectException e) { throw new MalformedProjectFileException("Parse Error: " + e.getMessage()); }
@@ -105,10 +106,10 @@ public class ProjectFileParser {
   }
   
   /** Given a top-level s-expression, this method checks the name of the node and configures the given pfir 
-   *  appropriately.  If the expression is empty, it is ignored.
-   *  @param e the top-level s-expression to check
-   *  @param pfir the ProjectFileIR to update
-   */
+    * appropriately.  If the expression is empty, it is ignored.
+    * @param e the top-level s-expression to check
+    * @param pfir the ProjectFileIR to update
+    */
   private void evaluateExpression(SEList e, ProjectFileIR pfir, DocFileListVisitor flv) throws IOException {
     if (e == Empty.ONLY) return;
     Cons exp = (Cons) e; // If it's not empty, it's a cons
@@ -121,16 +122,22 @@ public class ProjectFileParser {
     else if (name.compareToIgnoreCase("proj-root") == 0) {  // legacy node form; all paths relative to project file
       List<DocFile> fList = exp.getRest().accept(flv);
       if (fList.size() > 1) throw new PrivateProjectException("Cannot have multiple source roots");
-      else if (fList.size() == 0) pfir.setProjectRoot(null); // can this ever happen?
+      else if (fList.size() == 0) throw new PrivateProjectException("Cannot have no source roots");
       pfir.setProjectRoot(fList.get(0));
     }
     else if (name.compareToIgnoreCase("proj-root-and-base") == 0) { // source file paths are relative to project root
       List<DocFile> fList = exp.getRest().accept(flv);
       if (fList.size() > 1) throw new PrivateProjectException("Cannot have multiple source roots");
+      else if (fList.size() == 0) throw new PrivateProjectException("Cannot have no source roots");
       File root = fList.get(0);
       if (! root.exists()) throw new IOException("Project root " + root + " no longer exists");
       pfir.setProjectRoot(root);
       _srcFileBase = root.getCanonicalPath();
+    }else if (name.compareToIgnoreCase("proj-manifest") == 0) {
+      List<String> sList = exp.getRest().accept(PathListVisitor.ONLY);
+      if(sList.size() > 1) throw new PrivateProjectException("Cannot have multiple manifests");
+      if(sList.size() > 0)
+        pfir.setCustomManifest(sList.get(0));
     }
     else if (name.compareToIgnoreCase("auxiliary") == 0) {
       List<DocFile> dfList = exp.getRest().accept(flv);
@@ -144,13 +151,13 @@ public class ProjectFileParser {
       List<DocFile> fList = exp.getRest().accept(flv);
 //      System.err.println("BuildDir fList = " + fList);
       if (fList.size() > 1) throw new PrivateProjectException("Cannot have multiple build directories");
-      else if (fList.size() == 0) pfir.setBuildDirectory(null);
+      else if (fList.size() == 0) pfir.setBuildDirectory(FileOps.NULL_FILE);
       else pfir.setBuildDirectory(fList.get(0));
     }
     else if (name.compareToIgnoreCase("work-dir") == 0) {
       List<DocFile> fList = exp.getRest().accept(flv);
       if (fList.size() > 1) throw new PrivateProjectException("Cannot have multiple working directories");
-      else if (fList.size() == 0) pfir.setWorkingDirectory(null);
+//      else if (fList.size() == 0) pfir.setWorkingDirectory(null); // working directory should never be set to null;
       else pfir.setWorkingDirectory(fList.get(0));
     }
     else if (name.compareToIgnoreCase("classpaths") == 0) {
@@ -158,21 +165,30 @@ public class ProjectFileParser {
       pfir.setClassPaths(fList);
     }
     else if (name.compareToIgnoreCase("main-class") == 0) {
-      List<DocFile> fList = exp.getRest().accept(flv);
-      if (fList.size() > 1) throw new PrivateProjectException("Cannot have multiple main classes");
-      else if (fList.size() == 0) pfir.setMainClass(null);
-      else pfir.setMainClass(fList.get(0));
+      try{
+        List<DocFile> fList = exp.getRest().accept(flv);
+        if(fList.size() == 1){
+          String main = fList.get(0).getAbsolutePath();
+          
+          pfir.setMainClass(main);
+          
+          return;
+        }
+      }catch(Exception exc){ }
+      
+      String mainClass = exp.getRest().accept(NameVisitor.ONLY);
+      pfir.setMainClass(mainClass);
     }
-//    else if (name.compareToIgnoreCase("create-jar-file") == 0) {
-//      List<File> fList = exp.getRest().accept(fileListVisitor);
-//      if (fList.size() > 1) throw new PrivateProjectException("Cannot have more than one \"create jar\" file");
-//      else if (fList.size() == 0) pfir.setCreateJarFile(null);
-//      else pfir.setCreateJarFile(fList.get(0));
-//    }
-//    else if (name.compareToIgnoreCase("create-jar-flags") == 0) {
-//      Integer i = exp.getRest().accept(NumberVisitor.ONLY);
-//      pfir.setCreateJarFlags(i);
-//    }
+    else if (name.compareToIgnoreCase("create-jar-file") == 0) {
+      List<DocFile> fList = exp.getRest().accept(flv);
+      if (fList.size() > 1) throw new PrivateProjectException("Cannot have more than one \"create jar\" file");
+      else if (fList.size() == 0) pfir.setCreateJarFile(null);
+      else pfir.setCreateJarFile(fList.get(0));
+    }
+    else if (name.compareToIgnoreCase("create-jar-flags") == 0) {
+      Integer i = exp.getRest().accept(NumberVisitor.ONLY);
+      pfir.setCreateJarFlags(i);
+    }
     else if (name.compareToIgnoreCase("breakpoints") == 0) {
        List<DebugBreakpointData> bpList = exp.getRest().accept(breakpointListVisitor);
        pfir.setBreakpoints(bpList);
@@ -182,7 +198,7 @@ public class ProjectFileParser {
       pfir.setWatches(sList);
     }
     else if (name.compareToIgnoreCase("bookmarks") == 0) {
-       List<DocumentRegion> bmList = exp.getRest().accept(bookmarkListVisitor);
+       List<FileRegion> bmList = exp.getRest().accept(bookmarkListVisitor);
        pfir.setBookmarks(bmList);
     }
   } 
@@ -231,9 +247,6 @@ public class ProjectFileParser {
   }
   
   private Pair<Integer,Integer> parseIntPair(SExp s) {
-    int row;
-    int col;
-    
     /* we're getting in a "(select # #)" */
     if (!(s instanceof Cons)) {
       throw new PrivateProjectException("expected name tag, found string");
@@ -255,7 +268,7 @@ public class ProjectFileParser {
       }
       
       public List<Integer> forNumberAtom(NumberAtom n) {
-        intList.add(new Integer(n.intValue()));
+        intList.add(Integer.valueOf(n.intValue()));
         return intList;
       }
       
@@ -295,8 +308,8 @@ public class ProjectFileParser {
   /** Traverses the list of expressions found after "file" tag and returns the DocFile described by those properties. */
   private static class DocFilePropertyVisitor implements SEListVisitor<DocFile> {
     private String fname = "";
-    private Pair<Integer,Integer> select = new Pair<Integer,Integer>(new Integer(0),new Integer(0));
-    private Pair<Integer,Integer> scroll = new Pair<Integer,Integer>(new Integer(0),new Integer(0));
+    private Pair<Integer,Integer> select = new Pair<Integer,Integer>(Integer.valueOf(0), Integer.valueOf(0));
+    private Pair<Integer,Integer> scroll = new Pair<Integer,Integer>(Integer.valueOf(0), Integer.valueOf(0));
     private boolean active = false;
     private String pack = "";
     private Date modDate = null;
@@ -315,8 +328,19 @@ public class ProjectFileParser {
       }
       else if (name.compareToIgnoreCase("mod-date") == 0) {
         String tmp = ProjectFileParser.ONLY.parseStringNode(c.getFirst());
-        try { modDate = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss").parse(tmp); }
-        catch (java.text.ParseException e) { throw new PrivateProjectException("Bad mod-date: " + e.getMessage()); }
+        try {
+          //attemp parsing in default locale
+          modDate = ProjectProfile.MOD_DATE_FORMAT.parse(tmp); }
+        catch (java.text.ParseException e1) {
+          //parsing in default locale failed
+          try {
+            //attempt parsing in current locale
+            modDate = new SimpleDateFormat(ProjectProfile.MOD_DATE_FORMAT_STRING).parse(tmp);
+          } catch (java.text.ParseException e2) {
+            //both parsings failed
+            throw new PrivateProjectException("Bad mod-date: " + e2.getMessage());
+          }
+        }
       }
         
       return c.getRest().accept(this);
@@ -388,7 +412,7 @@ public class ProjectFileParser {
     }
     public Integer forNumberAtom(NumberAtom n) { return n.intValue(); }
     public Integer forTextAtom(TextAtom t) {
-      throw new PrivateProjectException("Found a string '"+t+"', expected an integer");
+      throw new PrivateProjectException("Found a string '" + t + "', expected an integer");
     }
   };
 
@@ -443,7 +467,7 @@ public class ProjectFileParser {
   /** Traverses the list of expressions found after "breakpoint" tag and returns the Breakpoint described by those properties. */
   private static class BreakpointPropertyVisitor implements SEListVisitor<DebugBreakpointData> {
     private String fname = null;
-    private Integer offset = null;
+//    private Integer offset = null;  // Not used.
     private Integer lineNumber = null;
     private boolean isEnabled = false;
     
@@ -453,7 +477,8 @@ public class ProjectFileParser {
     public DebugBreakpointData forCons(Cons c) {
       String name = c.getFirst().accept(NameVisitor.ONLY); 
       if (name.compareToIgnoreCase("name") == 0) { fname = ProjectFileParser.ONLY.parseFileName(c.getFirst()); }
-      else if (name.compareToIgnoreCase("offset") == 0) { offset = ProjectFileParser.ONLY.parseInt(c.getFirst()); }
+      // The offset field is not used.
+//      else if (name.compareToIgnoreCase("offset") == 0) { offset = ProjectFileParser.ONLY.parseInt(c.getFirst()); } 
       else if (name.compareToIgnoreCase("line") == 0) { lineNumber = ProjectFileParser.ONLY.parseInt(c.getFirst()); }
       else if (name.compareToIgnoreCase("enabled") == 0) { isEnabled = true; }
         
@@ -461,14 +486,13 @@ public class ProjectFileParser {
     }
     
     public DebugBreakpointData forEmpty(Empty c) {
-      if ((fname == null) || (offset == null) || (lineNumber == null)) {
-        throw new PrivateProjectException("Breakpoint information incomplete, need name, offset and line tags");
+      if ((fname == null) || (lineNumber == null)) {
+        throw new PrivateProjectException("Breakpoint information incomplete, need name and line tags");
       }
       if (pathRoot == null || new File(fname).isAbsolute()) {
         final File f = new File(fname);
         return new DebugBreakpointData() {
           public File getFile() { return f; }
-          public int getOffset() { return offset; }
           public int getLineNumber() { return lineNumber; }
           public boolean isEnabled() { return isEnabled; }
         };
@@ -477,7 +501,6 @@ public class ProjectFileParser {
         final File f = new File(pathRoot, fname);
         return new DebugBreakpointData() {
           public File getFile() { return f; }
-          public int getOffset() { return offset; }
           public int getLineNumber() { return lineNumber; }
           public boolean isEnabled() { return isEnabled; }
         };
@@ -488,11 +511,11 @@ public class ProjectFileParser {
   // === bookmarks ===
   
   /** Parses out a list of bookmark nodes. */
-  private class BookmarkListVisitor implements SEListVisitor<List<DocumentRegion>> {
-    public List<DocumentRegion> forEmpty(Empty e) { return new ArrayList<DocumentRegion>(); }
-    public List<DocumentRegion> forCons(Cons c) {
-      List<DocumentRegion> list = c.getRest().accept(this);
-      DocumentRegion tmp = ProjectFileParser.ONLY.parseBookmark(c.getFirst(), _srcFileBase);
+  private class BookmarkListVisitor implements SEListVisitor<List<FileRegion>> {
+    public List<FileRegion> forEmpty(Empty e) { return new ArrayList<FileRegion>(); }
+    public List<FileRegion> forCons(Cons c) {
+      List<FileRegion> list = c.getRest().accept(this);
+      FileRegion tmp = ProjectFileParser.ONLY.parseBookmark(c.getFirst(), _srcFileBase);
       list.add(0, tmp); // add to the end
       return list;
     }
@@ -502,7 +525,7 @@ public class ProjectFileParser {
    *  @param s the non-empty list expression
    *  @return the bookmark described by this s-expression
    */
-  DocumentRegion parseBookmark(SExp s, String pathRoot) {
+  FileRegion parseBookmark(SExp s, String pathRoot) {
     String name = s.accept(NameVisitor.ONLY);
     if (name.compareToIgnoreCase("bookmark") != 0)
       throw new PrivateProjectException("Expected a bookmark tag, found: " + name);
@@ -517,7 +540,7 @@ public class ProjectFileParser {
   
   /** Traverses the list of expressions found after "bookmark" tag and returns the DocumentRegion
    *  described by those properties. */
-  private static class BookmarkPropertyVisitor implements SEListVisitor<DocumentRegion> {
+  private static class BookmarkPropertyVisitor implements SEListVisitor<FileRegion> {
     private String fname = null;
     private Integer startOffset = null;
     private Integer endOffset = null;
@@ -525,7 +548,7 @@ public class ProjectFileParser {
     private String pathRoot;
     public BookmarkPropertyVisitor(String pr) { pathRoot = pr; }
     
-    public DocumentRegion forCons(Cons c) {
+    public FileRegion forCons(Cons c) {
       String name = c.getFirst().accept(NameVisitor.ONLY); 
       if (name.compareToIgnoreCase("name") == 0) { fname = ProjectFileParser.ONLY.parseFileName(c.getFirst()); }
       else if (name.compareToIgnoreCase("start") == 0) { startOffset = ProjectFileParser.ONLY.parseInt(c.getFirst()); }
@@ -534,22 +557,18 @@ public class ProjectFileParser {
       return c.getRest().accept(this);
     }
     
-    public DocumentRegion forEmpty(Empty c) {
+    public FileRegion forEmpty(Empty c) {
       if ((fname == null) || (startOffset == null) || (endOffset == null)) {
         throw new PrivateProjectException("Bookmark information incomplete, need name, start offset and end offset");
       }
       File f;
-      if (pathRoot == null || new File(fname).isAbsolute()) {
-        f = new File(fname);
-      }
-      else {
-        f = new File(pathRoot, fname);
-      }
-      return new SimpleDocumentRegion(null, f, startOffset, endOffset);
+      if (pathRoot == null || new File(fname).isAbsolute()) f = new File(fname);
+      else f = new File(pathRoot, fname);
+      return new DummyDocumentRegion(f, startOffset, endOffset);
     }
   }
   
-  private static class PrivateProjectException extends RuntimeException{
+  private static class PrivateProjectException extends RuntimeException {
     public PrivateProjectException(String message) { super(message); }
   }
 }

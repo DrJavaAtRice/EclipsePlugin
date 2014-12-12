@@ -1,67 +1,73 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.config;
 
+import java.io.StringWriter;
+import java.io.PrintWriter;
 import edu.rice.cs.util.swing.Utilities;
 
 /** Class to store and retrieve all configurable options.
- *  @version $Id$
- */
+  * @version $Id$
+  */
 public class Configuration {  
   
   /** OptionMap used to store all option settings. */
-  protected OptionMap map;
+  protected volatile OptionMap map;
   
   /** Any exception that is caught when initializing this Configuration object.
-   *  Used later by the UI to display a useful message to the user.
-   */
-  protected Exception _startupException;
+    * Used later by the UI to display a useful message to the user.
+    */
+  protected volatile Exception _startupException;
   
   /** Initializes this Configuration object with the given OptionMap.
-   *  @param om An empty OptionMap.
-   */
+    * @param om An empty OptionMap.
+    */
   public Configuration(OptionMap om) {
     map = om;
     _startupException = null;
   }
   
   /** Sets the given option to the given value and notifies all listeners of that option of the change.
-   *  @param op Option to set
-   *  @param value New value for the option
-   */
+    * @param op Option to set
+    * @param value New value for the option
+    */
   public <T> T setSetting(final Option<T> op, final T value) {
     T ret = map.setOption(op, value);
+//    System.err.println("setSetting(" + op + ", " + value + ") called");
     Utilities.invokeLater(new Runnable() { public void run() { op.notifyListeners(Configuration.this, value); } });
     return ret;
   }
@@ -69,10 +75,13 @@ public class Configuration {
   /** Gets the current value of the given Option. */
   public <T> T getSetting(Option<T> op) { return map.getOption(op); }
   
+  /** By default, all options are editable. */
+  public <T> boolean isEditable(Option<T> op) { return true; }
+  
   /** Adds an OptionListener to the given Option, to be notified each time the option changes.
-   *  @param op Option to listen for changes on
-   *  @param l OptionListener wishing to listen
-   */
+    * @param op Option to listen for changes on
+    * @param l OptionListener wishing to listen
+    */
   public <T> void addOptionListener(Option<T> op, OptionListener<T> l) { op.addListener(this,l); }
   
   /** Removes an OptionListener from an Option to which it was listening. */
@@ -84,14 +93,35 @@ public class Configuration {
   /** Returns whether there were any exceptions when starting. */
   public boolean hadStartupException() { return _startupException != null; }
   
-  /** Returns the exception caught during startup, or null if none were caught. */
+  /** Returns the exception caught during startUp, or null if none were caught. */
   public Exception getStartupException() { return _startupException; }
   
   /** Stores exception caught during creation of this Configuration object, so it can be displayed later by the UI.
-   *  @param e Exception caught during startup
-   */
+    * @param e Exception caught during startUp
+    */
   public void storeStartupException(Exception e) { _startupException = e; }
   
   /** Returns a string representation of the contents of the OptionMap. */
-  public String toString() { return map.toString(); }
+  public String toString() {
+    StringWriter sw = new StringWriter();
+    PrintWriter w = new PrintWriter(sw);
+
+    // Write each option
+    for (OptionParser<?> key : map.keys()) {
+      if (!key.getDefault().equals(map.getOption(key))) {
+        String tmpString = map.getString(key);
+        
+        // This replaces all backslashes with two backslashes for windows
+        tmpString = tmpString.replaceAll("\\\\", "\\\\\\\\");
+        
+        w.println(key.getName()+" = "+tmpString);
+      }
+    }
+    w.close();
+    
+    return sw.toString();
+  }
+  
+  /** Return OptionMap. */
+  public OptionMap getOptionMap() { return map; }
 }

@@ -1,328 +1,258 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
  * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util.newjvm;
 
-import edu.rice.cs.util.Log;
+import java.rmi.NoSuchObjectException;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.io.Serializable;
+import java.util.Map;
+
 import edu.rice.cs.util.UnexpectedException;
-import edu.rice.cs.drjava.config.FileOption;
+import edu.rice.cs.plt.collect.CollectUtil;
+import edu.rice.cs.plt.concurrent.ConcurrentUtil;
+import edu.rice.cs.plt.concurrent.JVMBuilder;
+import edu.rice.cs.plt.concurrent.StateMonitor;
+import edu.rice.cs.plt.lambda.LazyThunk;
+import edu.rice.cs.plt.lambda.Runnable1;
+import edu.rice.cs.plt.lambda.Thunk;
+import edu.rice.cs.plt.lambda.WrappedException;
+import edu.rice.cs.plt.reflect.ReflectException;
+import edu.rice.cs.plt.reflect.ReflectUtil;
 
-import java.rmi.*;
-import java.rmi.server.*;
-import java.io.*;
-import java.util.Arrays;
+import static edu.rice.cs.plt.debug.DebugUtil.debug;
+import static edu.rice.cs.plt.debug.DebugUtil.error;
 
-/** An abstract class implementing the logic to invoke and control, via RMI, a second Java virtual 
- *  machine. This class is used by subclassing it. (See package documentation for more details.)
- *  This class runs in both the master and the slave JVMs.
- *  @version $Id$
+/**
+ * An abstract class implementing the logic to invoke and control, via RMI, a second Java virtual 
+ * machine. This class is used by subclassing it. (See package documentation for more details.)
+ * The state-changing methods of this class consistently block until a precondition for the state
+ * change is satisfied &mdash; for example, {@link #quitSlave} cannot complete until a slave is
+ * running.  Only one thread may change the state at a time.  Thus, clients should be careful
+ * to only invoke state-changing methods when they are guaranteed to succeed (only invoking
+ * {@code quitSlave()}, for example, when it is known to have been matched by a successful
+ * {@code invokeSlave} invocation).
+ *  
+ * @version $Id$
  */
-public abstract class AbstractMasterJVM/*<SlaveType extends SlaveRemote>*/
-  implements MasterRemote/*<SlaveType>*/ {
+public abstract class AbstractMasterJVM implements MasterRemote {
   
-  public static final Log _log  = new Log("MasterSlave.txt", false);
+  /**
+   * Synchronization strategy: compare-and-swap guarantees that only one thread enters a STARTING, or
+   * QUITTING, or DISPOSED state.  After that, the only state transitions out of STARTING/QUITTING occur 
+   * in the same thread (or a single designated worker thread); all other threads must wait until the
+   * transition to FRESH or RUNNING.
+   */
+  private enum State { FRESH, STARTING, RUNNING, QUITTING, DISPOSED };
   
-  /** Name for the thread that waits for the slave to exit. */
-  protected volatile String _waitForQuitThreadName = "Wait for SlaveJVM Exit Thread";
+  /** Loads an instance of the given AbstractSlaveJVM class.  Invoked in the slave JVM. */
+  private static class SlaveFactory implements Thunk<AbstractSlaveJVM>, Serializable {
+    private final String _className;
+    public SlaveFactory(String className) { _className = className; }
+    public AbstractSlaveJVM value() {
+      try { return (AbstractSlaveJVM) ReflectUtil.getStaticField(_className, "ONLY"); }
+      catch (ReflectException e) {
+        try { return (AbstractSlaveJVM) ReflectUtil.loadObject(_className); }
+        catch (ReflectException e2) { throw new WrappedException(e2); }
+     }
+    }
+  }
   
-//  /** Name for the thread that exports the MasterJVM to RMI. */
-//  protected volatile String _exportMasterThreadName = "Export MasterJVM Thread";
-  
-  /** Lock for accessing the critical state of this AbstractMasterJVM including _monitorThread.  */
-  protected final Object _masterJVMLock = new Object();
-  
-  private static final String RUNNER = SlaveJVMRunner.class.getName();
-  
-  /** The slave JVM remote stub if it's connected; null if not connected. */
+  private final StateMonitor<State> _monitor;
+  private final SlaveFactory _slaveFactory;
+  private final LazyThunk<MasterRemote> _masterStub;
+  /** The slave JVM remote stub (non-null when the state is RUNNING). */
   private volatile SlaveRemote _slave;
-
-  /** Is slave JVM in the process of starting up?  INVARIANT: _startupInProgess => _slave == null. */
-  private volatile boolean _startupInProgress = false;
-
- /** This flag is set when a quit request is issued before the slave has finished starting up. 
-   * In that case, immediately after starting up, we quit it. INVARIANT: _quitOnStartUp => _startupInProgress 
-   */
-  private volatile boolean _quitOnStartup = false;
   
-//  /** Lock used in exporting this object to a file and loading it in the slaveJVM; protects stub variables. */
-//  final static Object Lock = new Object();
-  
-  /** The current remote stub for this main JVM object. This field is null except between the time the slave
-   *  JVM is first invoked and the time the slave registers itself.
-   */
-  private volatile MasterRemote _masterStub = null;
-  
-  /** The file containing the serialized remote stub. This field is null except between the time the slave
-   *  JVM is first invoked and the time the slave registers itself.
-   */
-  private volatile File _masterStubFile;
-  
-  /** The fully-qualified name of the slave JVM class. */
-  private final String _slaveClassName;
-  
-  /** The thread monitoring the Slave JVM, waiting for it to terminate.  This feature inhibits the creation
-   *  of more than one Slave JVM corresponding to "this" 
-   */
-  private volatile Thread _monitorThread;
-  
-//  /** The lock used to protect _monitorThread. */
-//  private final Object _monitorLock = new Object();
-
-  /** Sets up the master JVM object, but does not actually invoke the slave JVM.
-   *  @param slaveClassName The fully-qualified class name of the class to start up in the second JVM. This 
-   *  class must implement the interface specified by this class's type parameter, which must be a subclass 
-   *  of {@link SlaveRemote}.
+  /**
+   * Set up the master JVM object.  Does not start a slave JVM.
+   * @param slaveClassName The fully-qualified class name of the class to start up in the second JVM.  Must be a
+   *                       subclass of {@link AbstractSlaveJVM}.
    */
   protected AbstractMasterJVM(String slaveClassName) {
-    _slaveClassName = slaveClassName;
+    _monitor = new StateMonitor<State>(State.FRESH);
+    _slaveFactory = new SlaveFactory(slaveClassName);
+    _masterStub = new LazyThunk<MasterRemote>(new Thunk<MasterRemote>() {
+      public MasterRemote value() {
+        try { return (MasterRemote) UnicastRemoteObject.exportObject(AbstractMasterJVM.this, 0); }
+        catch (RemoteException re) {
+          error.log(re);
+          throw new UnexpectedException(re);
+        }
+      }
+    });
     _slave = null;
-    _monitorThread = null;
-    
-    _log.log(this + " CREATED");
-    
     // Make sure RMI doesn't use an IP address that might change
     System.setProperty("java.rmi.server.hostname", "127.0.0.1");
   }
-
-  /** Callback for when the slave JVM has connected, and the bidirectional communications link has been 
-   *  established.  During this call, {@link #getSlave} is guaranteed to not return null.
-   */
-  protected abstract void handleSlaveConnected();
   
-  /** Callback for when the slave JVM has quit. During this call, {@link #getSlave} is guaranteed to return null.
-   *  @param status The exit code returned by the slave JVM.
+  /**
+   * Callback for when the slave JVM has connected, and the bidirectional communications link has been 
+   * established.  Provides access to the newly-created slave JVM.
+   */
+  protected abstract void handleSlaveConnected(SlaveRemote newSlave);
+  
+  /**
+   * Callback for when the slave JVM has quit.
+   * @param status The exit code returned by the slave JVM.
    */
   protected abstract void handleSlaveQuit(int status);
   
-  /** Invokes slave JVM without any JVM arguments.
-   *  @throws IllegalStateException if slave JVM already connected or startup is in progress.
+  /**
+   * Callback for when the slave JVM fails to either run or respond to {@link SlaveRemote#start}.
+   * @param e  Exception that occurred during startup.
    */
-  protected final void invokeSlave() throws IOException, RemoteException {
-    invokeSlave(new String[0], FileOption.NULL_FILE);
-  }
+  protected abstract void handleSlaveWontStart(Exception e);
   
-  /** Invokes slave JVM, using the system classpath.
-   *  @param jvmArgs Array of arguments to pass to the JVM on startup
-   *  @throws IllegalStateException if slave JVM already connected or startup is in progress.
+  /**
+   * Creates and starts the slave JVM.  If the the slave is currently running, waits until it completes.
+   * Also waits until the new process has started up and calls one of {@link #handleSlaveConnected}
+   * or {@link #handleSlaveWontStart} before returning.
+   * @param jvmBuilder  JVMBuilder to use in starting the remote process.
+   * @throws IllegalStateException  If this object has been disposed.
    */
-  protected final void invokeSlave(String[] jvmArgs, File workDir) throws IOException, RemoteException {
-    invokeSlave(jvmArgs, System.getProperty("java.class.path"), workDir);
-  }
- 
-  /** Creates and invokes slave JVM.
-   *  @param jvmArgs Array of arguments to pass to the JVM on startup
-   *  @param cp Classpath to use when starting the JVM
-   *  @throws IllegalStateException if slave JVM already connected or startup is in progress.
-   */
-  protected final void invokeSlave(final String[] jvmArgs, final String cp, final File workDir) throws IOException, 
-    RemoteException {
-    
-    synchronized(_masterJVMLock) { // synchronization prelude only lets one thread at a time execute the sequel
-      
-      try { while (_startupInProgress || _monitorThread != null) _masterJVMLock.wait(); }
-      catch(InterruptedException e) { throw new UnexpectedException(e); }
-      _startupInProgress = true;
-    }
-    
-    _log.log(this + ".invokeSlave(...) called");
-    assert (_slave != null);
-    
-    /******************************************************************************************************
-     * First, we we export ourselves to a file, if it has not already been done on a previous invocation. *
-     *****************************************************************************************************/
+  protected final void invokeSlave(JVMBuilder jvmBuilder) {
+    transition(State.FRESH, State.STARTING);
 
-    if (_masterStub == null) {
-      try { _masterStub = (MasterRemote) UnicastRemoteObject.exportObject(this); }
-      catch (RemoteException re) {
-        javax.swing.JOptionPane.showMessageDialog(null, edu.rice.cs.util.StringOps.getStackTrace(re));
-        _log.log(this + " threw " + re);
-        throw new UnexpectedException(re);  // should never happen
-      }
-      _log.log(this + " EXPORTed Master JVM");
-      
-      _masterStubFile = File.createTempFile("DrJava-remote-stub", ".tmp");
-      _masterStubFile.deleteOnExit();
-      
-      // serialize stub to _masterStubFile
-      FileOutputStream fstream = new FileOutputStream(_masterStubFile);
-      ObjectOutputStream ostream = new ObjectOutputStream(fstream);
-      ostream.writeObject(_masterStub);
-      ostream.flush();
-      fstream.close();
-      ostream.close();
+    // update jvmBuilder with any special properties
+    Map<String, String> props = ConcurrentUtil.getPropertiesAsMap("plt.", "drjava.", "edu.rice.cs.");
+    if (!props.containsKey("plt.log.working.dir") && // Set plt.log.working.dir, in case the working dir changes
+        (props.containsKey("plt.debug.log") || props.containsKey("plt.error.log") || 
+            props.containsKey("plt.log.factory"))) {
+      props.put("plt.log.working.dir", System.getProperty("user.dir", ""));
     }
-    
-    final String[] args = 
-      new String[] { _masterStubFile.getAbsolutePath(), _slaveClassName };
-    
-    // Start a thread to wait for the slave to die.  When it dies, delegate what to do (restart?) to subclass
-    _monitorThread = new Thread(_waitForQuitThreadName) {
-      public void run() {
-        try { /* Create the slave JVM. */ 
-          
-          _log.log(AbstractMasterJVM.this + " is STARTING a Slave JVM with args " + Arrays.asList(args));
-          
-          final Process process = ExecJVM.runJVM(RUNNER, args, cp, jvmArgs, workDir);
-          _log.log(AbstractMasterJVM.this + " CREATED Slave JVM process " + process + " with " + asString());
-          
-          int status = process.waitFor();
-          _log.log(process + " DIED under control of " + asString() + " with status " + status);
-          synchronized(_masterJVMLock) {
-            if (_startupInProgress) {
-              _log.log("Process " + process + " died while starting up");
-              /* If we get here, the process died without registering.  One possible cause is the intermittent funky 3 minute
-               * pause in readObject in RUNNER.  Other possible causes are errors in the classpath or the absence of a 
-               * debug port.  Proper behavior in this case is unclear, so we'll let our subclasses decide. */
-              slaveQuitDuringStartup(status);
-            }
-            if (_slave != null) { // Slave JVM quit spontaneously
-              _slave = null; 
-            }
-            _monitorThread = null;
-            _masterJVMLock.notifyAll();  // signal that Slave JVM died to any thread waiting for _monitorThread == null
+    // include props, but shadow them with any definitions in jvmBuilder
+    final JVMBuilder tweakedJVMBuilder = jvmBuilder.properties(CollectUtil.union(props, jvmBuilder.properties()));
+
+    SlaveRemote newSlave = null;
+    try {
+      debug.logStart("invoking remote JVM process");
+      newSlave =
+        (SlaveRemote) ConcurrentUtil.exportInProcess(_slaveFactory, tweakedJVMBuilder, new Runnable1<Process>() {
+          public void run(Process p) {
+            debug.log("Remote JVM quit");
+            _monitor.set(State.FRESH);
+            //debug.log("Entered state " + State.FRESH);
+            debug.logStart("handleSlaveQuit");
+            handleSlaveQuit(p.exitValue());
+            debug.logEnd("handleSlaveQuit");
           }
-            
-//          _log.log(asString() + " calling handleSlaveQuit(" + status + ")");
-          handleSlaveQuit(status);
-        }
-        catch(NoSuchObjectException e) { throw new UnexpectedException(e); }
-        catch(InterruptedException e) { throw new UnexpectedException(e); }
-        catch(IOException e) { throw new UnexpectedException(e); }
+        });
+      debug.logEnd("invoking remote JVM process");
+    }
+    catch (Exception e) {
+      debug.log(e);
+      debug.logEnd("invoking remote JVM process (failed)");
+      _monitor.set(State.FRESH);
+      //debug.log("Entered state " + State.FRESH);
+      handleSlaveWontStart(e);
+    }
+
+    if (newSlave != null) {
+      try { newSlave.start(_masterStub.value()); }
+      catch (RemoteException e) {
+        debug.log(e);
+        attemptQuit(newSlave);
+        _monitor.set(State.FRESH);
+        //debug.log("Entered state " + State.FRESH);
+        handleSlaveWontStart(e);
+        return;
       }
-      private String asString() { return "MonitorThread@" + Integer.toHexString(hashCode()); }
-    };
-//    _log.log(this + " is starting a slave monitor thread to detect when the Slave JVM dies");
-    _monitorThread.start();
+      
+      handleSlaveConnected(newSlave);
+      _slave = newSlave;
+      _monitor.set(State.RUNNING);
+      //debug.log("Entered state " + State.RUNNING);
+    }
   }
   
-  /** Waits until no slave JVM is running under control of "this" */
-  public void waitSlaveDone() {
-    try { synchronized(_masterJVMLock) { while (_monitorThread != null) _masterJVMLock.wait(); }}
-    catch(InterruptedException e) { throw new UnexpectedException(e); } 
+  /**
+   * Quits slave JVM.  If a slave is not currently started and running, blocks until that state is reached.
+   * @throws IllegalStateException  If this object has been disposed.
+   */
+  protected final void quitSlave() {
+    transition(State.RUNNING, State.QUITTING);
+    attemptQuit(_slave);
+    _slave = null;
+    _monitor.set(State.FRESH);
+    //debug.log("Entered state " + State.FRESH);
   }
     
-  /** Action to take if the slave JVM quits before registering.  Assumes _masterJVMLock is held.
-   *  @param status Status code of the JVM
-   */
-  protected void slaveQuitDuringStartup(int status) {
-    // Reset Master JVM state (in case invokeSlave is called again on this object)
-    _startupInProgress = false;
-    _quitOnStartup = false;
-    _monitorThread = null;
+  /** Make a best attempt to invoke {@code slave.quit()}.  Log an error if it fails. */
+  private static void attemptQuit(SlaveRemote slave) {
+    try { slave.quit(); }
+    catch (RemoteException e) { error.log("Unable to complete slave.quit()", e); }
   }
   
-  /** Called if the slave JVM dies before it is able to register.
-   *  @param cause The Throwable which caused the slave to die.
+  /**
+   * Free the resources required for this object to respond to RMI invocations (useful for applications -- such as
+   * testing -- that produce a large number of MasterJVMs as a program runs).  Requires the slave to have
+   * quit; blocks until that occurs.  After an object has been disposed, it is no longer useful.
    */
-  public abstract void errorStartingSlave(Throwable cause) throws RemoteException;
+  protected void dispose() {
+    transition(State.FRESH, State.DISPOSED);
+    if (_masterStub.isResolved()) { 
+      try { UnicastRemoteObject.unexportObject(this, true); }
+      catch (NoSuchObjectException e) { error.log(e); }
+    }
+  }
+  
+  /**
+   * Make a thread-safe state transition.  Blocks until the {@code from} state is reached and this
+   * thread is successful in performing the transition (only one thread can do so at a time).  Throws
+   * an IllegalStateException if the DISPOSED state is reached first, since there is never a transition
+   * out of the disposed state (the alternative is to block permanently). 
+   */
+  private void transition(State from, State to) {
+    State s = _monitor.value();
+    // watch all state transitions until from->to is successful or the DISPOSED state is reached
+    while (!(s.equals(from) && _monitor.compareAndSet(from, to))) {
+      if (s.equals(State.DISPOSED)) { throw new IllegalStateException("In disposed state"); }
+      debug.log("Waiting for transition from " + s + " to " + from);
+      try { s = _monitor.ensureNotState(s); }
+      catch (InterruptedException e) { throw new UnexpectedException(e); }
+    }
+    //debug.log("Entered state " + to);
+  }
+  
+  protected boolean isDisposed() { return _monitor.value().equals(State.DISPOSED); }
   
   /** No-op to prove that the master is still alive. */
   public void checkStillAlive() { }
   
-  /* Records the identity and status of the Slave JVM in the Master JVM */
-  public void registerSlave(SlaveRemote slave) throws RemoteException {
-    _log.log(this + " registering Slave " + slave);
-    
-    boolean quitSlavePending;  // flag used to move quitSlave() call out of synchronized block
-    
-    synchronized(_masterJVMLock) {
-      _slave = slave;
-      _startupInProgress = false;
-      
-      _log.log(this + " calling handleSlaveConnected()");
-      
-      handleSlaveConnected();
-      
-      quitSlavePending = _quitOnStartup;
-      if (_quitOnStartup) {
-        // quitSlave was called before the slave registered, so we now act on the deferred quit request.
-        _quitOnStartup = false;
-      }
-    }
-    if (quitSlavePending) {
-      _log.log(this + " Executing deferred quitSlave() that was called during startup");
-      quitSlave();  // not synchronized; _slave may be null when this code executes
-    }
-  }
-  
-  /** Withdraws RMI exports for this. */
-  public void dispose() throws RemoteException {
-    _log.log(this + ".dispose() called; slaveRemote is " + _slave);
-    if (_startupInProgress) _log.log(this + ".dispose() is KILLing startup in process; dying slave reference does not yet exist");
-    SlaveRemote dyingSlave;
-    synchronized(_masterJVMLock) {
-      _masterStub = null;
-      if (_monitorThread != null) _monitorThread = null;
-      dyingSlave = _slave;  // save value of _slave in case it is not null
-      _slave = null;
-      
-      // Withdraw RMI exports
-      // Slave in process of starting will die because master is inaccessible.
-      _log.log(this + ".dispose() UNEXPORTing " + this);
-      UnicastRemoteObject.unexportObject(this, true);
-    }
-    if (dyingSlave != null) { 
-      _log.log(this + ".dispose() QUITing " + dyingSlave);
-      dyingSlave.quit();  // unsynchronized; may hasten the death of dyingSlave
-    }
-  }
-  
-  /** Quits slave JVM.  On exit, _slave == null.  _quitOnStartup may be true
-   *  @throws IllegalStateException if no slave JVM is connected
-   */
-  protected final void quitSlave() throws RemoteException {
-    SlaveRemote dyingSlave;
-    synchronized(_masterJVMLock) {
-      if (isStartupInProgress()) {
-        /* There is a slave to be quit, but _slave == null, so we cannot contact it yet. Instead we set _quitOnStartup
-         * and tell the slave to quit when it registers in registerSlave. */
-        _quitOnStartup = true;
-        return;
-      }
-      else if (_slave == null)  {
-        _log.log(this + " called quitSlave() when no slave was running");
-        return;
-      }
-      else {
-        dyingSlave = _slave;
-        _slave = null;
-      }
-    }
-    dyingSlave.quit();  // remote operation is not synchronized!
-  }
-  
-  /** Returns slave remote instance, or null if not connected. */
-  protected final SlaveRemote getSlave() {  return _slave; }
-  
-  /** Returns true if the slave is in the process of starting. */
-  protected boolean isStartupInProgress() { return _startupInProgress; }
 }
+

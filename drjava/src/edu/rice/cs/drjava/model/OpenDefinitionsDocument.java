@@ -1,78 +1,78 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model;
 
 
-import java.util.Vector;
-import java.util.List;
 import java.io.*;
 import java.awt.print.*;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Position;
 
-import edu.rice.cs.util.FileOpenSelector;
 import edu.rice.cs.drjava.model.FileSaveSelector;
 import edu.rice.cs.util.docnavigation.*;
-import edu.rice.cs.util.text.AbstractDocumentInterface;
 import edu.rice.cs.drjava.model.debug.Breakpoint;
 import edu.rice.cs.drjava.model.Finalizable;
 import edu.rice.cs.drjava.model.definitions.*;
 
-/**
- * Interface for the GlobalModel's handler of an open
- * DefinitionsDocument.  Provides a means to interact with
- * the document.
- *
- * @version $Id$
- */
+/** Interface for an open document in DrJava. It may not be resident (in DocumentCache).
+  * @version $Id$
+  */
 public interface OpenDefinitionsDocument extends DJDocument, Finalizable<DefinitionsDocument>,
-  Comparable<OpenDefinitionsDocument>, INavigatorItem, AbstractDocumentInterface {
+  Comparable<OpenDefinitionsDocument>, INavigatorItem {
   
   //----- Forwarding Methods -----/
 
   /** The following methods are forwarding methods required by the rest of the program in order for the 
    *  OpenDefinitionsDocument to handle DefinitionsDocuments */
-  public int id();
+//  public int id();
   public int commentLines(int selStart, int selEnd);
   public int uncommentLines(int selStart, int selEnd);
+  /** Gets the associated DefinitionsDocument which may force materializing it. */
+  public DefinitionsDocument getDocument();
   public boolean getClassFileInSync();
+  public void setClassFileInSync(boolean val);
   public int getCurrentLine();
   public int getCurrentCol();
-  public int getOffset(int lineNum);
+  public int _getOffset(int lineNum);
   public String getQualifiedClassName() throws ClassNameNotFoundException;
   public String getQualifiedClassName(int pos) throws ClassNameNotFoundException;
+  public String getLexiName();
   public CompoundUndoManager getUndoManager();
   public void resetUndoManager();
   public File getCachedClassFile();
@@ -126,14 +126,20 @@ public interface OpenDefinitionsDocument extends DJDocument, Finalizable<Definit
   /** Determines if this document in the file system tree below the specified root. */
   public boolean inNewProjectPath(File root);
   
+  /** Determines if the document is empty. */
+  public boolean isEmpty();
+  
   /** @return true if the document's file is a project auxiliary file. */
   public boolean isAuxiliaryFile();
   
-  /** @return true if the document's filename ends with the extension ".java", ".dj0", "dj1", or "dj2". */
+  /** @return true if the document's filename ends with the extension ".java", ".dj", ".dj0", "dj1", or "dj2". */
   public boolean isSourceFile();
   
   /** @return true if the documents file is saved in the current project file. */
   public boolean inProject();
+  
+  /** Returns whether this document is resident in memory. */ 
+  public boolean isReady();
   
   /** Returns whether this document is currently untitled (indicating whether it has a file yet or not).
    *  @return true if the document is untitled and has no file
@@ -158,21 +164,28 @@ public interface OpenDefinitionsDocument extends DJDocument, Finalizable<Definit
   
   
   //----- Major Operations -----//
+  
+  /** Adds region r to the browserRegions collection for this */
+  public void addBrowserRegion(BrowserDocumentRegion r);
+  
+  /** Removes region r from the browserRegions collection */
+  public void removeBrowserRegion(BrowserDocumentRegion r);
+  
   /** Returns the name of the top level class, if any.
-   *  @throws ClassNameNotFoundException if no top level class name found.
-   */
+    * @throws ClassNameNotFoundException if no top level class name found.
+    */
   public String getFirstTopLevelClassName() throws ClassNameNotFoundException;
   
   /** If the file exists, returns true. If it does not exist, prompts the user to look it up.  If the user
-   *  chooses a file, returns true, false otherwise. */
+    * chooses a file, returns true, false otherwise. */
   public boolean verifyExists();  
   
   /** Saves the document with a FileWriter.  If the file name is already set, the method will use that name 
-   *  instead of whatever selector is passed in.
-   *  @param com a selector that picks the file name
-   *  @exception IOException
-   *  @return true if the file was saved, false if the operation was canceled
-   */
+    * instead of whatever selector is passed in.
+    * @param com a selector that picks the file name
+    * @exception IOException
+    * @return true if the file was saved, false if the operation was canceled
+    */
   public boolean saveFile(FileSaveSelector com) throws IOException;
 
   /** Revert the document to the version saved on disk. */
@@ -189,20 +202,49 @@ public interface OpenDefinitionsDocument extends DJDocument, Finalizable<Definit
   public boolean saveFileAs(FileSaveSelector com) throws IOException;
 
   /** Starts compiling the source.  Demands that the definitions be saved before proceeding with the compile.  
-   *  Fires the appropriate events as the compiliation proceeds and finishes.
+   *  Fires the appropriate events as the compiliation proceeds and finishes.  Only executes in the event thread.
    *  @exception IOException if a file with errors cannot be opened
    */
   public void startCompile() throws IOException;
 
   /** Runs the main method in this document in the interactions pane. Demands that the definitions be saved 
    *  and compiled before proceeding. Fires an event to signal when execution is about to begin.
+   * 
+   *  @param qualifiedClassName - the fully qualified name of the class contained in this document to run the main(String[]) method of
    *  @exception ClassNameNotFoundException propagated from getFirstTopLevelClass()
    *  @exception IOException propagated from GlobalModel.compileAll()
    */
-  public void runMain() throws ClassNameNotFoundException, IOException;
+  public void runMain(String qualifiedClassName) throws ClassNameNotFoundException, IOException;
+
+  /** Runs this document as applet in the interactions pane. Demands that the definitions be saved 
+   *  and compiled before proceeding. Fires an event to signal when execution is about to begin.
+   *  The class that will be run must have a default (zero-argument) constructor.
+   * 
+   *  @param qualifiedClassName - the fully qualified name of the class contained in this document that will be run as applet
+   *  @exception ClassNameNotFoundException propagated from getFirstTopLevelClass()
+   *  @exception IOException propagated from GlobalModel.compileAll()
+   */
+  public void runApplet(String qualifiedClassName) throws ClassNameNotFoundException, IOException;
+
+  /** Runs this document, and tries to be smart about it. It detects if the class is a regular Java class with a
+    * main method, if it is an applet, or if it is an ACM Java Task Force program. It runs the program appropriately
+    * in the interactions pane after resetting interactions with the source root for this document as the
+    * working directory.  Warns the use if the class files for the doucment are not up to date.
+    * Fires an event to signal when execution is about to begin.
+    * NOTE: this code normally runs in the event thread; it cannot block waiting for an event that is triggered by
+    * event thread execution!
+    * 
+    * @param qualifiedClassName  the qualified name of the class (in this document) to run.  If NULL, it is the name
+    *                            of the top level class.
+    * 
+    * @exception ClassNameNotFoundException propagated from getFirstTopLevelClass()
+    * @exception IOException propagated from GlobalModel.compileAll()
+    */
+  public void runSmart(String qualifiedClassName) throws ClassNameNotFoundException, IOException;
 
   /** Starts testing the source using JUnit.  Demands that the definitions be saved and compiled before proceeding
    *  with testing.  Fires the appropriate events as the testing proceeds and finishes.
+   *  TODO: this method is redundant and should be deprecated
    *  @exception IOException if a file with errors cannot be opened
    *  @exception ClassNotFoundException when the class is compiled to a location not on the classpath.
    */
@@ -291,21 +333,21 @@ public interface OpenDefinitionsDocument extends DJDocument, Finalizable<Definit
   public RegionManager<Breakpoint> getBreakpointManager();
     
   /** @return the bookmark region manager. */
-  public RegionManager<DocumentRegion> getBookmarkManager();
+  public RegionManager<MovingDocumentRegion> getBookmarkManager();
     
-  /** @return managers for find result regions. */
-  public List<RegionManager<MovingDocumentRegion>> getFindResultsManagers();
+//  /** @return managers for find result regions. */
+//  public List<RegionManager<MovingDocumentRegion>> getFindResultsManagers();
   
-  /** Add a region manager for find results to this document.
-   *  @param rm the global model's region manager */
-  public void addFindResultsManager(RegionManager<MovingDocumentRegion> rm);
+//  /** Add a region manager for find results to this document.
+//   *  @param rm the global model's region manager */
+//  public void addFindResultsManager(RegionManager<MovingDocumentRegion> rm);
   
-  /** Remove a manager for find results from this document.
-   *  @param rm the global model's region manager. */
-  public void removeFindResultsManager(RegionManager<MovingDocumentRegion> rm);
+//  /** Remove a manager for find results from this document.
+//   *  @param rm the global model's region manager. */
+//  public void removeFindResultsManager(RegionManager<MovingDocumentRegion> rm);
   
-  /** @return manager for browser history regions. */
-  public RegionManager<DocumentRegion> getBrowserHistoryManager();
+  /** Remove the browser regions for this document from the browser history manager. */
+  public void clearBrowserRegions();
 
   /** Called when this document is being closed, removing related state from the debug manager. */
   public void removeFromDebugger();
@@ -336,6 +378,25 @@ public interface OpenDefinitionsDocument extends DJDocument, Finalizable<Definit
    *  @return the line number >= 0 */
   public int getLineOfOffset(int offset);
   
+  /** Translates a line number into an offset.
+    * @param line number >= 0
+    * @return offset >= 0 
+    */
+  public int getOffsetOfLine(int line);
+  
   /** @return the caret position as set by the view. */
   public int getCaretPosition();
+  
+  /** Creates a WrappedPosition in the document. */
+  public Position createUnwrappedPosition(int offs) throws BadLocationException;
+  
+  /** Determines if pos in document is inside a comment or a string. */
+  public boolean isShadowed(int pos);
+
+  /** Returns true if one of the words 'class', 'interface' or 'enum' is found
+    * in non-comment text. */
+  public boolean containsClassOrInterfaceOrEnum() throws BadLocationException;
+  
+  /** Update the syntax highlighting for the file type. */
+  public void updateSyntaxHighlighting();
 }

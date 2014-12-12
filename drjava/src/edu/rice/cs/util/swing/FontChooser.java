@@ -1,40 +1,44 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.util.swing;
 
-import edu.rice.cs.drjava.ui.MainFrame;
+import edu.rice.cs.util.swing.Utilities;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -48,14 +52,12 @@ import java.awt.event.*;
  */
 
 public class FontChooser extends JDialog {
-  /**
-   * Available font styles.
+  /** Available font styles.
    */
   private static final String[] STYLES =
       new String[] { "Plain", "Bold", "Italic", "Bold Italic" };
 
-  /**
-   * Available font sizes.
+  /** Available font sizes.
    */
   private static final String[] SIZES =
       new String[] { "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
@@ -74,8 +76,7 @@ public class FontChooser extends JDialog {
 
   private boolean _clickedOK = false;
 
-  /**
-   * Constructs a new modal FontChooser for the given frame,
+  /** Constructs a new modal FontChooser for the given frame,
    * using the specified font.
    */
   private FontChooser(Frame parent, Font font) {
@@ -86,11 +87,10 @@ public class FontChooser extends JDialog {
     _sizeList.setSelectedItem(font.getSize() + "");
     _styleList.setSelectedItem(STYLES[font.getStyle()]);
     //this.setResizable(false);
-    resize();
+    //resize();
   }
 
-  /**
-   * Method used to show the font chooser, and select a new font.
+  /** Method used to show the font chooser, and select a new font.
    *
    * @param parent The parent frame.
    * @param title  The title for this window.
@@ -101,7 +101,7 @@ public class FontChooser extends JDialog {
     FontChooser fd = new FontChooser(parent, font);
     fd.setTitle(title);
     
-    MainFrame.setPopupLoc(fd, parent);
+    Utilities.setPopupLoc(fd, parent);
     fd.setVisible(true);
 
     Font chosenFont = null;
@@ -112,69 +112,87 @@ public class FontChooser extends JDialog {
     return (chosenFont);
   }
 
-  /**
-   * Shows the font chooser with a standard title ("Font Chooser").
+  /** Shows the font chooser with a standard title ("Font Chooser").
    */
   public static Font showDialog(Frame parent, Font font) {
     return showDialog(parent, "Font Chooser", font);
   }
 
   private void initAll() {
-    getContentPane().setLayout(null);
-    setBounds(50, 50, 425, 400);
-    _sampleText = new JLabel();
-    addLists();
-    addButtons();
-    _sampleText.setForeground(Color.black);
-    getContentPane().add(_sampleText);
-    addWindowListener(new WindowAdapter() {
-      public void windowClosing(java.awt.event.WindowEvent e) {
-        setVisible(false);
-      }
-    });
-    addComponentListener(new ComponentAdapter() {
-      public void componentResized(ComponentEvent evt) {
-        resize();
-      }
-    });
-  }
+    Container cp = getContentPane();
+    GridBagLayout cpLayout = new GridBagLayout();
+    GridBagConstraints c = new GridBagConstraints();
+    cp.setLayout(cpLayout);
 
-  private void resize() {
-    int w = getWidth();
-    int h = getHeight();
-    double wf = (double) w / 425;
-    int w2 = (int) (80 * wf);
-    int w3 = (int) (50 * wf);
-    if (w3 < 30) w3 = 30;
-    int w1 = w - w2 - w3 - 25;
-    _fontList.setBounds(5, 5, w1, h - 91);
-    _styleList.setBounds(w1 + 10, 5, w2, h - 91);
-    _sizeList.setBounds(w1 + w2 + 15, 5, w3, h - 91);
-    _sampleText.setBounds(10, h - 78, w - 20, 45);
-    _okButton.setBounds(w - 165, h - 55, 70, 20);
-    _cancelButton.setBounds(w - 81, h - 55, 70, 20);
-    validate();
-  }
-
-  private void addLists() {
-    _fontList = new NwList(GraphicsEnvironment.getLocalGraphicsEnvironment()
-                           .getAvailableFontFamilyNames());
+    // lists
+    c.fill = GridBagConstraints.BOTH;
+    c.anchor = GridBagConstraints.NORTH;
+    c.gridwidth = 1;
+    c.gridheight = 1;
+    c.gridx = 0;
+    c.gridy = 0;
+    c.weightx = 1.0;
+    c.weighty = 1.0;
+    _fontList = new NwList(GraphicsEnvironment.getLocalGraphicsEnvironment().getAvailableFontFamilyNames());
+    cpLayout.setConstraints(_fontList, c);
+    cp.add(_fontList);
+//    JPanel fontListPanel = new JPanel();
+//    fontListPanel.setBackground(Color.RED);
+//    cpLayout.setConstraints(fontListPanel, c);
+//    cp.add(fontListPanel);
+    
+    c.fill = GridBagConstraints.VERTICAL;
+    c.anchor = GridBagConstraints.NORTH;
+    c.gridwidth = GridBagConstraints.RELATIVE;
+    c.gridheight = 1;
+    c.gridx = 1;
+    c.gridy = 0;
+    c.weightx = 0.3;
+    c.weighty = 1.0;
     _styleList = new NwList(STYLES);
+    cpLayout.setConstraints(_styleList , c);
+    cp.add(_styleList);
+//    JPanel styleListPanel = new JPanel();
+//    styleListPanel.setBackground(Color.GREEN);
+//    cpLayout.setConstraints(styleListPanel, c);
+//    cp.add(styleListPanel);
+    
+    c.fill = GridBagConstraints.BOTH;
+    c.anchor = GridBagConstraints.NORTH;
+    c.gridwidth = GridBagConstraints.REMAINDER;
+    c.gridheight = 1;
+    c.gridx = 2;
+    c.gridy = 0;
+    c.weightx = 0.3;
+    c.weighty = 1.0;
     _sizeList = new NwList(SIZES);
-    getContentPane().add(_fontList);
-    getContentPane().add(_styleList);
-    getContentPane().add(_sizeList);
-  }
+    cpLayout.setConstraints(_sizeList, c);
+    cp.add(_sizeList);    
 
-  private void addButtons() {
+    // sample text
+    c.fill = GridBagConstraints.BOTH;
+    c.anchor = GridBagConstraints.WEST;
+    c.gridwidth = GridBagConstraints.REMAINDER;
+    c.gridheight = 1;
+    c.gridx = 0;
+    c.gridy = 1;
+    c.weightx = 0.0;
+    c.weighty = 0.0;
+    _sampleText = new JLabel();
+    _sampleText.setForeground(Color.black);
+    cpLayout.setConstraints(_sampleText, c);
+    cp.add(_sampleText);
+    
+    // buttons
+    JPanel bottom = new JPanel();
+    bottom.setBorder(new EmptyBorder(5,5,5,5));
+    bottom.setLayout(new BoxLayout(bottom, BoxLayout.X_AXIS));
+    bottom.add(Box.createHorizontalGlue());
+    
     _okButton = new JButton("OK");
-    _okButton.setMargin(new Insets(0, 0, 0, 0));
     _cancelButton = new JButton("Cancel");
-    _cancelButton.setMargin(new Insets(0, 0, 0, 0));
-    _okButton.setFont(new Font(" ", 1, 11));
-    _cancelButton.setFont(new Font(" ", 1, 12));
-    getContentPane().add(_okButton);
-    getContentPane().add(_cancelButton);
+    bottom.add(_okButton);
+    bottom.add(_cancelButton);
     _okButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         setVisible(false);
@@ -187,15 +205,32 @@ public class FontChooser extends JDialog {
         _clickedOK = false;
       }
     });
+    bottom.add(Box.createHorizontalGlue());
+
+    c.fill = GridBagConstraints.NONE;
+    c.anchor = GridBagConstraints.PAGE_END;
+    c.gridwidth = GridBagConstraints.REMAINDER;
+    c.gridheight = 1;
+    c.gridx = 0;
+    c.gridy = 2;
+    c.weightx = 0.0;
+    c.weighty = 0.0;
+    cpLayout.setConstraints(bottom, c);
+    cp.add(bottom);
+    
+    addWindowListener(new WindowAdapter() {
+      public void windowClosing(java.awt.event.WindowEvent e) {
+        setVisible(false);
+      }
+    });
+    
+    setSize(425, 400);
   }
 
   private void showSample() {
     int g = 0;
-    try {
-      g = Integer.parseInt(_sizeList.getSelectedValue());
-    }
-    catch (NumberFormatException nfe) {
-    }
+    try { g = Integer.parseInt(_sizeList.getSelectedValue()); }
+    catch (NumberFormatException nfe) { /* do nothing */ }
     String st = _styleList.getSelectedValue();
     int s = Font.PLAIN;
     if (st.equalsIgnoreCase("Bold")) s = Font.BOLD;
@@ -206,34 +241,27 @@ public class FontChooser extends JDialog {
     _sampleText.setVerticalAlignment(SwingConstants.TOP);
   }
 
-  /**
-   * Returns whether the user clicked OK when the dialog was closed.
-   * (If false, the user clicked cancel.)
-   */
-  public boolean clickedOK() {
-    return _clickedOK;
-  }
+  /** Returns whether the user clicked OK when the dialog was closed. (If false, the user clicked cancel.) */
+  public boolean clickedOK() { return _clickedOK; }
 
-  /**
-   * Returns the currently selected Font.
-   */
-  public Font getFont() {
-    return _sampleText.getFont();
-  }
+  /** Returns the currently selected Font. */
+  public Font getFont() { return _sampleText.getFont(); }
 
-  /**
-   * Private inner class for a list which displays a list of options in addition to a label
-   * indicating the currently selected item.
-   */
+  /** Private inner class for a list which displays a list of options in addition to a label indicating the currently
+    * selected item.
+    */
   public class NwList extends JPanel {
-    JList jl;
+    JList<String> jl;
     JScrollPane sp;
     JLabel jt;
     String si = " ";
 
     public NwList(String[] values) {
-      setLayout(null);
-      jl = new JList(values);
+      GridBagLayout cpLayout = new GridBagLayout();
+      GridBagConstraints c = new GridBagConstraints();
+      setLayout(cpLayout);
+     
+      jl = new JList<String> (values);
       sp = new JScrollPane(jl);
       jt = new JLabel();
       jt.setBackground(Color.white);
@@ -243,29 +271,37 @@ public class FontChooser extends JDialog {
       jt.setFont(getFont());
       jl.addListSelectionListener(new ListSelectionListener() {
         public void valueChanged(ListSelectionEvent e) {
-          jt.setText((String) jl.getSelectedValue());
-          si = (String) jl.getSelectedValue();
+          si = jl.getSelectedValue();
+          jt.setText(si);
           showSample();
         }
       });
-      add(sp);
+      
+      c.fill = GridBagConstraints.HORIZONTAL;
+      c.anchor = GridBagConstraints.NORTH;
+      c.gridwidth = GridBagConstraints.REMAINDER;
+      c.gridheight = 1;
+      c.gridx = 0;
+      c.gridy = 0;
+      c.weightx = 1.0;
+      c.weighty = 0.0;
+      cpLayout.setConstraints(jt, c);
       add(jt);
+
+      c.fill = GridBagConstraints.BOTH;
+      c.anchor = GridBagConstraints.NORTH;
+      c.gridwidth = GridBagConstraints.REMAINDER;
+      c.gridheight = 1;
+      c.gridx = 0;
+      c.gridy = 1;
+      c.weightx = 1.0;
+      c.weighty = 1.0;
+      cpLayout.setConstraints(sp, c);
+      add(sp);
     }
 
-    public void setBounds(int x, int y, int w, int h) {
-      super.setBounds(x, y, w, h);
-      sp.setBounds(0, y + 16, w, h - 23);
-      sp.revalidate();
-      jt.setBounds(0, 0, w, 20);
-    }
+    public String getSelectedValue() { return (si); }
 
-    public String getSelectedValue() {
-      return (si);
-    }
-
-    public void setSelectedItem(String s) {
-      jl.setSelectedValue(s, true);
-    }
-
+    public void setSelectedItem(String s) { jl.setSelectedValue(s, true);}
   }
 }

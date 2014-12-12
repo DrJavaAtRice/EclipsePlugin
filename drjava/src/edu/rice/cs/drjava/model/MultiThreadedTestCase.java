@@ -1,40 +1,43 @@
 /*BEGIN_COPYRIGHT_BLOCK
  *
- * This file is part of DrJava.  Download the current version of this project from http://www.drjava.org/
- * or http://sourceforge.net/projects/drjava/
+ * Copyright (c) 2001-2010, JavaPLT group at Rice University (drjava@rice.edu)
+ * All rights reserved.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the names of DrJava, the JavaPLT group, Rice University, nor the
+ *      names of its contributors may be used to endorse or promote products
+ *      derived from this software without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * DrJava Open Source License
+ * This software is Open Source Initiative approved Open Source Software.
+ * Open Source Initative Approved is a trademark of the Open Source Initiative.
  * 
- * Copyright (C) 2001-2005 JavaPLT group at Rice University (javaplt@rice.edu).  All rights reserved.
- *
- * Developed by:   Java Programming Languages Team, Rice University, http://www.cs.rice.edu/~javaplt/
+ * This file is part of DrJava.  Download the current version of this project
+ * from http://www.drjava.org/ or http://sourceforge.net/projects/drjava/
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated 
- * documentation files (the "Software"), to deal with the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and 
- * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- *     - Redistributions of source code must retain the above copyright notice, this list of conditions and the 
- *       following disclaimers.
- *     - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the 
- *       following disclaimers in the documentation and/or other materials provided with the distribution.
- *     - Neither the names of DrJava, the JavaPLT, Rice University, nor the names of its contributors may be used to 
- *       endorse or promote products derived from this Software without specific prior written permission.
- *     - Products derived from this software may not be called "DrJava" nor use the term "DrJava" as part of their 
- *       names without prior written permission from the JavaPLT group.  For permission, write to javaplt@rice.edu.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
- * THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF 
- * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
- * WITH THE SOFTWARE.
- * 
- *END_COPYRIGHT_BLOCK*/
+ * END_COPYRIGHT_BLOCK*/
 
 package edu.rice.cs.drjava.model;
 
 import edu.rice.cs.drjava.DrJavaTestCase;
-import edu.rice.cs.util.Log;
+import edu.rice.cs.drjava.ui.DefinitionsPaneTest;
 
 import junit.framework.AssertionFailedError;
 
@@ -48,7 +51,9 @@ public abstract class MultiThreadedTestCase extends DrJavaTestCase {
   /** Flag to keep track of whether or not a test failed in another thread (not the testing thread). */
   protected volatile static boolean _testFailed = false;
 
-  /** Initialize test state to not failed. */
+  /** Initialize test state to not failed. 
+    * @throws Exception  This convention is mandated by the JUnit TestCase class which is an ancestor of this class. 
+    */
   public void setUp() throws Exception {
     super.setUp();
     _testFailed = false;
@@ -60,6 +65,7 @@ public abstract class MultiThreadedTestCase extends DrJavaTestCase {
   public void tearDown() throws Exception {
     ExceptionHandler.ONLY.rethrow();
     if (_testFailed) fail("test failed in another thread");
+    DefinitionsPaneTest._log.log("MultithreadedTestCase.tearDown() calling super.tearDown()");
     super.tearDown();
   }
 
@@ -67,12 +73,21 @@ public abstract class MultiThreadedTestCase extends DrJavaTestCase {
     * the test to fail, because the listener is often called from another thread.
     */
   protected static void listenerFail(String s) {
-    StackTraceElement[] trace = Thread.getAllStackTraces().get(Thread.currentThread());
-    System.out.println("TEST FAILED in a listener thread");
-    System.out.println("Failing thread stack trace:\n " + Log.traceToString(trace));
+//    StackTraceElement[] trace = Thread.getAllStackTraces().get(Thread.currentThread());
+//    System.err.println("TEST FAILED in a listener thread");
+//    System.err.println("Failing thread stack trace:\n " + Log.traceToString(trace));
 //    new AssertionFailedError(s).printStackTrace(System.out);
     _testFailed = true;
     fail(s);
+  }
+
+  /** This method prints the failure message to System.out and kills the JVM.  Just calling fail() doesn't always cause
+    * the test to fail, because the listener is often called from another thread.
+    */
+  protected static void listenerFail(Throwable t) {
+    java.io.StringWriter sw = new java.io.StringWriter();
+    t.printStackTrace(new java.io.PrintWriter(sw));
+    listenerFail(sw.toString());
   }
   
   /** Join with a thread, i.e. continue only after that thread has terminated.  If the join is interrupted, an 
@@ -120,7 +135,7 @@ public abstract class MultiThreadedTestCase extends DrJavaTestCase {
       _t = t;
       _e = e;
       if (_mainThread != null) {
-        System.out.println("Uncaught Exception in spawned thread within a MultiThreadedTestCase:");
+//        System.err.println("***Uncaught Exception in spawned thread within a MultiThreadedTestCase:");
         e.printStackTrace(System.out);
         _mainThread.interrupt();
       }
@@ -139,7 +154,7 @@ public abstract class MultiThreadedTestCase extends DrJavaTestCase {
         if (_e instanceof RuntimeException) throw (RuntimeException)_e;
         else {
           // avoid checked exceptions
-          throw new AssertionFailedError("Exception in thread "+_t+": "+_e);
+          throw new AssertionFailedError("Exception in thread " + _t + ": " + _e);
         }
       }            
     }

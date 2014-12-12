@@ -28,8 +28,6 @@
 
 package koala.dynamicjava.tree;
 
-import koala.dynamicjava.tree.visitor.*;
-
 /**
  * This class represents the initializer statement nodes of the syntax tree
  *
@@ -39,11 +37,6 @@ import koala.dynamicjava.tree.visitor.*;
 
 public abstract class Initializer extends Node {
     /**
-     * The block property name
-     */
-    public final static String BLOCK = "block";
-
-    /**
      * The block
      */
     private BlockStatement block;
@@ -51,16 +44,11 @@ public abstract class Initializer extends Node {
     /**
      * Creates a new initializer statement
      * @param block the block
-     * @param fn    the filename
-     * @param bl    the begin line
-     * @param bc    the begin column
-     * @param el    the end line
-     * @param ec    the end column
      * @exception IllegalArgumentException if block is null
      */
     protected Initializer(BlockStatement block,
-			  String fn, int bl, int bc, int el, int ec) {
-	super(fn, bl, bc, el, ec);
+			  SourceInfo si) {
+	super(si);
 
 	if (block == null) throw new IllegalArgumentException("block == null");
 
@@ -80,7 +68,6 @@ public abstract class Initializer extends Node {
      */
     public void setBlock(BlockStatement bs) {
 	if (bs == null) throw new IllegalArgumentException("bs == null");
-
-	firePropertyChange(BLOCK, block, block = bs);
+	block = bs;
     }
 }
