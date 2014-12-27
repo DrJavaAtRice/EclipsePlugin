@@ -40,8 +40,8 @@
 
   <!-- Retroweaver task, used to convert Java 5.0 class files to be compatible with an earlier JVM;
        also checks class references to insure that there are no dependencies on 1.5 APIs -->
-  <taskdef name="retroweaver" classpath="lib/buildlib/retroweaver-all-1.2.3.jar" 
-           classname="com.rc.retroweaver.ant.RetroWeaverTask" />
+<!--  <taskdef name="retroweaver" classpath="lib/buildlib/retroweaver-all-1.2.3.jar" 
+           classname="com.rc.retroweaver.ant.RetroWeaverTask" /> -->
   
   <!-- Extension that defines the "extendclasspath" task.  This should be a standard feature of Ant, but
        as long as it's not, we can use this extension from the Clover developers. -->
@@ -127,12 +127,7 @@
       <fileset dir="classes/test" includes="**/*" />
     </move>
     
-    <!--<javac srcdir="src" destdir="classes/base" source="1.5" target="1.5" sourcepath="${drjava-src}" 
-           debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes">-->
-          <!-- (Have to specify additional explicit srcdirs - see below) -->
-    <!-- <javac destdir="classes/base" source="1.5" target="1.5" sourcepath="${drjava-src}" 
-           debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes"> -->
-    <javac destdir="classes/base" source="1.5" target="1.5" debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes">
+    <javac destdir="classes/base" source="1.6" target="1.6" debug="on" optimize="off" deprecation="on" includeAntRuntime="no" fork="yes">
       <src>
         <pathelement location="src" />
         <!-- These classes won't automatically compile, because they aren't in files matching their name -->
@@ -267,97 +262,21 @@
     </unjar>
   </target>
   
-  <!--
-  <target name="compile-14" depends="compile-15, resolve-java14-runtime, assert-eclipse-exists"
-          description="Create 1.4 versions of the classes (after compiling)">
-  -->
-    <!-- Note: This target, in addition to checking 1.4 compatibility, serves to ensure that there are no dependencies
-         on test classes or JUnit classes in the base.  If 1.4 compatibility is no longer needed, a similar dependency
-         check should probably still be done. -->
-    <!--
-    <echo message="Generating 1.4 versions of the classes directories (this may take awhile after a large compile)" />
-    -->
-    
-    <!-- Convert lib classes -->
-    <!--
-    <mkdir dir="classes/lib-14" />
-    <retroweaver srcdir="classes/lib" destdir="classes/lib-14" target="1.4" verify="no" />
-    <copy todir="classes/lib-14">
-      <fileset dir="classes/lib" excludes="**/*.class" />
-    </copy>
-    -->
-
-    <!-- Convert base classes -->
-    <!--
-    <mkdir dir="classes/base-14" />
-    <pathconvert property="retroweaver-base-classpath" dirsep="${file.separator}" pathsep="${path.separator}">
-      <path>
-        <pathelement location="${java14-runtime}" />
-        <pathelement location="${clover-jar}" />
-        <pathelement location="classes/base-14" />
-        <pathelement location="classes/lib-14" />
-        <fileset refid="eclipse-libs" />
-      </path>
-    </pathconvert>
-    <retroweaver srcdir="classes/base" destdir="classes/base-14" target="1.4" verify="yes"
-                 classpath="${retroweaver-base-classpath}" />
-    <copy todir="classes/base-14">
-      <fileset dir="classes/base" excludes="**/*.class" />
-    </copy>
-    -->
-                 
-    <!-- Convert test classes -->
-    <!--
-    <mkdir dir="classes/test-14" />
-    <pathconvert property="retroweaver-test-classpath" dirsep="${file.separator}" pathsep="${path.separator}">
-      <path>
-        <pathelement location="${java14-runtime}" />
-        <pathelement location="${clover-jar}" />
-        <pathelement location="lib/buildlib/junit.jar" />
-        <pathelement location="classes/base-14" />
-        <pathelement location="classes/lib-14" />
-        <pathelement location="classes/test-14" />
-        <fileset refid="eclipse-libs" />
-      </path>
-    </pathconvert>
-    <retroweaver srcdir="classes/test" destdir="classes/test-14" target="1.4" verify="yes"
-                 classpath="${retroweaver-test-classpath}" />
-    <copy todir="classes/test-14">
-      <fileset dir="classes/test" excludes="**/*.class" />
-    </copy>
-    
-  </target>
-    -->
 
   <!-- ***************
        Testing Targets
        *************** -->
   
-  <target name="test" depends="test-15" description="Shortcut for 'test-15'">
+  <target name="test" depends="test-16" description="Shortcut for 'test-16'">
   </target>
 
-  <target name="test-15" depends="compile-15"
-          description="Run all 5.0 tests under Java 5.0 (after compiling); use -Dtest-spec=... to filter">
+  <target name="test-16" depends="compile-15"
+          description="Run all tests under current Java (>= 6.0); use -Dtest-spec=... to filter">
     <antcall target="iterate-tests">
-      <param name="do-test-target" value="do-test-15" />
+      <param name="do-test-target" value="do-test-16" />
     </antcall>
   </target>
   
-  <!--
-  <target name="test-14" depends="compile-14"
-          description="Run all 1.4 tests under Java 1.4 (after compiling); use -Dtest-spec=... to filter">
-    <antcall target="iterate-tests">
-      <param name="do-test-target" value="do-test-14" />
-    </antcall>
-  </target>
-  
-  <target name="test-14-in-15" depends="compile-14, assert-15"
-          description="Run all 1.4 tests under Java 5.0 (after compiling); use -Dtest-spec=... to filter">
-    <antcall target="iterate-tests">
-      <param name="do-test-target" value="do-test-14-in-15" />
-    </antcall>
-  </target>
-  -->
   <target name="iterate-tests">
     <if>
       <equals arg1="${test-spec}" arg2="" />
@@ -389,8 +308,8 @@
     </and>
   </selector>
  
-  <target name="do-test-15" depends="assert-eclipse-exists, assert-15">
-    <echo message="Running all 5.0 tests matching '${test-filter-string}' under Java 5.0" />
+  <target name="do-test-16" depends="assert-eclipse-exists, assert-15">
+    <echo message="Running all tests matching '${test-filter-string}' under current Java (>= 6.0)" />
     <junit haltonfailure="yes" fork="yes" forkmode="perTest" maxmemory="256M" dir="${basedir}">
       <classpath>
         <pathelement location="lib/buildlib/junit.jar" />
@@ -539,54 +458,13 @@
         <fileset refid="eclipse-libs" />
         <pathelement location="lib/buildlib/junit.jar" />
       </classpath>
-      <link href="http://java.sun.com/j2se/1.5/docs/api" />
+      <link href="http://java.sun.com/j2se/1.6/docs/api" />
       <link href="http://junit.org/junit/javadoc/3.8.1" />
       <link href="http://drjava.org/javadoc/drjava" />
       <!-- TODO: Eclipse API link(s) -->
       <!-- Additional external library APIs may be listed here -->
     </javadoc>
   </target>
-  
-  
-  <target name="clover" depends="clover-15" description="Shortcut for 'clover-15'">
-  </target>
-  
-  <target name="clover-15" depends="clean, setup-clover, test-15, report-clover" 
-          description="Generate a Clover test coverage report (using 'test-15')" />
-  
-  <!--
-  <target name="clover-14" depends="clean, setup-clover, test-14, report-clover" 
-          description="Generate a Clover test coverage report (using 'test-14')" />
-  
-  <target name="clover-14-in-15" depends="clean, setup-clover, test-14-in-15, report-clover" 
-          description="Generate a Clover test coverage report (using 'test-14-in-15')" />
-  -->
-
-  <target name="report-clover" depends="resolve-version-tag">
-    <echo message="Generating Clover report" />
-    <clover-report>
-      <current outfile="docs/clover" title="${readable-project-name} Test Coverage (${version-tag})">
-        <format type="html" />
-      </current>
-    </clover-report>
-    <antcall target="clean-intermediate"> <!-- Remove instrumented class files -->
-      <param name="clean-can-fail" value="no" />
-    </antcall>
-  </target>
-
-  <target name="setup-clover" depends="assert-clover-jar-exists">
-    <extendclasspath path="${clover-jar}" />
-    <taskdef resource="clovertasks" classpath="${clover-jar}" />
-    <mkdir dir="cloverdb" />
-    <clover-setup initString="cloverdb/clover.db">
-      <files>
-        <exclude name="**/*Test.java" />
-        <exclude name="**/*TestCase.java" />
-        <!-- Additional test sources should be listed here -->
-      </files>
-    </clover-setup>
-  </target>
-
   
   <!-- *************
        Clean Targets
@@ -810,43 +688,6 @@
   <!-- ***************************
        Property-resolution Targets 
        *************************** -->
-  <!--
-  <target name="resolve-java14-runtime">
-  -->
-    <!-- We rely on "location" to generate a platform-specific path; note that properties
-         are immutable and so java14-runtime will only be set the *first* time. -->
-  <!--
-    <property name="java14-runtime-1" location="${java14-home}/lib/rt.jar" />
-    <available property="java14-runtime" value="${java14-runtime-1}" file="${java14-runtime-1}" />
-
-    <property name="java14-runtime-2" location="${java14-home}/jre/lib/rt.jar" />
-    <available property="java14-runtime" value="${java14-runtime-2}" file="${java14-runtime-2}" />
-
-    <property name="java14-runtime-3" location="${java14-home}/../Classes/classes.jar" />
-    <available property="java14-runtime" value="${java14-runtime-3}" file="${java14-runtime-3}" />
-
-    <fail message="Can't find rt.jar in the Java 1.4 home: ${java14-home}" unless="java14-runtime" />
-  </target>
-  -->
-  <!--
-  <target name="resolve-java14-exec">
-  -->
-    <!-- We rely on "location" to generate a platform-specific path -->
-    <!--
-    <property name="java14-exec-1" location="${java14-home}/bin/java.exe" />
-    <condition property="java14-exec" value="${java14-exec-1}">
-      <and>
-        <available file="${java14-exec-1}" />
-        <os family="windows" />
-      </and>
-    </condition>
-    
-    <property name="java14-exec-2" location="${java14-home}/bin/java" />
-    <available property="java14-exec" value="${java14-exec-2}" file="${java14-exec-2}" />
-
-    <fail message="Can't find the java executable in the Java 1.4 home: ${java14-home}" unless="java14-exec" />
-  </target>
-    -->
 
   <target name="assert-15">
     <fail message="The specified target requires Ant to be run under Java 5.0 or later">
@@ -873,13 +714,6 @@
     <fail message="${clover-jar} does not exist" unless="clover-jar-exists" />
   </target>
   
-  <!--
-  <target name="assert-drjava-src-exists">
-    <available property="drjava-src-exists" file="${drjava-src}" />
-    <fail message="${drjava-src} does not exist" unless="drjava-src-exists" />
-  </target>
-  -->
-
   <target name="assert-eclipse-exists">
     <available property="eclipse-exists" file="${eclipse-home}" />
     <fail message="${eclipse-home} does not exist" unless="eclipse-exists" />
